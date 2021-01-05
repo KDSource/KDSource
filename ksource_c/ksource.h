@@ -1,46 +1,56 @@
 #include<stdio.h>
 #include<stdlib.h>
-
-#include "plists.h"
-#include "metrics.h"
+#include<time.h>
 
 #ifndef KSOURCE_H
 #define KSOURCE_H
 
+#include "plists.h"
+#include "metrics.h"
 
-struct KSource;
-struct MultiSource;
-struct PList;
-struct Metric;
+#define MAX_RESAMPLES 1000
 
-struct Part{
+
+typedef struct KSource KSource;
+typedef struct MultiSource MultiSource;
+typedef struct PList PList;
+typedef struct Metric Metric;
+
+typedef struct Part{
 	double E;
 	double pos[3];
 	double dir[3];
-};
+} Part;
 
 typedef int (*KSSampleFun)(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
 typedef int (*MSSampleFun)(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
 
-struct KSource{
+typedef struct KSource{
 	double J;
 	PList* plist;
 	Metric* metric;
-};
+} KSource;
 
 KSource* KS_create(double J_, PList* plist_, Metric* metric_);
-int KS_sample(KSource* ks, char* pt, Part* part, double* w);
+int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
 void KS_destroy(KSource* ks);
 
-struct MultiSource{
-	KSource* s;
+typedef struct MultiSource{
+	int len;
+	KSource** s;
 	double* ws;
-};
+	double* cdf;
+} MultiSource;
 
-MultiSource* MS_create(KSource* s_, double* ws_);
+MultiSource* MS_create(int len_, KSource** s_, double* ws_);
 double MS_J(MultiSource* ms);
-int MS_sample(MultiSource* ms, char* pt, Part* part, double* w);
+int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
 void MS_destroy(MultiSource* ms);
+
+
+// Funciones auxiliares
+
+double rand_norm();
 
 
 #endif

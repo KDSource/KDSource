@@ -2,31 +2,48 @@
 #include<stdlib.h>
 #include<math.h>
 
-#ifndef KSOURCE_H
-#define KSOURCE_H
+#ifndef PLISTS_H
+#define PLISTS_H
 
 
 #define LINE_MAX_LEN 256
 
-typedef int (*ReadFun)(char* lines[LINE_MAX_LEN], Part* part, double* w);
+typedef struct Part Part;
 
-struct PList{
-	char pt;
-	FILE** files;
-	char* lines[LINE_MAX_LEN];
-	Part part;
-	double w;
-	double pos[3];
-	double rot[3];
+typedef int (*ReadFun)(char* line, Part* part, double* w);
 
-	ReadFun read;
-};
+typedef struct PList{
+	char pt; // Tipo de particula (n, p, ...)
+	double* trasl; // Traslacion a aplicar
+	double* rot; // Rotacion a aplicar
 
-PList* PList_create(char pt_, FILE** files_, char* lines_[LINE_MAX_LEN], double* pos_, double* rot_, ReadFun read_);
+	int n; // Cantidad de archivos de tracks
+	FILE** files; // Archivos de tracks (unico o uno por variable)
+	char* line; // Buffer para linea de texto
+	Part* part; // Buffer para particula
+	double w; // Buffer para peso
+
+	ReadFun* read;
+} PList;
+
+PList* PList_create(char pt, double* trasl, double* rot, int n, FILE** files, ReadFun* read);
 int PList_get(PList* plist, Part* part, double* w);
 int PList_next(PList* plist);
-int PList_rewind(PList* plist);
 void PList_destroy(PList* plist);
+
+PList* PListSimple_create(char pt, double* trasl, double* rot, char* filename, ReadFun read);
+void PListSimple_destroy(PList* plist);
+
+PList* PListSepVar_create(char pt, double* trasl, double* rot, char* filename[3], ReadFun read[3]);
+void PListSepVar_destroy(PList* plist);
+
+int PTRAC_read(char* line, Part* part, double* w);
+
+int Tripoli_read_part(char* line, Part* part, double* w);
+
+int Decay_read(char* line, Part* part, double* w);
+int Tripoli_read_pos(char* line, Part* part, double* w);
+int Isotrop_read(char* line, Part* part, double* w);
 
 
 #endif
