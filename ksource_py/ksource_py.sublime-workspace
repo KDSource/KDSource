@@ -1,0 +1,1106 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"get",
+				"get_width\tdouble get_width() const"
+			],
+			[
+				"test_Pl",
+				"test_PListVirtual\tvoid test_PListVirtual()"
+			],
+			[
+				"test",
+				"test_Part\tvoid test_Part()"
+			],
+			[
+				"Part",
+				"PartTypeError"
+			],
+			[
+				"test_PL",
+				"test_PListVirtual\tvoid test_PListVirtual()"
+			],
+			[
+				"MAX",
+				"MAX_RESAMPLE\tMAX_RESAMPLE"
+			],
+			[
+				"map",
+				"map_E\tMapping<double> * map_E"
+			],
+			[
+				"Par",
+				"PartNotInMapping\tPartNotInMapping"
+			],
+			[
+				"k_",
+				"k_pos"
+			],
+			[
+				"uni",
+				"uniform_int_distribution\tuniform_int_distribution<>"
+			],
+			[
+				"Pa",
+				"PartTypeError\tPartTypeError"
+			],
+			[
+				"strin",
+				"string\tstring"
+			],
+			[
+				"PL",
+				"PListFile\tPListFile"
+			],
+			[
+				"get_",
+				"get_I_from\tPList<T> * get_I_from"
+			],
+			[
+				"PLi",
+				"PList\tPList"
+			],
+			[
+				"begi",
+				"begin\titerator begin()"
+			],
+			[
+				"acc",
+				"accumulate\t_Tp accumulate(_InputIterator __first, _InputIterator __last, _Tp __init, _BinaryOperation __binary_op)"
+			],
+			[
+				"ge",
+				"get\tvoid get(T &part, double &w)"
+			],
+			[
+				"dir",
+				"dir_"
+			],
+			[
+				"pos",
+				"pos_"
+			],
+			[
+				"ma",
+				"map_"
+			],
+			[
+				"Sep",
+				"SepVarPList\tSepVarPList::"
+			],
+			[
+				"pl",
+				"plist_dir\tPList<Dir> * plist_dir"
+			],
+			[
+				"PLis",
+				"PList"
+			],
+			[
+				"k",
+				"k_sv\tSepVarKernel k_sv"
+			],
+			[
+				"tes",
+				"test_Part\tvoid test_Part()"
+			],
+			[
+				"unifo",
+				"uniform_real_distribution\tuniform_real_distribution<>"
+			],
+			[
+				"cons",
+				"constexpr\tconstexpr"
+			],
+			[
+				"Se",
+				"SimpleKernel"
+			],
+			[
+				"th",
+				"throw\tvoid throw expression"
+			],
+			[
+				"PList",
+				"PListCSV\tPListCSV"
+			],
+			[
+				"file",
+				"filename\tstd::string filename"
+			],
+			[
+				"ios",
+				"iostream\t/usr/include/c++/7"
+			],
+			[
+				"os",
+				"ostream\tostream"
+			],
+			[
+				"ve",
+				"vect_size"
+			],
+			[
+				"max_el",
+				"max_element\t_ForwardIterator max_element(_ForwardIterator __first, _ForwardIterator __last, _Compare __comp)"
+			],
+			[
+				"vr",
+				"\\verb                                             \tlatex-document"
+			],
+			[
+				"tran",
+				"transform\t_OutputIterator transform(_InputIterator1 __first1, _InputIterator1 __last1, _InputIterator2 __first2, _OutputIterator __result, _BinaryOperation __binary_op)"
+			],
+			[
+				"S",
+				"SimpleSource"
+			],
+			[
+				"subsubse",
+				"\\subsubsection{title}                             \tlatex-document"
+			],
+			[
+				"end",
+				"\\end{}                                            \tlatex-document"
+			],
+			[
+				"sq",
+				"\\sqrt{arg}                                        \tlatex-document"
+			],
+			[
+				"mat",
+				"\\mathcal{text}                                    \tlatex-document"
+			],
+			[
+				"us",
+				"\\usepackage{package}                              \tlatex-document"
+			],
+			[
+				"ri",
+				"\\right|                                           \tlatex-document"
+			],
+			[
+				"subsu",
+				"\\subsubsection{title}                             \tlatex-document"
+			],
+			[
+				"lef",
+				"\\left(                                            \tlatex-document"
+			],
+			[
+				"le",
+				"\\left(                                            \tlatex-document"
+			],
+			[
+				"app",
+				"\\approx                                           \tlatex-mathsymbols"
+			],
+			[
+				"Sh",
+				"ShoppingItem\tShoppingItem"
+			],
+			[
+				"t_",
+				"t_deque\tstatement"
+			],
+			[
+				"t",
+				"t_list\tstatement"
+			],
+			[
+				"N_",
+				"N_max"
+			],
+			[
+				"random",
+				"random_device\trandom_device()"
+			],
+			[
+				"pus_",
+				"push_back\tvoid push_back(const value_type &__x)"
+			],
+			[
+				"Cmp",
+				"CmpItem\tCmpItem"
+			],
+			[
+				"Sho",
+				"ShoppingItem"
+			],
+			[
+				"Shoppin",
+				"ShoppingItem\tShoppingItem(std::string &n, double c)"
+			],
+			[
+				"Deri",
+				"Deriv1\tDeriv1"
+			],
+			[
+				"Der",
+				"Deriv1\tDeriv1()"
+			],
+			[
+				"in",
+				"in_size\tparam"
+			],
+			[
+				"be",
+				"\\begin{itemize}                                   \tlatex-document"
+			],
+			[
+				"Y_",
+				"Y_test\tstatement"
+			],
+			[
+				"Y",
+				"Y_test\tstatement"
+			],
+			[
+				"X_",
+				"X_train\tstatement"
+			],
+			[
+				"laye",
+				"layer_list\tparam"
+			],
+			[
+				"la",
+				"layer_list\tparam"
+			],
+			[
+				"pre",
+				"preprocessing\tmodule"
+			],
+			[
+				"X",
+				"X_train\tstatement"
+			],
+			[
+				"ne",
+				"newaxis\tstatement"
+			],
+			[
+				"me",
+				"metrics\tmodule"
+			],
+			[
+				"tra",
+				"transpose\tfunction"
+			],
+			[
+				"pri",
+				"print\tvoid print()"
+			],
+			[
+				"si",
+				"size_t\tsize_t"
+			],
+			[
+				"reg",
+				"reg_fact\tparam"
+			],
+			[
+				"ax",
+				"axis=\tparam"
+			],
+			[
+				"con",
+				"connections\tparam"
+			],
+			[
+				"eval",
+				"eval_size\tparam"
+			],
+			[
+				"op",
+				"optimizers\tmodule"
+			],
+			[
+				"n_",
+				"n_epochs\tparam"
+			],
+			[
+				"regu",
+				"regularizations\tmodule"
+			],
+			[
+				"ac",
+				"activations\tmodule"
+			],
+			[
+				"Bas",
+				"BaseLayer\tclass"
+			],
+			[
+				"Tes",
+				"Test2\tmodule"
+			],
+			[
+				"L",
+				"Loss"
+			],
+			[
+				"A",
+				"Activation"
+			],
+			[
+				"grad",
+				"grad_W"
+			],
+			[
+				"Clase",
+				"ClaseTrucha"
+			],
+			[
+				"Cla",
+				"ClaseTrucha"
+			],
+			[
+				"ls",
+				"ls_len"
+			],
+			[
+				"Miem",
+				"Miembro1"
+			],
+			[
+				"sec",
+				"\\section{title}                                   \tlatex-document"
+			],
+			[
+				"selc",
+				"selected"
+			],
+			[
+				"rig",
+				"\\right)                                           \tlatex-document"
+			],
+			[
+				"str",
+				"string.h\t/usr/include"
+			],
+			[
+				"inc",
+				"include"
+			],
+			[
+				"std",
+				"stdio.h\t/usr/include"
+			],
+			[
+				"Ej",
+				"Ej10_ini"
+			],
+			[
+				"se",
+				"setDate\tvoid setDate(unsigned int d, Month m, unsigned int y)"
+			],
+			[
+				"sor",
+				"sorted\tbool sorted"
+			],
+			[
+				"F",
+				"FechaNac\tFecha FechaNac"
+			],
+			[
+				"sort",
+				"sort\tvoid sort(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp)"
+			],
+			[
+				"d",
+				"do\tDo While Loop"
+			],
+			[
+				"begin",
+				"\\begin{figure}                                    \tlatex-document"
+			],
+			[
+				"create",
+				"create_tree"
+			],
+			[
+				"par",
+				"part"
+			],
+			[
+				"Gri",
+				"Grid_eval"
+			],
+			[
+				"N",
+				"N_part"
+			],
+			[
+				"NP",
+				"NPROC"
+			],
+			[
+				"data",
+				"data_file"
+			],
+			[
+				"5_",
+				"5_bunker"
+			],
+			[
+				"pat",
+				"path_file"
+			],
+			[
+				"l",
+				"legend"
+			],
+			[
+				"plot",
+				"plot_I"
+			],
+			[
+				"len",
+				"legends"
+			],
+			[
+				"lege",
+				"legend"
+			],
+			[
+				"y",
+				"ylabel"
+			],
+			[
+				"plo",
+				"plot_2D"
+			],
+			[
+				"ra",
+				"rand_norm"
+			],
+			[
+				"w",
+				"while"
+			],
+			[
+				"dis",
+				"distrib"
+			],
+			[
+				"Activ",
+				"Activ_from_map"
+			],
+			[
+				"DS_",
+				"DS_I_tot"
+			],
+			[
+				"Ns",
+				"N_simul"
+			],
+			[
+				"NAME",
+				"NAME_CURRENT_COMP"
+			],
+			[
+				"we",
+				"weight"
+			],
+			[
+				"ds",
+				"dsource"
+			],
+			[
+				"Wind",
+				"Window_transf"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "ksource.py",
+			"settings":
+			{
+				"buffer_size": 77,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "plists.py",
+			"settings":
+			{
+				"buffer_size": 77,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "# -*- coding: utf-8 -*-\n\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nclass Metric:\n\tdef transform:\n\t\tpass\n\tdef inverse_transform:\n\t\tpass\n\tdef jac_inverse:\n\t\tpass\n\n",
+			"file": "metrics.py",
+			"file_size": 92,
+			"file_write_time": 132543317043754788,
+			"settings":
+			{
+				"buffer_size": 171,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/C++/C Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C Single File.sublime-build",
+				"Run"
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Traditional"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Script Builder"
+				]
+			],
+			[
+				"Packages/LaTeXTools/LaTeX.sublime-build",
+				"PdfLaTeX"
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"open",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"open re",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"oper",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"packa",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"packagere",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"sublime",
+				"SublimeJedi: Show Docstring"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"package res",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"prv",
+				"PackageResourceViewer: Open Resource"
+			],
+			[
+				"pack",
+				"Package Control: Remove Package"
+			],
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"Prefere",
+				"Preferences: LSP Settings"
+			],
+			[
+				"Pac",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"package control:ins",
+				"Package Control: Install Package"
+			],
+			[
+				"Snippet: ",
+				"Snippet: Enumerate"
+			],
+			[
+				"Ins",
+				"Package Control: Install Package"
+			],
+			[
+				"late",
+				"Set Syntax: LaTeX"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Remove Package"
+			],
+			[
+				"Package Control: rem",
+				"Package Control: Remove Package"
+			],
+			[
+				"Snippet: fig",
+				"Snippet: figure"
+			],
+			[
+				"La",
+				"LaTeXTools: Reset user settings to default"
+			],
+			[
+				"Insta",
+				"Package Control: Install Package"
+			],
+			[
+				"pe",
+				"Permute Lines: Reverse"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 252.0,
+		"history":
+		[
+			"import numpy as np",
+			"os.getcwd()",
+			"os.getpwd()",
+			"os.pwd()",
+			"os.pwd",
+			"import os",
+			"a = 0",
+			"windows()",
+			"bash pwd",
+			"int a",
+			"pwd"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/inti/Documents/Maestria/KSource/ksource_c/metrics.c",
+		"/home/inti/Documents/Maestria/KSource/ksource_py/metrics.py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/test.csv",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/test.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/kernels.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/kernels.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.o",
+		"/home/inti/Documents/PI/Codigos/Arch_com/Distrib2Tripoli_guide.c",
+		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.c",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/geom.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/geom.h",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract7/Informe/main.tex",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract6/Informe/main.tex",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract5/Ej3.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract5/Informe/main.tex",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract7/pract7.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej03.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract7/airline-passengers.csv",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract5/pract5.ipynb",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract5/Ej4.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej07.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract0/pract0.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej02.py",
+		"/home/inti/Downloads/pract6.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract6/Carseats.csv",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej5.py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final (copy)/KSource (copy).h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final (copy)/KSource.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final (copy)/kernels.h",
+		"/home/inti/Documents/McStas/McStas-2.6.1/libs/mcpl/mcpl.c",
+		"/home/inti/Documents/PI/Codigos/dsource_c/activ.c",
+		"/home/inti/Documents/PI/Simulaciones/Guia_final/GF12p_p",
+		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.h",
+		"/home/inti/Documents/PI/Codigos/dsource_c/guide.c",
+		"/home/inti/Documents/PI/Codigos/dsource_c/activ.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource (copy).h",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Informe/main.tex",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej10.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/DeepLearning/Pract4/submit.sh",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/DeepLearning/Pract4/Ej02.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/DeepLearning/Pract4/Ej10.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/DeepLearning/Pract4/Ej01.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej01.py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KDE-MC.h",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pract4.py",
+		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/table.sublime-snippet",
+		"/home/inti/Downloads/Ej10.py",
+		"/home/inti/Downloads/Ej08.py",
+		"/home/inti/Downloads/Ej07.py",
+		"/home/inti/Downloads/Ej06.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej05.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej04.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pima-indians-diabete-names.txt",
+		"/home/inti/Desktop/granada@cnea.gov.ar.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pima-indians-diabetes.csv",
+		"/home/inti/Downloads/Ej01.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/submit.sh",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/test.py",
+		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/subfigure.sublime-snippet",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej4.py",
+		"/home/inti/Desktop/granada@cab.cnea.gov.ar.txt",
+		"/home/inti/Documents/PI/Simulaciones/Guia_final/3_bunker_n.data",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej2.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej3.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej1.py",
+		"/home/inti/Downloads/pract4.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej4.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej6.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej3.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej3 (copy).py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/DSource.h",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Cluster/Scripts/testkeras.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/Ej10-Alexnet.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej10-Alexnet.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Script.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/dicts.npy",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/my_dict.npy",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/dicts.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Cluster/Scripts/submit_testgpu_compute-xx.local.sh",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Cluster/Scripts/submit_testconda_compute-6-5.local.sh",
+		"/home/inti/.config/sublime-text-3/Packages/Jedi - Python autocompletion/Default.sublime-keymap",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/share/apps/DeepLearning/icnpg/2020/DeepLearningSoftware/Problemas/cifar10.py",
+		"/home/inti/Universidad/Maestria/Maestria - Lista de materias.txt",
+		"/home/inti/Universidad/Docencia/Fisica de Neutrones/Horarios.txt",
+		"/home/inti/Universidad/UBA/UBA - Lista de materias.txt",
+		"/home/inti/Universidad/Ayudantia Fisica de Neutrones/Finales/Final/Comentarios.txt",
+		"/home/inti/Documents/TRIPOLI-4/scripts/tripoli4.job",
+		"/home/inti/Documents/TRIPOLI-4/scripts/sub_tripoli4",
+		"/home/inti/Documents/PI/Simulaciones/Guia_final/tripoli4.run",
+		"/home/inti/Documents/TRIPOLI-4/scripts/tripoli4_par.run",
+		"/home/inti/Documents/TRIPOLI-4/scripts/T4_exe.sh",
+		"/run/user/1000/gvfs/sftp:host=10.73.36.214/home/inti/PI/Guia_final/tripoli4.sub",
+		"/run/user/1000/gvfs/sftp:host=10.73.36.214/home/difra/script_tripoli4/sub_tripoli4",
+		"/run/user/1000/gvfs/sftp:host=10.73.36.214/home/difra/script_tripoli4/tripoli4.job",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/.fuse_hidden00003c1b00000001",
+		"/home/inti/Documents/Maestria/Resumen_metodos/Resumen_métodos.tex",
+		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/Insert environment.sublime-snippet",
+		"/home/inti/Desktop/Text_File.txt",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2_graph.py",
+		"/home/inti/.cache/.fr-vpQ38s/Article/main.tex",
+		"/home/inti/Templates/LaTeX/Article.tex",
+		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/figure.sublime-snippet",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2_tsort.txt",
+		"/home/inti/Downloads/Script.py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL Containers/Ej1.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Associative Containers/Ej2.cpp",
+		"/home/inti/Templates/C++/Source.cpp",
+		"/home/inti/Templates/C++/Header.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Ej10.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Ej6.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-6_Osiris_Abbate.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-10_Osiris_Abbate.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Source.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL/Ej1.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract10/Ej9.cpp",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract10/Ej7.cpp",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/LEEME.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/TP2_OIA/LEEME.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej8.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej7.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej0-Clasif_lin.py"
+	],
+	"find":
+	{
+		"height": 26.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "ksource.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 77,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"show_definitions": false,
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "plists.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 77,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"show_definitions": false,
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "metrics.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 171,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								171,
+								171
+							]
+						],
+						"settings":
+						{
+							"show_definitions": false,
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 26.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 199.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.latextools":
+	{
+		"height": 133.0
+	},
+	"output.mdpopups":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/LaTeXTools/LaTeX.sublime-build",
+	"project": "",
+	"replace":
+	{
+		"height": 48.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/trabajo_final.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": false,
+	"side_bar_width": 237.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
