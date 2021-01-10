@@ -1,0 +1,130 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright 1997-2002, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Component: Distrib2McStas_window
+*
+* %I
+* Written by: 
+* Date: 
+* Origin: 
+*
+* Neutron guide.
+*
+* %D
+* Description
+*
+* Example: Distrib2McStas_window(...)
+*
+* %VALIDATION
+*
+* %BUGS
+*
+* %P
+* INPUT PARAMETERS:
+*
+* file_d1: [str]    File with current distribution in E
+* file_d2: [str]    File with current distribution in E, x, y
+* file_d3: [str]    File with current distribution in E, x, y, mu
+* file_d4: [str]    File with current distribution in E, x, y, mu, phi
+*
+* %D
+* Example values:
+*
+* %E
+*******************************************************************************/
+
+DEFINE COMPONENT KSource
+DEFINITION PARAMETERS (bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_ang=0.0,
+	trasl_x=0.0, trasl_y=0.0, trasl_z=0.0,
+	rot_x=0.0, rot_y=0.0, rot_z=0.0, switch_x2z=1)
+SETTING PARAMETERS (string filename, string format="PTRAC",
+	string kernel="gaussian")
+OUTPUT PARAMETERS ()
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
+
+SHARE
+%{
+	%include "ksource"
+	%include "metrics"
+	%include "plists"
+	%include "aux"
+%}
+
+DECLARE
+%{
+	char pt;
+	Part part;
+	double w;
+    
+    double trasl[] = {trasl_x, trasl_y, trasl_z};
+    double rot[] = {rot_x, rot_y, rot_z};
+    ReadFun readfun;
+    PList* plist;
+
+    double bw_E[] = {bw_u};
+    double bw_pos[] = {bw_x, bw_y};
+    double bw_dir[] = {bw_ang};
+    double* bw[] = {bw_E, bw_pos, bw_dir};
+    double* gp[] = {NULL, NULL, NULL};
+    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Dir_perturb};
+    Metric* metric;
+	KSource *ksource;
+%}
+
+INITIALIZE
+%{  
+	if(strcmp(format, "PTRAC") == 0) readfun = PTRAC_read;
+	else{
+		printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
+	}
+	plist = PListSimple_create('n', trasl, rot, filename, readfun);
+    metric = MetricSepVar_create(gp, kernel, bw, perturb);
+	ksource = KS_create(1, plist, metric);
+%}
+
+TRACE
+%{
+	double v;
+	KS_sample(ksource, &pt, &part, &w, 0);
+
+	x = part.pos[1]/100;
+	y = part.pos[2]/100;
+	z = part.pos[0]/100;
+	v = SE2V*sqrt(part.E*1E9);
+	vx = v*part.dir[1];
+	vy = v*part.dir[2];
+	vz = v*part.dir[0];
+	sx = 0;
+	sy = 0;
+	sz = 0;
+	t = 0;
+	p = w;
+
+	SCATTER;
+
+%}
+
+SAVE
+%{
+%}
+
+FINALLY
+%{
+	KS_destroy(ksource);
+%}
+
+MCDISPLAY
+%{
+	multiline(5,
+    	-1.0, -1.0, 0.0,
+    	 1.0, -1.0, 0.0,
+    	 1.0,  1.0, 0.0,
+    	-1.0,  1.0, 0.0,
+    	-1.0, -1.0, 0.0);
+%}
+
+END

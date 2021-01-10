@@ -1,0 +1,103 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright 1997-2002, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Component: Distrib2McStas_window
+*
+* %I
+* Written by: 
+* Date: 
+* Origin: 
+*
+* Neutron guide.
+*
+* %D
+* Description
+*
+* Example: Distrib2McStas_window(...)
+*
+* %VALIDATION
+*
+* %BUGS
+*
+* %P
+* INPUT PARAMETERS:
+*
+* file_d1: [str]    File with current distribution in E
+* file_d2: [str]    File with current distribution in E, x, y
+* file_d3: [str]    File with current distribution in E, x, y, mu
+* file_d4: [str]    File with current distribution in E, x, y, mu, phi
+*
+* %D
+* Example values:
+*
+* %E
+*******************************************************************************/
+
+DEFINE COMPONENT Monitor_tracks
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (string filename="", xwidth=0.0, yheight=0.0)
+OUTPUT PARAMETERS (file, I, p2, N)
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
+
+SHARE
+%{
+%}
+
+DECLARE
+%{
+	FILE* file;
+	double I, p2;
+	int N;
+%}
+
+INITIALIZE
+%{  
+	if(strlen(filename) == 0) strcat(strcpy(filename, NAME_CURRENT_COMP), "_tracks.ssv");
+	file = fopen(filename, "w");
+	fprintf(file, "#Format: E x y z dx dy dz w\n");
+	fprintf(file, "#Units: MeV, cm\n");
+
+	I = p2 = N = 0;
+%}
+
+TRACE
+%{
+	if(-xwidth/2<x && x<xwidth/2 && -yheight/2<y && y<yheight/2){
+		double v2 = (vx*vx + vy*vy + vz*vz);
+		double E = 1e-9 * VS2E * v2;
+		double v = sqrt(v2);
+	
+		fprintf(file, "%e %e %e %e %e %e %e %e\n", E, x*100.0, y*100.0, z*100.0, vx/v, vy/v, vz/v, p);
+	
+		I += p;
+		p2 += p*p;
+		N++;
+	
+		SCATTER;
+	}
+%}
+
+SAVE
+%{
+	printf("Monitor_tracks %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
+%}
+
+FINALLY
+%{
+%}
+
+MCDISPLAY
+%{
+	multiline(5,
+    	-1.0, -1.0, 0.0,
+    	 1.0, -1.0, 0.0,
+    	 1.0,  1.0, 0.0,
+    	-1.0,  1.0, 0.0,
+    	-1.0, -1.0, 0.0);
+%}
+
+END
