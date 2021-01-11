@@ -520,10 +520,29 @@
 	"buffers":
 	[
 		{
+			"file": "__init__.py",
+			"settings":
+			{
+				"buffer_size": 89,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
 			"file": "ksource.py",
 			"settings":
 			{
-				"buffer_size": 77,
+				"buffer_size": 1342,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "metrics.py",
+			"settings":
+			{
+				"buffer_size": 2428,
+				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
@@ -531,18 +550,8 @@
 			"file": "plists.py",
 			"settings":
 			{
-				"buffer_size": 77,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"contents": "# -*- coding: utf-8 -*-\n\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nclass Metric:\n\tdef transform:\n\t\tpass\n\tdef inverse_transform:\n\t\tpass\n\tdef jac_inverse:\n\t\tpass\n\n",
-			"file": "metrics.py",
-			"file_size": 92,
-			"file_write_time": 132543317043754788,
-			"settings":
-			{
-				"buffer_size": 171,
+				"buffer_size": 1231,
+				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		}
@@ -750,6 +759,13 @@
 	},
 	"file_history":
 	[
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n.instr",
+		"/home/inti/Documents/Maestria/Simulaciones/comps/KSource.comp",
+		"/home/inti/Documents/Maestria/Simulaciones/0_Benchmark/salida.dat",
+		"/home/inti/Documents/Maestria/LethargyGaussian.tex",
+		"/home/inti/Documents/Maestria/Ideas.txt",
+		"/home/inti/Documents/PI/Codigos/dsource_py/dsource.py",
+		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract0/p0_lib/__init__.py",
 		"/home/inti/Documents/Maestria/KSource/ksource_c/metrics.c",
 		"/home/inti/Documents/Maestria/KSource/ksource_py/metrics.py",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.h",
@@ -870,18 +886,11 @@
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-6_Osiris_Abbate.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-10_Osiris_Abbate.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Source.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL/Ej1.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract10/Ej9.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract10/Ej7.cpp",
-		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/LEEME.txt",
-		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/TP2_OIA/LEEME.txt",
-		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej8.py",
-		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej7.py",
-		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej0-Clasif_lin.py"
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL/Ej1.cpp"
 	],
 	"find":
 	{
-		"height": 26.0
+		"height": 40.0
 	},
 	"find_in_files":
 	{
@@ -895,6 +904,41 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"metrics",
+			"window",
+			"parts",
+			"mean",
+			"parts",
+			"self.dims[1]",
+			"self.dims[0]",
+			"Vol",
+			"Energy",
+			"Es",
+			"E0",
+			"jac_dir",
+			"Es",
+			"transform",
+			"pos",
+			"E",
+			"hstack",
+			"(())",
+			"parts",
+			"E",
+			"jac_inverse",
+			"ones",
+			"parts",
+			"pass",
+			"X",
+			"ekin",
+			"p",
+			"NEUTRON",
+			"l",
+			"file",
+			"filename",
+			"file",
+			"filename",
+			"INPUT",
+			"ksource"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -912,24 +956,24 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "ksource.py",
+					"file": "__init__.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 77,
+						"buffer_size": 89,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								67,
+								67
 							]
 						],
 						"settings":
@@ -941,24 +985,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 3,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "plists.py",
+					"file": "ksource.py",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 77,
+						"buffer_size": 1342,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								334,
+								334
 							]
 						],
 						"settings":
@@ -967,10 +1011,10 @@
 							"syntax": "Packages/Python/Python.sublime-syntax"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 111.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -979,15 +1023,44 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 171,
+						"buffer_size": 2428,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								171,
-								171
+								2421,
+								2421
+							]
+						],
+						"settings":
+						{
+							"show_definitions": false,
+							"syntax": "Packages/Python/Python.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1145.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "plists.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1231,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								119,
+								119
 							]
 						],
 						"settings":

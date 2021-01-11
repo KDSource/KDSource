@@ -79,9 +79,3 @@ void MS_destroy(MultiSource* ms){
 	free(ms->cdf);
 	free(ms);
 }
-
-
-double rand_norm(){
-	double y1 = (double)(rand()+1) / ((double)RAND_MAX+1), y2 = rand() / (double)RAND_MAX;
-	return sqrt(-2 * log(y1)) * cos(2 * M_PI * y2);
-}

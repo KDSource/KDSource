@@ -1,12 +1,12 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<time.h>
 
 #ifndef KSOURCE_H
 #define KSOURCE_H
 
-#include "plists.h"
+#include "aux.h"
 #include "metrics.h"
+#include "plists.h"
 
 #define MAX_RESAMPLES 1000
 
@@ -46,11 +46,6 @@ MultiSource* MS_create(int len_, KSource** s_, double* ws_);
 double MS_J(MultiSource* ms);
 int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
 void MS_destroy(MultiSource* ms);
-
-
-// Funciones auxiliares
-
-double rand_norm();
 
 
 #endif

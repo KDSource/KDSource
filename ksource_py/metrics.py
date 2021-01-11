@@ -60,7 +60,7 @@ class Lethargy (Metric):
 	def inverse_transform(self, us):
 		return self.E0 * np.exp(-us)
 	def jac(self, Es):
-		return 1/Es
+		return 1/Es.reshape(-1)
 
 class Vol (Metric):
 	def __init__(self):

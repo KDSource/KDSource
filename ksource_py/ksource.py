@@ -6,10 +6,11 @@ from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 
 class KSource:
-	def __init__(self, metric, plist, N=1e4, bw=0):
+	def __init__(self, metric, parts, weights, bw=0):
 		self.metric = metric
-		self.plist = plist
 		self.kde = KernelDensity(bandwidth=bw)
+		vecs = self.metric.transform(parts)
+		self.kde.fit(vecs, sample_weight=weights)
 		
 	def optimize_bw(self, parts):
 		C_silv = 0.9397
@@ -36,5 +37,5 @@ class KSource:
 	def score(self, parts):
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts)
-		scores = self.kde.eval_scores(vecs)
-		return jacs * scores
+		scores = self.kde.score_samples(vecs)
+		return jacs * np.exp(scores)

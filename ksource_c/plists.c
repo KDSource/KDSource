@@ -23,6 +23,12 @@ PList* PList_create(char pt, double* trasl, double* rot, int n, FILE** files, Re
 int PList_get(PList* plist, Part* part, double* w){
 	*part = (*plist->part);
 	*w = plist->w;
+	if(plist->trasl)
+		traslv(part->pos, plist->trasl);
+	if(plist->rot){
+		rotv(part->pos, plist->rot);
+		rotv(part->dir, plist->rot);
+	}
 	return 0;
 }
 
