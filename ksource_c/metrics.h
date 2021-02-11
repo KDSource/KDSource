@@ -42,7 +42,8 @@ int Let_perturb(Metric* metric, Part* part);
 int Vol_perturb(Metric* metric, Part* part);
 int SurfXY_perturb(Metric* metric, Part* part);
 
-int Dir_perturb(Metric* metric, Part* part);
+int Isotrop_perturb(Metric* metric, Part* part);
+int Polar_perturb(Metric* metric, Part* part);
 
 
 #endif

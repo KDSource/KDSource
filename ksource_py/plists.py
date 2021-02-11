@@ -2,15 +2,27 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readfun, filename):
+	def __init__(self, readfun, filename, trasl=None, rot=None, switch_x2z=False, set_params=True):
 		self.filename = filename
 		self.read = readfun
-		self.set_params()
+		self.trasl = trasl
+		if rot is not None:
+			self.rot = st.Rotation.from_rotvec(rot)
+		else:
+			self.rot = rot
+		self.x2z = switch_x2z
+		if set_params:
+			self.set_params()
+		else:
+			self.I = self.p2 = 1.0
+			self.N = 1
 	def set_params(self):
 		file = open(self.filename, "r")
 		I = p2 = N = 0
+		print("Reading file", self.filename, "...")
 		for line in file:
 			part_w = self.read(line)
 			if part_w is not None: # Linea de texto es particula
@@ -19,6 +31,7 @@ class PList:
 				p2 += w*w
 				N += 1
 		file.close()
+		print("Done")
 		self.I = I
 		self.p2 = p2
 		self.N = N
@@ -30,14 +43,25 @@ class PList:
 		for line in file:
 			part_w = self.read(line)
 			if part_w is not None: # Linea de texto es particula
+				part,w = part_w
 				if cont >= skip: 
-					parts.append(part_w[0])
-					ws.append(part_w[1])
+					parts.append(part)
+					ws.append(w)
 				cont += 1
 				if N>0 and cont==skip+N:
 					break
 		file.close()
-		return [np.array(parts), np.array(ws)]
+		parts = np.array(parts)
+		ws = np.array(ws)
+		if self.trasl is not None: # Aplico traslacion
+			parts[:,1:4] += self.trasl
+		if self.rot is not None: # Aplico rotacion
+			parts[:,1:4] = self.rot.apply(parts[:,1:4]) # Posicion
+			parts[:,4:7] = self.rot.apply(parts[:,4:7]) # Direccion
+		if self.x2z: # Aplico permutacion (x,y,z) -> (y,z,x)
+			E,x,y,z,dx,dy,dz = parts.T
+			parts = np.stack((E,y,z,x,dy,dz,dx), axis=1)
+		return [parts, ws]
 
 def SSV_read(line):
 	line = line.split()

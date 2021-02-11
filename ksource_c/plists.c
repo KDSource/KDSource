@@ -6,11 +6,12 @@
 #include "ksource.h"
 
 
-PList* PList_create(char pt, double* trasl, double* rot, int n, FILE** files, ReadFun* read){
+PList* PList_create(char pt, double* trasl, double* rot, int switch_x2z, int n, FILE** files, ReadFun* read){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	plist->pt = pt;
 	plist->trasl = trasl;
 	plist->rot = rot;
+	plist->x2z = switch_x2z;
 	plist->line = (char*)malloc(LINE_MAX_LEN*sizeof(char));
 	plist->n = n;
 	plist->files = files;
@@ -28,6 +29,16 @@ int PList_get(PList* plist, Part* part, double* w){
 	if(plist->rot){
 		rotv(part->pos, plist->rot);
 		rotv(part->dir, plist->rot);
+	}
+	if(plist->x2z){
+		double x=part->pos[0], y=part->pos[1], z=part->pos[2];
+		part->pos[0] = y;
+		part->pos[1] = z;
+		part->pos[2] = x;
+		double dx=part->dir[0], dy=part->dir[1], dz=part->dir[2];
+		part->dir[0] = dy;
+		part->dir[1] = dz;
+		part->dir[2] = dx;
 	}
 	return 0;
 }
@@ -63,12 +74,12 @@ void PList_destroy(PList* plist){
 }
 
 
-PList* PListSimple_create(char pt, double* trasl, double* rot, char* filename, ReadFun read){
+PList* PListSimple_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename, ReadFun read){
 	FILE** files = (FILE**)malloc(sizeof(FILE*));
 	*files = fopen(filename, "r");
 	ReadFun* pread = (ReadFun*)malloc(sizeof(ReadFun));
 	*pread = read;
-	return PList_create(pt, trasl, rot, 1, files, pread);
+	return PList_create(pt, trasl, rot, switch_x2z, 1, files, pread);
 }
 
 void PListSimple_destroy(PList* plist){
@@ -79,7 +90,7 @@ void PListSimple_destroy(PList* plist){
 }
 
 
-PList* PListSepVar_create(char pt, double* trasl, double* rot, char* filename[3], ReadFun read[3]){
+PList* PListSepVar_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename[3], ReadFun read[3]){
 	FILE** files = (FILE**)malloc(3*sizeof(FILE*));
 	files[0] = fopen(filename[0], "r");
 	files[1] = fopen(filename[1], "r");
@@ -88,7 +99,7 @@ PList* PListSepVar_create(char pt, double* trasl, double* rot, char* filename[3]
 	pread[0] = read[0];
 	pread[1] = read[1];
 	pread[2] = read[2];
-	return PList_create(pt, trasl, rot, 3, files, pread);
+	return PList_create(pt, trasl, rot, switch_x2z, 3, files, pread);
 }
 
 void PListSepVar_destroy(PList* plist){

@@ -91,7 +91,7 @@ int SurfXY_perturb(Metric* metric, Part* part){
 	return 0;
 }
 
-int Dir_perturb(Metric* metric, Part* part){
+int Isotrop_perturb(Metric* metric, Part* part){
 	double xi = (double)rand()/RAND_MAX;
 	double w = 1;
 	if(*metric->bw[2] > BW_MIN) w += *metric->bw[2]**metric->bw[2] * log(xi+(1-xi)*exp(-2/(*metric->bw[2]**metric->bw[2])));
@@ -107,5 +107,17 @@ int Dir_perturb(Metric* metric, Part* part){
 		part->dir[1] = v*z + w*y - (v*x-u*y)*x/(1-z);
 	}
 	part->dir[2] = w*z - u*x - v*y;
+	return 0;
+}
+
+int Polar_perturb(Metric* metric, Part* part){
+	double theta, phi;
+	theta = acos(part->dir[2]);
+	phi   = atan2(part->dir[1], part->dir[0]);
+	theta += metric->bw[2][0] * rand_norm();
+	phi   += metric->bw[2][1] * rand_norm();
+	part->pos[0] = sin(theta) * cos(phi);
+	part->pos[1] = sin(theta) * sin(phi);
+	part->pos[2] = cos(theta);
 	return 0;
 }

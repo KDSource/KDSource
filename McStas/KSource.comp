@@ -70,7 +70,7 @@ DECLARE
     double bw_dir[1];
     double* bw[3] = {bw_E, bw_pos, bw_dir};
     double* gp[] = {NULL, NULL, NULL};
-    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Dir_perturb};
+    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Isotrop_perturb};
     Metric* metric;
 	KSource *ksource;
 %}
@@ -83,7 +83,7 @@ INITIALIZE
 	else{
 		printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
 	}
-	plist = PListSimple_create('n', trasl, rot, filename, readfun);
+	plist = PListSimple_create('n', trasl, rot, switch_x2z, filename, readfun);
 
     bw_E[0] = bw_u;
     bw_pos[0] = bw_x; bw_pos[1] = bw_y;
@@ -98,13 +98,13 @@ TRACE
 	double v;
 	KS_sample(ksource, &pt, &part, &w, 0);
 
-	x = part.pos[1]/100;
-	y = part.pos[2]/100;
-	z = part.pos[0]/100;
+	x = part.pos[0]/100;
+	y = part.pos[1]/100;
+	z = part.pos[2]/100;
 	v = SE2V*sqrt(part.E*1E9);
-	vx = v*part.dir[1];
-	vy = v*part.dir[2];
-	vz = v*part.dir[0];
+	vx = v*part.dir[0];
+	vy = v*part.dir[1];
+	vz = v*part.dir[2];
 	sx = 0;
 	sy = 0;
 	sz = 0;

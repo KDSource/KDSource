@@ -16,6 +16,7 @@ typedef struct PList{
 	char pt; // Tipo de particula (n, p, ...)
 	double* trasl; // Traslacion a aplicar
 	double* rot; // Rotacion a aplicar
+	int x2z; // Si es true, se aplica permutacion x,y,z -> y,z,x
 
 	int n; // Cantidad de archivos de tracks
 	FILE** files; // Archivos de tracks (unico o uno por variable)
@@ -26,15 +27,15 @@ typedef struct PList{
 	ReadFun* read;
 } PList;
 
-PList* PList_create(char pt, double* trasl, double* rot, int n, FILE** files, ReadFun* read);
+PList* PList_create(char pt, double* trasl, double* rot, int switch_x2z, int n, FILE** files, ReadFun* read);
 int PList_get(PList* plist, Part* part, double* w);
 int PList_next(PList* plist);
 void PList_destroy(PList* plist);
 
-PList* PListSimple_create(char pt, double* trasl, double* rot, char* filename, ReadFun read);
+PList* PListSimple_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename, ReadFun read);
 void PListSimple_destroy(PList* plist);
 
-PList* PListSepVar_create(char pt, double* trasl, double* rot, char* filename[3], ReadFun read[3]);
+PList* PListSepVar_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename[3], ReadFun read[3]);
 void PListSepVar_destroy(PList* plist);
 
 int PTRAC_read(char* line, Part* part, double* w);
