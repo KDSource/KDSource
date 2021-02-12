@@ -93,9 +93,16 @@ class KSource:
 		#
 		return [plt.gcf(), scores]
 
-	def plot_integr(self, grid, idx, vec0, vec1, jacs=None):
-		mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
-		mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+	def plot_integr(self, grid, idx, vec0=None, vec1=None, jacs=None):
+		trues = np.array(len(self.vecs)*[True])
+		if vec0 is not None:
+			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+		else:
+			mask1 = trues
+		if vec1 is not None:
+			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+		else:
+			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		vecs = self.vecs[:,idx][mask].reshape(-1,1)
 		ws = self.ws[mask]
@@ -116,14 +123,47 @@ class KSource:
 		#
 		return [plt.gcf(), scores]
 
+	def plot_E(self, grid_E, idx, vec0=None, vec1=None):
+		trues = np.array(len(self.vecs)*[True])
+		if vec0 is not None:
+			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+		else:
+			mask1 = trues
+		if vec1 is not None:
+			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+		else:
+			mask2 = trues
+		mask = np.logical_and(mask1, mask2)
+		vecs = self.vecs[:,idx][mask].reshape(-1,1)
+		ws = self.ws[mask]
+		bw = self.bw[idx]
+		kde = KernelDensity(bandwidth=1.0)
+		kde.fit(vecs/bw, sample_weight=ws)
+		grid = self.metric.E.transform(grid_E)
+		jacs = self.metric.E.jac(grid_E)
+		scores = jacs * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		#
+		lbl = str(vec0)+" < vec < "+str(vec1)
+		plt.plot(grid_E, scores, '-s', label=lbl)
+		plt.xscale('log')
+		plt.yscale('log')
+		plt.xlabel("E [MeV]")
+		plt.ylabel(r"$\Phi\ \left[ \frac{1}{s MeV} \right]$")
+		plt.grid()
+		plt.legend()
+		#
+		return [plt.gcf(), scores]
+
 	def plot2D_point(self, grids, idxs, part0):
-		parts = np.zeros((len(grid[0])*len(grid[1]), 7))
-		parts[:,idxs] = np.meshgrid(grids).reshape(-1,2).T
-		part0[idx] = 0
+		parts = np.zeros((len(grids[0])*len(grids[1]), 7))
+		parts[:,idxs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
+		part0 = np.array(part0)
+		part0[idxs] = 0
 		parts += part0
 		scores = self.score(parts)
 		#
 		plt.scatter(*parts[:,idxs].T, c=scores, edgecolors='k')
+		plt.colorbar()
 		title = r"$\Phi \left[ \frac{1}{???} \right]$"
 		title += "\npart = "+str(part0)
 		plt.title(title)
@@ -132,23 +172,29 @@ class KSource:
 		#
 		return [plt.gcf(), scores]
 
-	def plot2D_integr(self, grids, idxs, vec0, vec1, jacs=None):
-		mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
-		mask1 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None):
+		trues = np.array(len(self.vecs)*[True])
+		if vec0 is not None:
+			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+		else:
+			mask1 = trues
+		if vec1 is not None:
+			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+		else:
+			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		vecs = self.vecs[:,idxs][mask]
-		ws = self.ws[masks]
-		bw = self.bw[idx]
+		ws = self.ws[mask]
+		bw = self.bw[idxs]
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
-		grid = np.meshgrid(grids).reshape(-1,2).T
+		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
 		scores = np.exp(kde.score_samples(grid/bw))
-		if jacs is not None:
-			scores *= jacs
 		#
 		plt.scatter(*grid.T, c=scores, edgecolors='k')
+		plt.colorbar()
 		title = r"$\Phi \left[ \frac{1}{???} \right]$"
-		title += "\npart = "+str(part0)
+		title += "\n"+str(vec0)+" < vec < "+str(vec1)
 		plt.title(title)
 		plt.xlabel("??? [???]")
 		plt.ylabel("??? [???]")
