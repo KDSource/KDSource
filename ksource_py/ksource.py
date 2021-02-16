@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
+from scipy.interpolate import interp2d
 
 class KSource:
 	def __init__(self, metric, bw=1):
@@ -162,7 +163,14 @@ class KSource:
 		parts += part0
 		scores = self.score(parts)
 		#
-		plt.scatter(*parts[:,idxs].T, c=scores, edgecolors='k')
+		interp = interp2d(*parts[:,idxs].T, scores)
+		xx = np.linspace(grids[0].min(),grids[0].max(),100)
+		yy = np.linspace(grids[1].min(),grids[1].max(),100)
+		cx = (xx[1:] + xx[:-1]) / 2
+		cy = (yy[1:] + yy[:-1]) / 2
+		plt.pcolormesh(xx, yy, interp(cx, cy))
+		#
+		plt.scatter(*parts[:,idxs].T, marker='o', c=scores, edgecolors='k')
 		plt.colorbar()
 		title = r"$\Phi \left[ \frac{1}{???} \right]$"
 		title += "\npart = "+str(part0)
@@ -191,7 +199,14 @@ class KSource:
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
 		scores = np.exp(kde.score_samples(grid/bw))
 		#
-		plt.scatter(*grid.T, c=scores, edgecolors='k')
+		interp = interp2d(*grid.T, scores)
+		xx = np.linspace(grids[0].min(),grids[0].max(),100)
+		yy = np.linspace(grids[1].min(),grids[1].max(),100)
+		cx = (xx[1:] + xx[:-1]) / 2
+		cy = (yy[1:] + yy[:-1]) / 2
+		plt.pcolormesh(xx, yy, interp(cx, cy))
+		#
+		plt.scatter(*grid.T, c=scores, marker='o', edgecolors='k')
 		plt.colorbar()
 		title = r"$\Phi \left[ \frac{1}{???} \right]$"
 		title += "\n"+str(vec0)+" < vec < "+str(vec1)
