@@ -83,7 +83,8 @@ class SurfXY (Metric):
 	def transform(self, poss):
 		return poss[:,:2]
 	def inverse_transform(self, poss):
-		return np.hstack((poss, self.z))
+		z_col = np.broadcast_to(self.z, (*poss.shape[:-1],1))
+		return np.concatenate((poss, z_col), axis=1)
 
 class Isotrop (Metric):
 	def __init__(self):
@@ -108,15 +109,13 @@ class Polar (Metric):
 	def __init__(self):
 		super().__init__(2)
 	def transform(self, dirs):
-		thetas = np.arccos(dirs[:,2])
+		mus = dirs[:,2]
 		phis = np.arctan2(dirs[:,1], dirs[:,0])
-		return np.hstack((thetas, phis))
+		return np.stack((mus, phis), axis=1)
 	def inverse_transform(self, tps):
-		thetas = tps[:,0]
+		mus = tps[:,0]
 		phis = tps[:,1]
-		xs = np.sin(thetas) * np.cos(phis)
-		ys = np.sin(thetas) * np.sin(phis)
-		zs = np.cos(thetas)
-		return np.hstack((xs, ys, zs))
-	def jac(self, dirs):
-		return 1/np.sqrt(1-dirs[:,2]**2)
+		xs = np.sqrt(1-mus**2) * np.cos(phis)
+		ys = np.sqrt(1-mus**2) * np.sin(phis)
+		zs = mus
+		return np.stack((xs, ys, zs), axis=1)
