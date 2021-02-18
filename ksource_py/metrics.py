@@ -97,7 +97,7 @@ class Isotrop (Metric):
 	def __init__(self):
 		super().__init__(["dx","dy","dz"], ["","",""], "sr")
 	def jac(self, parts, bw):
-		fact = np.sqrt(2*pi) * bw[0] / (1-np.exp(-2/bw[0]**2))
+		fact = np.sqrt(2*np.pi) * bw[0] / (1-np.exp(-2/bw[0]**2))
 		return fact * np.ones(len(parts))
 	def mean(self, dirs, transform=False):
 		if transform:

@@ -26,6 +26,7 @@ class KSource:
 			print("Error: Invalid bandwidth")
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.std = None
+		self.J = J
 
 	def fit(self, plist, N, N_tot=None):
 		self.plist = plist
@@ -43,8 +44,10 @@ class KSource:
 	def score(self, parts):
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts, bw=self.bw)
-		scores = self.kde.score_samples(vecs/self.bw)
-		return jacs * np.exp(scores)
+		scores = np.exp(self.kde.score_samples(vecs/self.bw))
+		R = 1 / (2*np.pi) # Roughness of gaussian kernel
+		errs = np.sqrt(scores * R**self.metric.dim / (len(parts) * np.prod(self.bw)))
+		return np.array([jacs*scores, jacs*errs])
 		
 	def optimize_bw(self, parts, N_tot=None, method='silv'):
 		vecs = self.metric.transform(parts)
@@ -91,10 +94,10 @@ class KSource:
 		parts[:,idx] = grid
 		part0[idx] = 0
 		parts += part0
-		scores = self.J * self.score(parts)
+		scores,errs = self.J * self.score(parts)
 		#
 		lbl = "part = "+str(part0)
-		plt.plot(grid, scores, '-s', label=lbl)
+		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idx], units[idx]))
@@ -102,7 +105,7 @@ class KSource:
 		plt.grid()
 		plt.legend()
 		#
-		return [plt.gcf(), scores]
+		return [plt.gcf(), [scores,errs]]
 
 	def plot_integr(self, grid, idx, vec0=None, vec1=None, jacs=None):
 		if isinstance(idx, str):
@@ -123,20 +126,24 @@ class KSource:
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		scores = self.J * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		R = 1 / (2*np.pi) # Roughness of gaussian kernel
+		errs = np.sqrt(scores * R / (len(vecs) * bw))
+		scores *= self.J
+		errs *= self.J
 		if jacs is not None:
 			scores *= jacs
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
-		plt.plot(grid, scores, '-s', label=lbl)
+		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.yscale('log')
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idx], self.metric.units[idx]))
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.metric.units[idx]))
 		plt.grid()
 		plt.legend()
 		#
-		return [plt.gcf(), scores]
+		return [plt.gcf(), [scores,errs]]
 
-	def plot_E(self, grid_E, idx, vec0=None, vec1=None):
+	def plot_E(self, grid_E, vec0=None, vec1=None):
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -147,17 +154,21 @@ class KSource:
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
-		vecs = self.vecs[:,idx][mask].reshape(-1,1)
+		vecs = self.vecs[:,0][mask].reshape(-1,1)
 		ws = self.ws[mask]
-		bw = self.bw[idx]
+		bw = self.bw[0]
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = self.metric.E.transform(grid_E)
 		jacs = self.metric.E.jac(grid_E)
-		scores = self.J * jacs * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		scores = np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		R = 1 / (2*np.pi) # Roughness of gaussian kernel
+		errs = np.sqrt(scores * R / (len(vecs) * bw))
+		scores *= self.J * jacs
+		errs *= self.J * jacs
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
-		plt.plot(grid_E, scores, '-s', label=lbl)
+		plt.errorbar(grid_E, scores, errs, fmt='-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
 		plt.xlabel(r"$E\ [MeV]$")
@@ -165,7 +176,7 @@ class KSource:
 		plt.grid()
 		plt.legend()
 		#
-		return [plt.gcf(), scores]
+		return [plt.gcf(), [scores,errs]]
 
 	def plot2D_point(self, grids, idxs, part0):
 		if isinstance(idxs[0], str):
@@ -175,7 +186,7 @@ class KSource:
 		part0 = np.array(part0)
 		part0[idxs] = 0
 		parts += part0
-		scores = self.J * self.score(parts)
+		scores,errs = self.J * self.score(parts)
 		#
 		interp = interp2d(*parts[:,idxs].T, scores)
 		xx = np.linspace(grids[0].min(),grids[0].max(),100)
@@ -192,7 +203,7 @@ class KSource:
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(varnames[idxs[1]], units[idxs[1]]))
 		#
-		return [plt.gcf(), scores]
+		return [plt.gcf(), [scores,errs]]
 
 	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None):
 		if isinstance(idxs[0], str):
@@ -213,7 +224,11 @@ class KSource:
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-		scores = self.J * np.exp(kde.score_samples(grid/bw))
+		scores = np.exp(kde.score_samples(grid/bw))
+		R = 1 / (2*np.pi) # Roughness of gaussian kernel
+		errs = np.sqrt(scores * R**2 / (len(vecs) * bw[0]*bw[1]))
+		scores *= self.J
+		errs *= self.J
 		#
 		interp = interp2d(*grid.T, scores)
 		xx = np.linspace(grids[0].min(),grids[0].max(),100)
@@ -230,4 +245,4 @@ class KSource:
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[1]], self.metric.units[idxs[1]]))
 		#
-		return [plt.gcf(), scores]
+		return [plt.gcf(), [scores,errs]]
