@@ -5,20 +5,25 @@
 #include "ksource.h"
 
 
-Metric* Metric_create(double** geom_par, char* kernel, double** bw, int n, PerturbFun* perturb){
+Metric* Metric_create(double** bw, int n, PerturbFun* perturb, double trasl[3], double rot[3], double** geom_par){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
-	metric->geom_par = geom_par;
-	metric->kernel = kernel;
 	metric->bw = bw;
 	metric->n = n;
 	metric->perturb = perturb;
+	metric->trasl = trasl;
+	metric->rot = rot;
+	metric->geom_par = geom_par;
 	return metric;
 }
 
 int Metric_perturb(Metric* metric, Part* part){
 	int i, ret=1;
+	if(metric->trasl) traslv(part->pos, metric->trasl, 1);
+	if(metric->rot){ rotv(part->pos, metric->rot, 1); rotv(part->dir, metric->rot, 1); }
 	for(i=0; i<metric->n; i++)
 		if(metric->perturb[i](metric, part)) return 1;
+	if(metric->rot){ rotv(part->pos, metric->rot, 0); rotv(part->dir, metric->rot, 0); }
+	if(metric->trasl) traslv(part->pos, metric->trasl, 0);
 	return 0;
 }
 
@@ -31,14 +36,14 @@ void Metric_destroy(Metric* metric){
 }
 
 
-Metric* MetricSimple_create(double* geom_par, char* kernel, double* bw, PerturbFun perturb){
+Metric* MetricSimple_create(double* bw, PerturbFun perturb, double trasl[3], double rot[3], double* geom_par){
 	double** pgeom_par = (double**)malloc(sizeof(double*));
 	*pgeom_par = geom_par;
 	double** pbw = (double**)malloc(sizeof(double*));
 	*pbw = bw;
 	PerturbFun* pperturb = (PerturbFun*)malloc(sizeof(PerturbFun));
 	*pperturb = perturb;
-	return Metric_create(pgeom_par, kernel, pbw, 1, pperturb);
+	return Metric_create(pbw, 1, pperturb, trasl, rot, pgeom_par);
 }
 
 void MetricSimple_destroy(Metric* metric){
@@ -47,7 +52,7 @@ void MetricSimple_destroy(Metric* metric){
 	free(metric->perturb);
 }
 
-Metric* MetricSepVar_create(double* geom_par[3], char* kernel, double* bw[3], PerturbFun perturb[3]){
+Metric* MetricSepVar_create(double* bw[3], PerturbFun perturb[3], double trasl[3], double rot[3], double* geom_par[3]){
 	double** pgeom_par = (double**)malloc(3*sizeof(double*));
 	pgeom_par[0] = geom_par[0];
 	pgeom_par[1] = geom_par[1];
@@ -60,7 +65,7 @@ Metric* MetricSepVar_create(double* geom_par[3], char* kernel, double* bw[3], Pe
 	pperturb[0] = perturb[0];
 	pperturb[1] = perturb[1];
 	pperturb[2] = perturb[2];
-	return Metric_create(pgeom_par, kernel, pbw, 3, pperturb);
+	return Metric_create(pbw, 3, pperturb, trasl, rot, pgeom_par);
 }
 
 void MetricSepVar_destroy(Metric* metric){
@@ -88,6 +93,46 @@ int Vol_perturb(Metric* metric, Part* part){
 int SurfXY_perturb(Metric* metric, Part* part){
 	part->pos[0] += metric->bw[1][0] * rand_norm();
 	part->pos[1] += metric->bw[1][1] * rand_norm();
+	return 0;
+}
+int Guide_perturb(Metric* metric, Part* part){
+	double x=part->pos[0], y=part->pos[1], z=part->pos[2];
+	double xwidth=metric->geom_par[1][0], yheight=metric->geom_par[1][1], rcurv=metric->geom_par[1][2];
+	if(rcurv != 0){
+		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
+		x = r - rcurv;
+		z = rcurv * atan2(z, rcurv+x);
+	}
+	z += metric->bw[1][0] * rand_norm();
+	if( (y/yheight > -x/xwidth) && (y/yheight <  x/xwidth) ){ // espejo x pos
+		y += metric->bw[1][1] * rand_norm();
+		if(y >  yheight/2){ x -=  y-yheight/2; y =  yheight/2; }
+		if(y < -yheight/2){ x -= -y-yheight/2; y = -yheight/2; }
+	}
+	if( (y/yheight >  x/xwidth) && (y/yheight > -x/xwidth) ){ // espejo y pos
+		x += metric->bw[1][1] * rand_norm();
+		if(x >  xwidth/2){ y -=  x-xwidth/2; x =  xwidth/2; }
+		if(x < -xwidth/2){ y -= -x-xwidth/2; x = -xwidth/2; }
+	}
+	if( (y/yheight < -x/xwidth) && (y/yheight >  x/xwidth) ){ // espejo x neg
+		y += metric->bw[1][1] * rand_norm();
+		if(y >  yheight/2){ x +=  y-yheight/2; y =  yheight/2; }
+		if(y < -yheight/2){ x += -y-yheight/2; y = -yheight/2; }
+	}
+	if( (y/yheight <  x/xwidth) && (y/yheight < -x/xwidth) ){ // espejo y neg
+		x += metric->bw[1][1] * rand_norm();
+		if(x >  xwidth/2){ y +=  x-xwidth/2; x =  xwidth/2; }
+		if(x < -xwidth/2){ y += -x-xwidth/2; x = -xwidth/2; }
+	}
+	if(rcurv != 0){
+		double r = rcurv + x;
+		double ang = tan(z / rcurv);
+		x = r * cos(ang) - rcurv;
+		z = r * sin(ang);
+	}
+	part->pos[0] = x;
+	part->pos[1] = y;
+	part->pos[2] = z;
 	return 0;
 }
 

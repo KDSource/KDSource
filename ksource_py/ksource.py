@@ -25,7 +25,6 @@ class KSource:
 		else:
 			print("Error: Invalid bandwidth")
 		self.kde = KernelDensity(bandwidth=1.0)
-		self.std = None
 		self.J = J
 
 	def fit(self, plist, N, N_tot=None):

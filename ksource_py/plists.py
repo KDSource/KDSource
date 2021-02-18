@@ -9,11 +9,12 @@ class PList:
 		self.filename = filename
 		self.pt = pt
 		self.read = readfun
-		self.trasl = trasl
+		if trasl is not None:
+			trasl = np.array(trasl)
 		if rot is not None:
-			self.rot = st.Rotation.from_rotvec(rot)
-		else:
-			self.rot = rot
+			rot = st.Rotation.from_rotvec(rot)
+		self.trasl = trasl
+		self.rot = rot
 		self.x2z = switch_x2z
 		if set_params:
 			self.set_params()
