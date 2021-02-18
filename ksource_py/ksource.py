@@ -6,8 +6,12 @@ from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from scipy.interpolate import interp2d
 
+varnames = ["E", "x","y","z", "dx","dy","dz"]
+varmap = {name:idx for idx,name in enumerate(varnames)}
+units = ["MeV", "cm","cm","cm", "","",""]
+
 class KSource:
-	def __init__(self, metric, bw=1):
+	def __init__(self, metric, bw=1, J=1):
 		self.metric = metric
 		if isinstance(bw, str):
 			self.bw = None
@@ -23,9 +27,13 @@ class KSource:
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.std = None
 
-	def fit(self, parts, weights, N_tot=None):
+	def fit(self, plist, N, N_tot=None):
+		self.plist = plist
+		parts,ws = plist.get(N=N)
+		parts = parts[ws>0]
+		ws = ws[ws>0]
 		self.vecs = self.metric.transform(parts)
-		self.ws = weights
+		self.ws = ws
 		if self.bw_method is not None:
 			print("Calculating bw ...")
 			self.bw = self.optimize_bw(parts, N_tot=N_tot, method=self.bw_method)
@@ -34,7 +42,7 @@ class KSource:
 
 	def score(self, parts):
 		vecs = self.metric.transform(parts)
-		jacs = self.metric.jac(parts)
+		jacs = self.metric.jac(parts, bw=self.bw)
 		scores = self.kde.score_samples(vecs/self.bw)
 		return jacs * np.exp(scores)
 		
@@ -77,24 +85,28 @@ class KSource:
 			print("Error: Invalid method")
 
 	def plot_point(self, grid, idx, part0):
+		if isinstance(idx, str):
+			idx = varmap[idx]
 		parts = np.zeros((len(grid), 7))
 		parts[:,idx] = grid
 		part0[idx] = 0
 		parts += part0
-		scores = self.score(parts)
+		scores = self.J * self.score(parts)
 		#
 		lbl = "part = "+str(part0)
 		plt.plot(grid, scores, '-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
-		plt.xlabel("??? [???]")
-		plt.ylabel(r"$\Phi\ \left[ \frac{1}{???} \right]$")
+		plt.xlabel(r"${}\ [{}]$".format(varnames[idx], units[idx]))
+		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.metric.volunits))
 		plt.grid()
 		plt.legend()
 		#
 		return [plt.gcf(), scores]
 
 	def plot_integr(self, grid, idx, vec0=None, vec1=None, jacs=None):
+		if isinstance(idx, str):
+			idx = self.metric.varnames[idx]
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -110,15 +122,15 @@ class KSource:
 		bw = self.bw[idx]
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
-		scores = np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		scores = self.J * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
 		if jacs is not None:
 			scores *= jacs
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
 		plt.plot(grid, scores, '-s', label=lbl)
 		plt.yscale('log')
-		plt.xlabel("??? [???]")
-		plt.ylabel(r"$\Phi\ \left[ \frac{1}{???} \right]$")
+		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idx], self.metric.units[idx]))
+		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.metric.units[idx]))
 		plt.grid()
 		plt.legend()
 		#
@@ -142,26 +154,28 @@ class KSource:
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = self.metric.E.transform(grid_E)
 		jacs = self.metric.E.jac(grid_E)
-		scores = jacs * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		scores = self.J * jacs * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
 		plt.plot(grid_E, scores, '-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
-		plt.xlabel("E [MeV]")
-		plt.ylabel(r"$\Phi\ \left[ \frac{1}{s MeV} \right]$")
+		plt.xlabel(r"$E\ [MeV]$")
+		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt))
 		plt.grid()
 		plt.legend()
 		#
 		return [plt.gcf(), scores]
 
 	def plot2D_point(self, grids, idxs, part0):
+		if isinstance(idxs[0], str):
+			idxs = [varnames[idx] for idx in idxs]
 		parts = np.zeros((len(grids[0])*len(grids[1]), 7))
 		parts[:,idxs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
 		part0 = np.array(part0)
 		part0[idxs] = 0
 		parts += part0
-		scores = self.score(parts)
+		scores = self.J * self.score(parts)
 		#
 		interp = interp2d(*parts[:,idxs].T, scores)
 		xx = np.linspace(grids[0].min(),grids[0].max(),100)
@@ -172,15 +186,17 @@ class KSource:
 		#
 		plt.scatter(*parts[:,idxs].T, marker='o', c=scores, edgecolors='k')
 		plt.colorbar()
-		title = r"$\Phi \left[ \frac{1}{???} \right]$"
+		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.volunits)
 		title += "\npart = "+str(part0)
 		plt.title(title)
-		plt.xlabel("??? [???]")
-		plt.ylabel("??? [???]")
+		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
+		plt.ylabel(r"${}\ [{}]$".format(varnames[idxs[1]], units[idxs[1]]))
 		#
 		return [plt.gcf(), scores]
 
 	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None):
+		if isinstance(idxs[0], str):
+			idxs = [self.metric.varnames[idx] for idx in idxs]
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -197,7 +213,7 @@ class KSource:
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-		scores = np.exp(kde.score_samples(grid/bw))
+		scores = self.J * np.exp(kde.score_samples(grid/bw))
 		#
 		interp = interp2d(*grid.T, scores)
 		xx = np.linspace(grids[0].min(),grids[0].max(),100)
@@ -208,10 +224,10 @@ class KSource:
 		#
 		plt.scatter(*grid.T, c=scores, marker='o', edgecolors='k')
 		plt.colorbar()
-		title = r"$\Phi \left[ \frac{1}{???} \right]$"
+		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.units[idxs[0]],self.metric.units[idxs[1]])
 		title += "\n"+str(vec0)+" < vec < "+str(vec1)
 		plt.title(title)
-		plt.xlabel("??? [???]")
-		plt.ylabel("??? [???]")
+		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))
+		plt.ylabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[1]], self.metric.units[idxs[1]]))
 		#
 		return [plt.gcf(), scores]

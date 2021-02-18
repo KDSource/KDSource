@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readfun, filename, trasl=None, rot=None, switch_x2z=False, set_params=True):
+	def __init__(self, readfun, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True):
 		self.filename = filename
+		self.pt = pt
 		self.read = readfun
 		self.trasl = trasl
 		if rot is not None:

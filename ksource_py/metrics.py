@@ -4,13 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Metric:
-	def __init__(self, dim):
-		self.dim = dim
+	def __init__(self, varnames, units, volunits):
+		self.varnames = varnames
+		self.varmap = {name:idx for idx,name in enumerate(varnames)}
+		self.units = units
+		self.volunits = volunits
+		self.dim = dim = len(varnames)
 	def transform(self, parts):
 		return parts
 	def inverse_transform(self, vecs):
 		return parts
-	def jac(self, parts):
+	def jac(self, parts, bw=None):
 		return np.ones(len(parts))
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
@@ -23,7 +27,10 @@ class Metric:
 
 class SepVarMetric (Metric):
 	def __init__(self, metric_E, metric_pos, metric_dir):
-		super().__init__(metric_E.dim+metric_pos.dim+metric_dir.dim)
+		varnames = metric_E.varnames+metric_pos.varnames+metric_dir.varnames
+		units = metric_E.units+metric_pos.units+metric_dir.units
+		volunits = metric_E.volunits+" "+metric_pos.volunits+" "+metric_dir.volunits
+		super().__init__(varnames, units, volunits)
 		self.E = metric_E
 		self.pos = metric_pos
 		self.dir = metric_dir
@@ -37,10 +44,10 @@ class SepVarMetric (Metric):
 		poss = self.pos.inverse_transform(vecs[:,self.E.dim:self.E.dim+self.pos.dim])
 		dirs = self.dir.inverse_transform(vecs[:,self.E.dim+self.pos.dim:])
 		return np.concatenate((Es, poss, dirs), axis=1)
-	def jac(self, parts):
-		jac_E = self.E.jac(parts[:,0:1])
-		jac_pos = self.pos.jac(parts[:,1:4])
-		jac_dir = self.dir.jac(parts[:,4:7])
+	def jac(self, parts, bw=None):
+		jac_E = self.E.jac(parts[:,0:1], bw[:self.E.dim])
+		jac_pos = self.pos.jac(parts[:,1:4], bw[self.E.dim:self.E.dim+self.pos.dim])
+		jac_dir = self.dir.jac(parts[:,4:7], bw[self.E.dim+self.pos.dim:])
 		return jac_E*jac_pos*jac_dir
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
@@ -59,26 +66,26 @@ class SepVarMetric (Metric):
 
 class Energy (Metric):
 	def __init__(self):
-		super().__init__(1)
+		super().__init__(["E"], ["MeV"], "MeV")
 
 class Lethargy (Metric):
 	def __init__(self, E0):
-		super().__init__(1)
+		super().__init__(["u"], [""], "MeV")
 		self.E0 = E0
 	def transform(self, Es):
 		return np.log(self.E0/Es)
 	def inverse_transform(self, us):
 		return self.E0 * np.exp(-us)
-	def jac(self, Es):
+	def jac(self, Es, bw=None):
 		return 1/Es.reshape(-1)
 
 class Vol (Metric):
 	def __init__(self):
-		super().__init__(3)
+		super().__init__(["x","y","z"], ["cm","cm","cm"], "cm3")
 
 class SurfXY (Metric):
 	def __init__(self, z):
-		super().__init__(2)
+		super().__init__(["x","y"], ["cm","cm"], "cm2")
 		self.z = z
 	def transform(self, poss):
 		return poss[:,:2]
@@ -88,9 +95,10 @@ class SurfXY (Metric):
 
 class Isotrop (Metric):
 	def __init__(self):
-		super().__init__(3)
-	def jac(self, parts):
-		return np.ones(len(parts)) # ??? Calcular factor de cambio de unidades (volum a sup)
+		super().__init__(["dx","dy","dz"], ["","",""], "sr")
+	def jac(self, parts, bw):
+		fact = np.sqrt(2*pi) * bw[0] / (1-np.exp(-2/bw[0]**2))
+		return fact * np.ones(len(parts))
 	def mean(self, dirs, transform=False):
 		if transform:
 			vecs = self.transform(dirs)
@@ -107,7 +115,7 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__(2)
+		super().__init__(["mu","phi"], ["","rad"], "sr")
 	def transform(self, dirs):
 		mus = dirs[:,2]
 		phis = np.arctan2(dirs[:,1], dirs[:,0])
