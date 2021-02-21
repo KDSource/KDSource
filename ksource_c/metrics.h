@@ -11,30 +11,34 @@
 typedef struct Part Part;
 typedef struct Metric Metric;
 
-typedef void (*MetricVoidFun)(Metric* metric);
 typedef int (*PerturbFun)(Metric* metric, Part* part);
 
 typedef struct Metric{
-	double** bw;
-	MetricVoidFun update_bw;
+	int n; // Multiplicidad de la metrica
+	int* dims; // Dimensiones de cada submetrica
+	double** bw; // Anchos de banda
+	FILE* file_bw; // Archivo con anchos de banda
+	int variable_bw; // Si es true, se releen anchos de banda en cada sampleo
 
-	double* trasl;
-	double* rot;
-	double** geom_par;
+	PerturbFun* perturb; // Funciones de perturbacion
 
-	int n; // Cantidad de funciones de perturbacion
-	PerturbFun* perturb;
+	double* trasl; // Traslacion de la metrica
+	double* rot; // Rotacion de la metrica
+	double** geom_par; // Parametros geometricos de cada submetrica
 } Metric;
 
-Metric* Metric_create(double** bw, int n, PerturbFun* perturb, double trasl[3], double rot[3], double** geom_par);
+Metric* Metric_create(int n, int* dims, double** bw, char* bwfilename, int variable_bw, PerturbFun* perturb,
+	double trasl[3], double rot[3], double** geom_par);
 int Metric_perturb(Metric* metric, Part* part);
-void Metric_next(Metric* metric);
+int Metric_next(Metric* metric);
 void Metric_destroy(Metric* metric);
 
-Metric* MetricSimple_create(double* bw, PerturbFun perturb, double trasl[3], double rot[3], double* geom_par);
+Metric* MetricSimple_create(int dim, double* bw, char* bwfilename, int variable_bw, PerturbFun perturb,
+	double trasl[3], double rot[3], double* geom_par);
 void MetricSimple_destroy(Metric* metric);
 
-Metric* MetricSepVar_create(double* bw[3], PerturbFun perturb[3], double trasl[3], double rot[3], double* geom_par[3]);
+Metric* MetricSepVar_create(int dims[3], double* bw[3], char* bwfilename, int variable_bw, PerturbFun perturb[3],
+	double trasl[3], double rot[3], double** geom_par);
 void MetricSepVar_destroy(Metric* metric);
 
 int E_perturb(Metric* metric, Part* part);

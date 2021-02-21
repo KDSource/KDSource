@@ -11,7 +11,7 @@ varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm","cm","cm", "","",""]
 
 class KSource:
-	def __init__(self, metric, bw=1, J=1):
+	def __init__(self, metric, bw="silv", J=1):
 		self.metric = metric
 		if isinstance(bw, str):
 			self.bw = None
@@ -35,15 +35,15 @@ class KSource:
 		self.vecs = self.metric.transform(parts)
 		self.ws = ws
 		if self.bw_method is not None:
-			print("Calculating bw ...")
+			print("Calculating bw ... ", end="")
 			self.bw = self.optimize_bw(parts, N_tot=N_tot, method=self.bw_method)
-			print("Done. Optimal bw =", self.bw)
+			print("Done\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
 		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
 
 	def score(self, parts):
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts, bw=self.bw)
-		scores = np.exp(self.kde.score_samples(vecs/self.bw))
+		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
 		R = 1 / (2*np.pi) # Roughness of gaussian kernel
 		errs = np.sqrt(scores * R**self.metric.dim / (len(parts) * np.prod(self.bw)))
 		return np.array([jacs*scores, jacs*errs])
@@ -83,6 +83,31 @@ class KSource:
 				bw_mlcv *= (N_tot/N)**(-1/(4+self.metric.dim))
 			#
 			return bw_mlcv
+		#
+		elif method == 'knn': # Metodo K Nearest Neighbours
+			K = 2
+			batch_size = 10000
+			batches = int(N_tot / batch_size)
+			std = self.metric.std(vecs=vecs)
+			vecs /= std
+			open('bandwidths.txt', 'w').close()
+			file = open("bandwidths.txt", 'a')
+			print("Calculating KNN ...")
+			for batch in range(batches):
+				print("batch =", batch+1, "/", batches)
+				if batch < batches-1:
+					vs = vecs[batch*batch_size:(batch+1)*batch_size]
+				else:
+					vs = vecs[batch*batch_size:]
+				bws = []
+				for v in vs:
+					dists2 = np.sum((vs - v)**2, axis=1)
+					bws.append(np.sqrt(np.partition(dists2, K-1)[K-1]))
+				bws = std * np.array(bws)[:,np.newaxis] / (N_tot/len(vs))**(1/len(std))
+				np.savetxt(file, bws, fmt="%.5e")
+			file.close()
+			return bws
+		#
 		else:
 			print("Error: Invalid method")
 

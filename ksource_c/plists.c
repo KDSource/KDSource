@@ -25,10 +25,10 @@ int PList_get(PList* plist, Part* part, double* w){
 	*part = (*plist->part);
 	*w = plist->w;
 	if(plist->trasl)
-		traslv(part->pos, plist->trasl);
+		traslv(part->pos, plist->trasl, 0);
 	if(plist->rot){
-		rotv(part->pos, plist->rot);
-		rotv(part->dir, plist->rot);
+		rotv(part->pos, plist->rot, 0);
+		rotv(part->dir, plist->rot, 0);
 	}
 	if(plist->x2z){
 		double x=part->pos[0], y=part->pos[1], z=part->pos[2];

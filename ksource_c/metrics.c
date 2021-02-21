@@ -5,10 +5,28 @@
 #include "ksource.h"
 
 
-Metric* Metric_create(double** bw, int n, PerturbFun* perturb, double trasl[3], double rot[3], double** geom_par){
+Metric* Metric_create(int n, int* dims, double** bw, char* bwfilename, int variable_bw, PerturbFun* perturb,
+		double trasl[3], double rot[3], double** geom_par){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
-	metric->bw = bw;
+	int i, j;
 	metric->n = n;
+	metric->dims = dims;
+	metric->bw = (double**)malloc(n*sizeof(double*));
+	for(i=0; i<n; i++) metric->bw[i] = (double*)malloc(dims[i]*sizeof(double));
+	if(bw) for(i=0; i<n; i++) for(j=0; j<dims[i]; j++) metric->bw[i][j] = bw[i][j];
+	if(bwfilename){
+		metric->file_bw = fopen(bwfilename, "r");
+		Metric_next(metric);
+		if(!variable_bw){
+			fclose(metric->file_bw);
+			metric->file_bw = NULL;
+		}
+		metric->variable_bw = variable_bw;
+	}
+	else{
+		metric->file_bw = NULL;
+		metric->variable_bw = 0;
+	}
 	metric->perturb = perturb;
 	metric->trasl = trasl;
 	metric->rot = rot;
@@ -27,36 +45,51 @@ int Metric_perturb(Metric* metric, Part* part){
 	return 0;
 }
 
-void Metric_next(Metric* metric){
-	if(metric->update_bw) metric->update_bw(metric);
+int Metric_next(Metric* metric){
+	int i, j, ret=1;
+	for(i=0; i<metric->n; i++)
+		for(j=0; j<metric->dims[i]; j++)
+			if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])){
+				rewind(metric->file_bw);
+				if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])) return 1;
+			}
+	return 0;
 }
 
 void Metric_destroy(Metric* metric){
+	int i;
+	for(i=0; i<metric->n; i++) free(metric->bw[i]);
+	free(metric->bw);
+	if(metric->file_bw) fclose(metric->file_bw);
 	free(metric);
 }
 
 
-Metric* MetricSimple_create(double* bw, PerturbFun perturb, double trasl[3], double rot[3], double* geom_par){
-	double** pgeom_par = (double**)malloc(sizeof(double*));
-	*pgeom_par = geom_par;
+Metric* MetricSimple_create(int dim, double* bw, char* bwfilename, int variable_bw, PerturbFun perturb,
+		double trasl[3], double rot[3], double* geom_par){
+	int* pdim = (int*)malloc(sizeof(int));
 	double** pbw = (double**)malloc(sizeof(double*));
 	*pbw = bw;
 	PerturbFun* pperturb = (PerturbFun*)malloc(sizeof(PerturbFun));
 	*pperturb = perturb;
-	return Metric_create(pbw, 1, pperturb, trasl, rot, pgeom_par);
+	double** pgeom_par = (double**)malloc(sizeof(double*));
+	*pgeom_par = geom_par;
+	return Metric_create(1, pdim, pbw, bwfilename, variable_bw, pperturb, trasl, rot, pgeom_par);
 }
 
 void MetricSimple_destroy(Metric* metric){
-	free(metric->geom_par);
+	free(metric->dims);
 	free(metric->bw);
 	free(metric->perturb);
+	free(metric->geom_par);
 }
 
-Metric* MetricSepVar_create(double* bw[3], PerturbFun perturb[3], double trasl[3], double rot[3], double* geom_par[3]){
-	double** pgeom_par = (double**)malloc(3*sizeof(double*));
-	pgeom_par[0] = geom_par[0];
-	pgeom_par[1] = geom_par[1];
-	pgeom_par[2] = geom_par[2];
+Metric* MetricSepVar_create(int dims[3], double* bw[3], char* bwfilename, int variable_bw, PerturbFun perturb[3],
+		double trasl[3], double rot[3], double** geom_par){
+	int* pdims = (int*)malloc(3*sizeof(int));
+	pdims[0] = dims[0];
+	pdims[1] = dims[1];
+	pdims[2] = dims[2];
 	double** pbw = (double**)malloc(3*sizeof(double*));
 	pbw[0] = bw[0];
 	pbw[1] = bw[1];
@@ -65,13 +98,21 @@ Metric* MetricSepVar_create(double* bw[3], PerturbFun perturb[3], double trasl[3
 	pperturb[0] = perturb[0];
 	pperturb[1] = perturb[1];
 	pperturb[2] = perturb[2];
-	return Metric_create(pbw, 3, pperturb, trasl, rot, pgeom_par);
+	double** pgeom_par = (double**)malloc(3*sizeof(double*));
+	if(geom_par){
+		pgeom_par[0] = geom_par[0];
+		pgeom_par[1] = geom_par[1];
+		pgeom_par[2] = geom_par[2];
+	}
+	else pgeom_par[0] = pgeom_par[1] = pgeom_par[2] = NULL;
+	return Metric_create(3, dims, pbw, bwfilename, variable_bw, pperturb, trasl, rot, pgeom_par);
 }
 
 void MetricSepVar_destroy(Metric* metric){
-	free(metric->geom_par);
+	free(metric->dims);
 	free(metric->bw);
 	free(metric->perturb);
+	free(metric->geom_par);
 }
 
 

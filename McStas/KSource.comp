@@ -40,7 +40,7 @@
 DEFINE COMPONENT KSource
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (string filename, string format="PTRAC",
-	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_ang=0.0, string kernel="gaussian",
+	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_ang=0.0, string bwfilename="", variable_bw=0,
 	trasl_x=0.0, trasl_y=0.0, trasl_z=0.0,
 	rot_x=0.0, rot_y=0.0, rot_z=0.0, switch_x2z=1)
 OUTPUT PARAMETERS ()
@@ -65,11 +65,11 @@ DECLARE
     ReadFun readfun;
     PList* plist;
 
+    int dims[3] = {1, 2, 3};
     double bw_E[1];
     double bw_pos[2];
     double bw_dir[1];
     double* bw[3] = {bw_E, bw_pos, bw_dir};
-    double* gp[] = {NULL, NULL, NULL};
     PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Isotrop_perturb};
     Metric* metric;
 	KSource *ksource;
@@ -88,7 +88,7 @@ INITIALIZE
     bw_E[0] = bw_u;
     bw_pos[0] = bw_x; bw_pos[1] = bw_y;
     bw_dir[0] = bw_ang;
-    metric = MetricSepVar_create(gp, kernel, bw, perturb);
+    metric = MetricSepVar_create(dims, bw, bwfilename, variable_bw, perturb, NULL, NULL, NULL);
 
 	ksource = KS_create(1, plist, metric);
 %}

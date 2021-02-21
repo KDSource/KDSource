@@ -38,8 +38,8 @@ void KS_destroy(KSource* ks);
 typedef struct MultiSource{
 	int len;
 	KSource** s;
-	double* ws;
-	double* cdf;
+	double* ws; // Pesos de cada fuente
+	double* cdf; // cdf de los pesos de fuentes
 } MultiSource;
 
 MultiSource* MS_create(int len_, KSource** s_, double* ws_);
