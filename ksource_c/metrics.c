@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
+#include<string.h>
 
 #include "ksource.h"
 
@@ -14,7 +15,7 @@ Metric* Metric_create(int n, int* dims, double** bw, char* bwfilename, int varia
 	metric->bw = (double**)malloc(n*sizeof(double*));
 	for(i=0; i<n; i++) metric->bw[i] = (double*)malloc(dims[i]*sizeof(double));
 	if(bw) for(i=0; i<n; i++) for(j=0; j<dims[i]; j++) metric->bw[i][j] = bw[i][j];
-	if(bwfilename){
+	if(bwfilename && strlen(bwfilename)){
 		metric->file_bw = fopen(bwfilename, "r");
 		Metric_next(metric);
 		if(!variable_bw){
@@ -46,13 +47,15 @@ int Metric_perturb(Metric* metric, Part* part){
 }
 
 int Metric_next(Metric* metric){
-	int i, j, ret=1;
-	for(i=0; i<metric->n; i++)
-		for(j=0; j<metric->dims[i]; j++)
-			if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])){
-				rewind(metric->file_bw);
-				if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])) return 1;
-			}
+	if(metric->variable_bw){
+		int i, j, ret=1;
+		for(i=0; i<metric->n; i++)
+			for(j=0; j<metric->dims[i]; j++)
+				if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])){
+					rewind(metric->file_bw);
+					if(!fscanf(metric->file_bw, "%lf", &metric->bw[i][j])) return 1;
+				}
+	}
 	return 0;
 }
 
@@ -202,8 +205,8 @@ int Polar_perturb(Metric* metric, Part* part){
 	phi   = atan2(part->dir[1], part->dir[0]);
 	theta += metric->bw[2][0] * rand_norm();
 	phi   += metric->bw[2][1] * rand_norm();
-	part->pos[0] = sin(theta) * cos(phi);
-	part->pos[1] = sin(theta) * sin(phi);
-	part->pos[2] = cos(theta);
+	part->dir[0] = sin(theta) * cos(phi);
+	part->dir[1] = sin(theta) * sin(phi);
+	part->dir[2] = cos(theta);
 	return 0;
 }

@@ -4,11 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
-from scipy.interpolate import interp2d
+from scipy.interpolate import RectBivariateSpline
 
 varnames = ["E", "x","y","z", "dx","dy","dz"]
 varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm","cm","cm", "","",""]
+
+R_gaussian = 1 / (2*np.pi) # Roughness of gaussian kernel
 
 class KSource:
 	def __init__(self, metric, bw="silv", J=1):
@@ -20,7 +22,7 @@ class KSource:
 			self.bw = np.array(bw)
 			self.bw_method = None
 		elif np.isscalar(bw):
-			self.bw = bw
+			self.bw = bw * np.ones((metric.dim))
 			self.bw_method = None
 		else:
 			print("Error: Invalid bandwidth")
@@ -36,7 +38,7 @@ class KSource:
 		self.ws = ws
 		if self.bw_method is not None:
 			print("Calculating bw ... ", end="")
-			self.bw = self.optimize_bw(parts, N_tot=N_tot, method=self.bw_method)
+			self.bw = self.optimize_bw(parts, method=self.bw_method, N_tot=N_tot)
 			print("Done\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
 		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
 
@@ -44,25 +46,30 @@ class KSource:
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts, bw=self.bw)
 		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
-		R = 1 / (2*np.pi) # Roughness of gaussian kernel
-		errs = np.sqrt(scores * R**self.metric.dim / (len(parts) * np.prod(self.bw)))
-		return np.array([jacs*scores, jacs*errs])
+		errs = np.sqrt(scores * R_gaussian**self.metric.dim / (len(parts) * np.prod(self.bw)))
+		scores *= self.J * jacs
+		errs *= self.J * jacs
+		return np.array([scores, errs])
+
+	def save_bw(self, bwfilename, append=False):
+		if append:
+			bwfilename = open(bwfilename, "a")
+		np.savetxt(bwfilename, self.bw.reshape(-1,self.metric.dim))
 		
-	def optimize_bw(self, parts, N_tot=None, method='silv'):
+	def optimize_bw(self, parts, method='silv', N_tot=None):
 		vecs = self.metric.transform(parts)
+		N = len(parts)
+		if N_tot is None:
+			N_tot = len(parts)
+		std = self.metric.std(vecs=vecs)
 		#
 		if method == 'silv': # Metodo de Silverman
 			C_silv = 0.9397 # Cte de Silverman (revisar)
-			std = self.metric.std(vecs=vecs)
-			if N_tot is None:
-				N_tot = len(parts)
 			bw_silv = C_silv * std * N_tot**(-1/(4+self.metric.dim))
 			return bw_silv
 		#
 		elif method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
 			C_silv = 0.9397 # Cte de Silverman (revisar)
-			std = self.metric.std(vecs=vecs)
-			N = len(parts)
 			bw_silv = C_silv * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
 			#
 			nsteps = 20 # Cantidad de pasos para bw
@@ -77,22 +84,21 @@ class KSource:
 			                                  verbose=10,
 			                                  n_jobs=8)
 			grid.fit(vecs/bw_silv)
+			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))
+			plt.xlabel("ancho de banda normalizado")
+			plt.ylabel("mean CV score")
+			plt.show()
 			bw_mlcv = bw_silv * grid.best_params_['bandwidth']
-			#
-			if N_tot is not None:
-				bw_mlcv *= (N_tot/N)**(-1/(4+self.metric.dim))
+			bw_mlcv *= (N_tot/N)**(-1/(4+self.metric.dim))
 			#
 			return bw_mlcv
 		#
 		elif method == 'knn': # Metodo K Nearest Neighbours
 			K = 2
 			batch_size = 10000
-			batches = int(N_tot / batch_size)
-			std = self.metric.std(vecs=vecs)
+			batches = int(N / batch_size)
 			vecs /= std
-			open('bandwidths.txt', 'w').close()
-			file = open("bandwidths.txt", 'a')
-			print("Calculating KNN ...")
+			bw_knn = np.zeros((0,self.metric.dim))
 			for batch in range(batches):
 				print("batch =", batch+1, "/", batches)
 				if batch < batches-1:
@@ -104,9 +110,8 @@ class KSource:
 					dists2 = np.sum((vs - v)**2, axis=1)
 					bws.append(np.sqrt(np.partition(dists2, K-1)[K-1]))
 				bws = std * np.array(bws)[:,np.newaxis] / (N_tot/len(vs))**(1/len(std))
-				np.savetxt(file, bws, fmt="%.5e")
-			file.close()
-			return bws
+				bw_knn = np.concatenate((bw_knn, bws), axis=0)
+			return bw_knn
 		#
 		else:
 			print("Error: Invalid method")
@@ -118,7 +123,7 @@ class KSource:
 		parts[:,idx] = grid
 		part0[idx] = 0
 		parts += part0
-		scores,errs = self.J * self.score(parts)
+		scores,errs = self.score(parts)
 		#
 		lbl = "part = "+str(part0)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
@@ -149,9 +154,8 @@ class KSource:
 		bw = self.bw[idx]
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
-		scores = self.J * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
-		R = 1 / (2*np.pi) # Roughness of gaussian kernel
-		errs = np.sqrt(scores * R / (len(vecs) * bw))
+		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
 		scores *= self.J
 		errs *= self.J
 		if jacs is not None:
@@ -185,9 +189,8 @@ class KSource:
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = self.metric.E.transform(grid_E)
 		jacs = self.metric.E.jac(grid_E)
-		scores = np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
-		R = 1 / (2*np.pi) # Roughness of gaussian kernel
-		errs = np.sqrt(scores * R / (len(vecs) * bw))
+		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
 		scores *= self.J * jacs
 		errs *= self.J * jacs
 		#
@@ -212,12 +215,13 @@ class KSource:
 		parts += part0
 		scores,errs = self.J * self.score(parts)
 		#
-		interp = interp2d(*parts[:,idxs].T, scores)
-		xx = np.linspace(grids[0].min(),grids[0].max(),100)
-		yy = np.linspace(grids[1].min(),grids[1].max(),100)
+		k = 5 # Factor de suavizado
+		interp = RectBivariateSpline(*grids, scores.reshape(len(grids[0]),len(grids[1])))
+		xx = np.linspace(grids[0].min(), grids[0].max(), k*len(grids[0]))
+		yy = np.linspace(grids[1].min(), grids[1].max(), k*len(grids[1]))
 		cx = (xx[1:] + xx[:-1]) / 2
 		cy = (yy[1:] + yy[:-1]) / 2
-		plt.pcolormesh(xx, yy, interp(cx, cy))
+		plt.pcolormesh(xx, yy, interp(cx, cy), cmap="jet")
 		#
 		plt.scatter(*parts[:,idxs].T, marker='o', c=scores, edgecolors='k')
 		plt.colorbar()
@@ -248,22 +252,26 @@ class KSource:
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-		scores = np.exp(kde.score_samples(grid/bw))
-		R = 1 / (2*np.pi) # Roughness of gaussian kernel
-		errs = np.sqrt(scores * R**2 / (len(vecs) * bw[0]*bw[1]))
+		scores = 1/np.prod(bw) * np.exp(kde.score_samples(grid/bw))
+		errs = np.sqrt(scores * R_gaussian**2 / (len(vecs) * bw[0]*bw[1]))
 		scores *= self.J
 		errs *= self.J
 		#
-		interp = interp2d(*grid.T, scores)
-		xx = np.linspace(grids[0].min(),grids[0].max(),100)
-		yy = np.linspace(grids[1].min(),grids[1].max(),100)
+		k = 5 # Factor de suavizado
+		interp = RectBivariateSpline(*grids, scores.reshape(len(grids[0]),len(grids[1])))
+		xx = np.linspace(grids[0].min(), grids[0].max(), k*len(grids[0]))
+		yy = np.linspace(grids[1].min(), grids[1].max(), k*len(grids[1]))
 		cx = (xx[1:] + xx[:-1]) / 2
 		cy = (yy[1:] + yy[:-1]) / 2
-		plt.pcolormesh(xx, yy, interp(cx, cy))
+		plt.pcolormesh(xx, yy, interp(cx, cy), cmap="jet")
 		#
-		plt.scatter(*grid.T, c=scores, marker='o', edgecolors='k')
+		#plt.scatter(*grid.T, c=scores, marker='o', edgecolors='k')
 		plt.colorbar()
-		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.units[idxs[0]],self.metric.units[idxs[1]])
+		if self.metric.units[idxs[0]] == self.metric.units[idxs[1]]:
+			units = self.metric.units[idxs[0]]+"^2"
+		else:
+			units = self.metric.units[idxs[0]] + self.metric.units[idxs[1]]
+		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
 		title += "\n"+str(vec0)+" < vec < "+str(vec1)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))

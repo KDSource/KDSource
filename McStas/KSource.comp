@@ -40,10 +40,10 @@
 DEFINE COMPONENT KSource
 DEFINITION PARAMETERS ()
 SETTING PARAMETERS (string filename, string format="PTRAC",
-	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_ang=0.0, string bwfilename="", variable_bw=0,
+	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_mu=0.0, bw_phi=0.0, string bwfilename=NULL, variable_bw=0,
 	trasl_x=0.0, trasl_y=0.0, trasl_z=0.0,
 	rot_x=0.0, rot_y=0.0, rot_z=0.0, switch_x2z=1)
-OUTPUT PARAMETERS ()
+OUTPUT PARAMETERS (I, p2, N)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 
 SHARE
@@ -59,18 +59,20 @@ DECLARE
 	char pt;
 	Part part;
 	double w;
+	int N;
+	double I, p2;
     
     double trasl[3];
     double rot[3];
     ReadFun readfun;
     PList* plist;
 
-    int dims[3] = {1, 2, 3};
+    int dims[3] = {1, 2, 2};
     double bw_E[1];
     double bw_pos[2];
-    double bw_dir[1];
+    double bw_dir[2];
     double* bw[3] = {bw_E, bw_pos, bw_dir};
-    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Isotrop_perturb};
+    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Polar_perturb};
     Metric* metric;
 	KSource *ksource;
 %}
@@ -87,7 +89,7 @@ INITIALIZE
 
     bw_E[0] = bw_u;
     bw_pos[0] = bw_x; bw_pos[1] = bw_y;
-    bw_dir[0] = bw_ang;
+    bw_dir[0] = bw_mu; bw_dir[1] = bw_phi;
     metric = MetricSepVar_create(dims, bw, bwfilename, variable_bw, perturb, NULL, NULL, NULL);
 
 	ksource = KS_create(1, plist, metric);
@@ -96,7 +98,10 @@ INITIALIZE
 TRACE
 %{
 	double v;
-	KS_sample(ksource, &pt, &part, &w, 0);
+	KS_sample(ksource, &pt, &part, &w, 1);
+	I += w;
+	p2 += w*w;
+	N++;
 
 	x = part.pos[0]/100;
 	y = part.pos[1]/100;
@@ -117,6 +122,7 @@ TRACE
 
 SAVE
 %{
+	printf("KSource %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
 %}
 
 FINALLY

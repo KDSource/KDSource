@@ -17,7 +17,7 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w){
 	if(!normalize_w){
 		PList_get(ks->plist, part, w);
 		PList_next(ks->plist);
-		if(ks->metric->variable_bw) Metric_next(ks->metric);
+		Metric_next(ks->metric);
 	}
 	else{ // Normalizo w a 1
 		int resamples = 0;

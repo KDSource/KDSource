@@ -4,6 +4,78 @@
 		"selected_items":
 		[
 			[
+				"bat",
+				"batch_size\tstatement"
+			],
+			[
+				"save",
+				"savetxt\tfunction"
+			],
+			[
+				"w",
+				"write\tfunction"
+			],
+			[
+				"bandw",
+				"bandwidths"
+			],
+			[
+				"ba",
+				"batches\tstatement"
+			],
+			[
+				"batc",
+				"batch_size\tstatement"
+			],
+			[
+				"zeros",
+				"zeros_like\tfunction"
+			],
+			[
+				"varam",
+				"varnames\tstatement"
+			],
+			[
+				"pcolo",
+				"pcolormesh\tfunction"
+			],
+			[
+				"par",
+				"parts\tstatement"
+			],
+			[
+				"integr",
+				"integr_pos\tstatement"
+			],
+			[
+				"inte",
+				"integr_pos\tstatement"
+			],
+			[
+				"score",
+				"score_samples\tfunction"
+			],
+			[
+				"idx",
+				"idx_grids\tstatement"
+			],
+			[
+				"KE",
+				"KernelDensity\tclass"
+			],
+			[
+				"iss",
+				"isinstance\tfunction"
+			],
+			[
+				"hs",
+				"hstack\tfunction"
+			],
+			[
+				"arcta",
+				"arctan2\tinstance"
+			],
+			[
 				"get",
 				"get_width\tdouble get_width() const"
 			],
@@ -424,10 +496,6 @@
 				"create_tree"
 			],
 			[
-				"par",
-				"part"
-			],
-			[
 				"Gri",
 				"Grid_eval"
 			],
@@ -446,74 +514,6 @@
 			[
 				"5_",
 				"5_bunker"
-			],
-			[
-				"pat",
-				"path_file"
-			],
-			[
-				"l",
-				"legend"
-			],
-			[
-				"plot",
-				"plot_I"
-			],
-			[
-				"len",
-				"legends"
-			],
-			[
-				"lege",
-				"legend"
-			],
-			[
-				"y",
-				"ylabel"
-			],
-			[
-				"plo",
-				"plot_2D"
-			],
-			[
-				"ra",
-				"rand_norm"
-			],
-			[
-				"w",
-				"while"
-			],
-			[
-				"dis",
-				"distrib"
-			],
-			[
-				"Activ",
-				"Activ_from_map"
-			],
-			[
-				"DS_",
-				"DS_I_tot"
-			],
-			[
-				"Ns",
-				"N_simul"
-			],
-			[
-				"NAME",
-				"NAME_CURRENT_COMP"
-			],
-			[
-				"we",
-				"weight"
-			],
-			[
-				"ds",
-				"dsource"
-			],
-			[
-				"Wind",
-				"Window_transf"
 			]
 		]
 	},
@@ -532,7 +532,7 @@
 			"file": "ksource.py",
 			"settings":
 			{
-				"buffer_size": 1415,
+				"buffer_size": 9225,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -541,7 +541,7 @@
 			"file": "metrics.py",
 			"settings":
 			{
-				"buffer_size": 2440,
+				"buffer_size": 7780,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -550,7 +550,7 @@
 			"file": "plists.py",
 			"settings":
 			{
-				"buffer_size": 1841,
+				"buffer_size": 2666,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
@@ -759,12 +759,27 @@
 	},
 	"file_history":
 	[
+		"/home/inti/Documents/Maestria/Simulaciones/bandwidths.txt",
+		"/home/inti/Documents/Maestria/KSource/ksource_py/kde.py",
+		"/home/inti/Documents/Maestria/Simulaciones/GF12p_n_bw_mlcv.txt",
+		"/home/inti/Documents/Maestria/KSource/McStas/Ptrac_source_difra.comp",
+		"/home/inti/Documents/Maestria/Simulaciones/exe_McStas.sh",
+		"/home/inti/Documents/Maestria/Simulaciones/execute.sh",
+		"/home/inti/Documents/PI/Codigos/dsource_c/guide.c",
+		"/home/inti/Documents/PI/Codigos/dsource_py/guide.py",
+		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej7.py",
 		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n.instr",
+		"/home/inti/Documents/Maestria/Simulaciones/GF12p_inicio",
+		"/home/inti/Documents/Maestria/Simulaciones/GF12p_n",
+		"/home/inti/Documents/PI/Codigos/dsource_py/dsource.py",
 		"/home/inti/Documents/Maestria/Simulaciones/comps/KSource.comp",
+		"/home/inti/Documents/Maestria/Simulaciones/comps/Guide_tracks.comp",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/plists.h",
+		"/home/inti/Documents/Maestria/Simulaciones/0_Benchmark_n.instr",
+		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Trabajo Final/kde.py",
 		"/home/inti/Documents/Maestria/Simulaciones/0_Benchmark/salida.dat",
 		"/home/inti/Documents/Maestria/LethargyGaussian.tex",
 		"/home/inti/Documents/Maestria/Ideas.txt",
-		"/home/inti/Documents/PI/Codigos/dsource_py/dsource.py",
 		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract0/p0_lib/__init__.py",
 		"/home/inti/Documents/Maestria/KSource/ksource_c/metrics.c",
 		"/home/inti/Documents/Maestria/KSource/ksource_py/metrics.py",
@@ -805,7 +820,6 @@
 		"/home/inti/Documents/PI/Codigos/dsource_c/activ.c",
 		"/home/inti/Documents/PI/Simulaciones/Guia_final/GF12p_p",
 		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.h",
-		"/home/inti/Documents/PI/Codigos/dsource_c/guide.c",
 		"/home/inti/Documents/PI/Codigos/dsource_c/activ.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource (copy).h",
 		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Informe/main.tex",
@@ -872,21 +886,7 @@
 		"/home/inti/Desktop/Text_File.txt",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2_graph.py",
-		"/home/inti/.cache/.fr-vpQ38s/Article/main.tex",
-		"/home/inti/Templates/LaTeX/Article.tex",
-		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/figure.sublime-snippet",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Containers/Ej2_tsort.txt",
-		"/home/inti/Downloads/Script.py",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL Containers/Ej1.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract12 - STL Associative Containers/Ej2.cpp",
-		"/home/inti/Templates/C++/Source.cpp",
-		"/home/inti/Templates/C++/Header.h",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Ej10.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Ej6.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-6_Osiris_Abbate.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/P9-10_Osiris_Abbate.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract9 - Templates/Source.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Practicas/Pract11 - STL/Ej1.cpp"
+		"/home/inti/.cache/.fr-vpQ38s/Article/main.tex"
 	],
 	"find":
 	{
@@ -904,41 +904,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"metrics",
-			"window",
-			"parts",
-			"mean",
-			"parts",
-			"self.dims[1]",
-			"self.dims[0]",
-			"Vol",
-			"Energy",
-			"Es",
-			"E0",
-			"jac_dir",
-			"Es",
-			"transform",
-			"pos",
-			"E",
-			"hstack",
-			"(())",
-			"parts",
-			"E",
-			"jac_inverse",
-			"ones",
-			"parts",
-			"pass",
-			"X",
-			"ekin",
-			"p",
-			"NEUTRON",
-			"l",
-			"file",
-			"filename",
-			"file",
-			"filename",
+			"k",
+			"bw",
+			"sample_weights",
+			"KernelDensity",
+			"kde",
+			"vecs",
+			"FOLDER",
 			"INPUT",
-			"ksource"
+			"1_guia_n",
+			"file",
+			"k",
+			"floor",
+			"int",
+			"parts[:,4:7]",
+			"parts[:,1:4",
+			"apply",
+			"rot",
+			"st",
+			"trasl",
+			"rcurv",
+			"+",
+			"0.5",
+			"xwidth",
+			"yheight",
+			"xwidth",
+			"mask0",
+			"1.5",
+			"    ",
+			"pos",
+			"zs",
+			"parts",
+			"self.std",
+			"None",
+			"curv",
+			"xwidth",
+			"z",
+			"pi",
+			"idx",
+			"'-s'",
+			"scores",
+			"score",
+			"jac",
+			"scores = ",
+			"scores =",
+			"_integr",
+			"\n\t\tplt.xlabel(self.metric.varnames[idx]+\" [\"+self.metric.units[idx]+\"]\")",
+			"\n\t\tplt.xlabel(varnames[idxs[0]]+\" [\"+units[idxs[0]]+\"]\")\n\t\tplt.ylabel(varnames[idxs[1]]+\" [\"+units[idxs[1]]+\"]\")",
+			"volunits",
+			"units",
+			"partvol",
+			"volunits",
+			"varnames",
+			"]+\"[???]\")",
+			"self.metric",
+			"self",
+			"lst",
+			"v",
+			"k",
+			"cm",
+			"units",
+			"varnames",
+			"dim",
+			"varnames",
+			"vars",
+			"0]",
+			"min",
+			"30",
+			"marker='c'",
+			"yyy",
+			"xxx",
+			"pcolormesh",
+			"interp2d",
+			"x",
+			"100",
+			"idxs",
+			"xx",
+			"min",
+			"stop",
+			"thetas",
+			"sta",
+			"stack",
+			"meshgrid",
+			"object",
+			"grid",
+			"}{???}",
+			"[???]\")",
+			"grid_u",
+			"grid",
+			"None",
+			"jacs",
+			"logical_and",
+			"\n\t\tplt.show()",
+			"weights",
+			"self.weights",
+			"xlabel",
+			"scores",
+			"grid",
+			"plot",
+			"def plot",
+			"part",
+			"part0",
+			"poss",
+			"pos",
+			"npos",
+			"pos",
+			"resha",
+			"self",
+			"dim_pos",
+			"pos",
+			"self.metric.E.dim",
+			"self.metric.dir.dim",
+			"self.metric.pos.dim",
+			"E",
+			"poDs",
+			"pos",
+			"[:,])",
+			"pos",
+			"idx_scalars",
+			"isscalar",
+			"b",
+			"a",
+			"7f5da6652e171847d4113bc669df3e8f6cb3a363",
+			"None",
+			"bw_best",
+			"Squares",
+			"I",
+			"std",
+			"()"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -956,7 +1049,7 @@
 	"groups":
 	[
 		{
-			"selected": 3,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -972,16 +1065,8 @@
 						"selection":
 						[
 							[
-								47,
-								47
-							],
-							[
-								69,
-								69
-							],
-							[
-								92,
-								92
+								24,
+								24
 							]
 						],
 						"settings":
@@ -1002,15 +1087,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1415,
+						"buffer_size": 9225,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1415,
-								1415
+								2968,
+								2968
 							]
 						],
 						"settings":
@@ -1020,10 +1105,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 30.0,
+						"translation.y": 1348.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -1032,15 +1117,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2440,
+						"buffer_size": 7780,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1738,
-								1738
+								2568,
+								2568
 							]
 						],
 						"settings":
@@ -1050,10 +1135,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 201.0,
+						"translation.y": 921.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
@@ -1062,15 +1147,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1841,
+						"buffer_size": 2666,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								198,
-								198
+								106,
+								106
 							]
 						],
 						"settings":
@@ -1083,7 +1168,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]
