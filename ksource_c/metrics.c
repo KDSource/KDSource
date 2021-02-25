@@ -144,8 +144,8 @@ int Guide_perturb(Metric* metric, Part* part){
 	double xwidth=metric->geom_par[1][0], yheight=metric->geom_par[1][1], rcurv=metric->geom_par[1][2];
 	if(rcurv != 0){
 		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
-		x = r - rcurv;
-		z = rcurv * atan2(z, rcurv+x);
+		x = copysign(1, rcurv) * r - rcurv;
+		z = fabs(rcurv) * asin(z / r);
 	}
 	z += metric->bw[1][0] * rand_norm();
 	if( (y/yheight > -x/xwidth) && (y/yheight <  x/xwidth) ){ // espejo x pos
@@ -169,9 +169,9 @@ int Guide_perturb(Metric* metric, Part* part){
 		if(x < -xwidth/2){ y += -x-xwidth/2; x = -xwidth/2; }
 	}
 	if(rcurv != 0){
-		double r = rcurv + x;
-		double ang = tan(z / rcurv);
-		x = r * cos(ang) - rcurv;
+		double r = (rcurv + x) * copysign(1, rcurv);
+		double ang = z / fabs(rcurv);
+		x = copysign(1, rcurv) * r * cos(ang) - rcurv;
 		z = r * sin(ang);
 	}
 	part->pos[0] = x;

@@ -2,9 +2,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as col
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
-from scipy.interpolate import RectBivariateSpline
 
 varnames = ["E", "x","y","z", "dx","dy","dz"]
 varmap = {name:idx for idx,name in enumerate(varnames)}
@@ -29,17 +29,19 @@ class KSource:
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.J = J
 
-	def fit(self, plist, N, N_tot=None):
+	def fit(self, plist, N, skip=0, **kwargs):
 		self.plist = plist
-		parts,ws = plist.get(N=N)
-		parts = parts[ws>0]
-		ws = ws[ws>0]
+		parts,ws = plist.get(N=N, skip=skip)
+		if len(parts) == 0:
+			print("Error: No se pudieron obtener particulas para entrenamiento")
+			return
+		print("Usando {} particulas para entrenamiento".format(len(parts)))
 		self.vecs = self.metric.transform(parts)
 		self.ws = ws
 		if self.bw_method is not None:
-			print("Calculating bw ... ", end="")
-			self.bw = self.optimize_bw(parts, method=self.bw_method, N_tot=N_tot)
-			print("Done\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
+			print("Calculando bw ... ")
+			self.optimize_bw(**kwargs)
+			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
 		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
 
 	def score(self, parts):
@@ -56,19 +58,21 @@ class KSource:
 			bwfilename = open(bwfilename, "a")
 		np.savetxt(bwfilename, self.bw.reshape(-1,self.metric.dim))
 		
-	def optimize_bw(self, parts, method='silv', N_tot=None):
-		vecs = self.metric.transform(parts)
-		N = len(parts)
-		if N_tot is None:
-			N_tot = len(parts)
+	def optimize_bw(self, **kwargs):
+		vecs = self.vecs.copy()
+		N = len(vecs)
+		if "N_tot" in kwargs:
+			N_tot = kwargs["N_tot"]
+		else:
+			N_tot = N
 		std = self.metric.std(vecs=vecs)
 		#
-		if method == 'silv': # Metodo de Silverman
+		if self.bw_method == 'silv': # Metodo de Silverman
 			C_silv = 0.9397 # Cte de Silverman (revisar)
 			bw_silv = C_silv * std * N_tot**(-1/(4+self.metric.dim))
-			return bw_silv
+			self.bw = bw_silv
 		#
-		elif method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
+		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
 			C_silv = 0.9397 # Cte de Silverman (revisar)
 			bw_silv = C_silv * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
 			#
@@ -91,11 +95,15 @@ class KSource:
 			bw_mlcv = bw_silv * grid.best_params_['bandwidth']
 			bw_mlcv *= (N_tot/N)**(-1/(4+self.metric.dim))
 			#
-			return bw_mlcv
+			self.bw = bw_mlcv
 		#
-		elif method == 'knn': # Metodo K Nearest Neighbours
-			K = 2
+		elif self.bw_method == 'knn': # Metodo K Nearest Neighbours
+			K = 10
 			batch_size = 10000
+			k = round(K * batch_size/N_tot)
+			if k == 0:
+				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(N_tot/batch_size))
+				k = 1
 			batches = int(N / batch_size)
 			vecs /= std
 			bw_knn = np.zeros((0,self.metric.dim))
@@ -108,27 +116,32 @@ class KSource:
 				bws = []
 				for v in vs:
 					dists2 = np.sum((vs - v)**2, axis=1)
-					bws.append(np.sqrt(np.partition(dists2, K-1)[K-1]))
+					bws.append(np.sqrt(np.partition(dists2, k)[k]))
 				bws = std * np.array(bws)[:,np.newaxis] / (N_tot/len(vs))**(1/len(std))
 				bw_knn = np.concatenate((bw_knn, bws), axis=0)
-			return bw_knn
+			self.bw = bw_knn
 		#
 		else:
 			print("Error: Invalid method")
 
-	def plot_point(self, grid, idx, part0):
+	def plot_point(self, grid, idx, part0, **kwargs):
 		if isinstance(idx, str):
 			idx = varmap[idx]
+		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
+		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		parts = np.zeros((len(grid), 7))
 		parts[:,idx] = grid
 		part0[idx] = 0
 		parts += part0
 		scores,errs = self.score(parts)
+		if "fact" in kwargs:
+			scores *= kwargs["fact"]
+			errs *= kwargs["fact"]
 		#
 		lbl = "part = "+str(part0)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
-		plt.xscale('log')
-		plt.yscale('log')
+		plt.xscale(kwargs["xscale"])
+		plt.yscale(kwargs["yscale"])
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idx], units[idx]))
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.metric.volunits))
 		plt.grid()
@@ -136,9 +149,11 @@ class KSource:
 		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot_integr(self, grid, idx, vec0=None, vec1=None, jacs=None):
+	def plot_integr(self, grid, idx, vec0=None, vec1=None, **kwargs):
 		if isinstance(idx, str):
 			idx = self.metric.varnames[idx]
+		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
+		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -158,12 +173,14 @@ class KSource:
 		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
 		scores *= self.J
 		errs *= self.J
-		if jacs is not None:
-			scores *= jacs
+		if "fact" in kwargs:
+			scores *= kwargs["fact"]
+			errs *= kwargs["fact"]
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
-		plt.yscale('log')
+		plt.xscale(kwargs["xscale"])
+		plt.yscale(kwargs["yscale"])
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idx], self.metric.units[idx]))
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.metric.units[idx]))
 		plt.grid()
@@ -171,7 +188,7 @@ class KSource:
 		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot_E(self, grid_E, vec0=None, vec1=None):
+	def plot_E(self, grid_E, vec0=None, vec1=None, **kwargs):
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -182,6 +199,9 @@ class KSource:
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
+		if sum(mask) == 0:
+			print("Error: No hay tracks en el rango pedido")
+			return
 		vecs = self.vecs[:,0][mask].reshape(-1,1)
 		ws = self.ws[mask]
 		bw = self.bw[0]
@@ -193,6 +213,9 @@ class KSource:
 		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
 		scores *= self.J * jacs
 		errs *= self.J * jacs
+		if "fact" in kwargs:
+			scores *= kwargs["fact"]
+			errs *= kwargs["fact"]
 		#
 		lbl = str(vec0)+" < vec < "+str(vec1)
 		plt.errorbar(grid_E, scores, errs, fmt='-s', label=lbl)
@@ -205,25 +228,25 @@ class KSource:
 		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot2D_point(self, grids, idxs, part0):
+	def plot2D_point(self, grids, idxs, part0, **kwargs):
 		if isinstance(idxs[0], str):
 			idxs = [varnames[idx] for idx in idxs]
+		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		parts = np.zeros((len(grids[0])*len(grids[1]), 7))
 		parts[:,idxs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
 		part0 = np.array(part0)
 		part0[idxs] = 0
 		parts += part0
 		scores,errs = self.J * self.score(parts)
+		if "fact" in kwargs:
+			scores *= kwargs["fact"]
+			errs *= kwargs["fact"]
 		#
-		k = 5 # Factor de suavizado
-		interp = RectBivariateSpline(*grids, scores.reshape(len(grids[0]),len(grids[1])))
-		xx = np.linspace(grids[0].min(), grids[0].max(), k*len(grids[0]))
-		yy = np.linspace(grids[1].min(), grids[1].max(), k*len(grids[1]))
-		cx = (xx[1:] + xx[:-1]) / 2
-		cy = (yy[1:] + yy[:-1]) / 2
-		plt.pcolormesh(xx, yy, interp(cx, cy), cmap="jet")
-		#
-		plt.scatter(*parts[:,idxs].T, marker='o', c=scores, edgecolors='k')
+		xx = np.concatenate((grids[0][:1], (grids[0][1:]+grids[0][:-1])/2, grids[0][-1:]))
+		yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
+		if kwargs["scale"] == "log": norm = col.LogNorm()
+		else: norm = None
+		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
 		plt.colorbar()
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.volunits)
 		title += "\npart = "+str(part0)
@@ -233,9 +256,10 @@ class KSource:
 		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None):
+	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None, **kwargs):
 		if isinstance(idxs[0], str):
 			idxs = [self.metric.varnames[idx] for idx in idxs]
+		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
@@ -256,16 +280,15 @@ class KSource:
 		errs = np.sqrt(scores * R_gaussian**2 / (len(vecs) * bw[0]*bw[1]))
 		scores *= self.J
 		errs *= self.J
+		if "fact" in kwargs:
+			scores *= kwargs["fact"]
+			errs *= kwargs["fact"]
 		#
-		k = 5 # Factor de suavizado
-		interp = RectBivariateSpline(*grids, scores.reshape(len(grids[0]),len(grids[1])))
-		xx = np.linspace(grids[0].min(), grids[0].max(), k*len(grids[0]))
-		yy = np.linspace(grids[1].min(), grids[1].max(), k*len(grids[1]))
-		cx = (xx[1:] + xx[:-1]) / 2
-		cy = (yy[1:] + yy[:-1]) / 2
-		plt.pcolormesh(xx, yy, interp(cx, cy), cmap="jet")
-		#
-		#plt.scatter(*grid.T, c=scores, marker='o', edgecolors='k')
+		xx = np.concatenate((grids[0][:1], (grids[0][1:]+grids[0][:-1])/2, grids[0][-1:]))
+		yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
+		if kwargs["scale"] == "log": norm = col.LogNorm()
+		else: norm = None
+		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
 		plt.colorbar()
 		if self.metric.units[idxs[0]] == self.metric.units[idxs[1]]:
 			units = self.metric.units[idxs[0]]+"^2"

@@ -77,6 +77,9 @@ void PList_destroy(PList* plist){
 PList* PListSimple_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename, ReadFun read){
 	FILE** files = (FILE**)malloc(sizeof(FILE*));
 	*files = fopen(filename, "r");
+	if(!*files){
+		printf("Error: %s no encontrado\n", filename);
+	}
 	ReadFun* pread = (ReadFun*)malloc(sizeof(ReadFun));
 	*pread = read;
 	return PList_create(pt, trasl, rot, switch_x2z, 1, files, pread);
@@ -95,6 +98,10 @@ PList* PListSepVar_create(char pt, double* trasl, double* rot, int switch_x2z, c
 	files[0] = fopen(filename[0], "r");
 	files[1] = fopen(filename[1], "r");
 	files[2] = fopen(filename[2], "r");
+	int i;
+	for(i=0; i<3; i++) if(!files[i]){
+		printf("Error: %s no encontrado\n", filename[i]);
+	}
 	ReadFun* pread = (ReadFun*)malloc(3*sizeof(ReadFun));
 	pread[0] = read[0];
 	pread[1] = read[1];

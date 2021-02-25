@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readfun, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True):
+	def __init__(self, readformat, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True):
 		self.filename = filename
 		self.pt = pt
-		self.read = readfun
+		if isinstance(readformat, str):
+			readformat = readfunmap[readformat]
+		self.read = readformat
 		if trasl is not None:
 			trasl = np.array(trasl)
 		if rot is not None:
@@ -22,7 +24,10 @@ class PList:
 			self.I = self.p2 = 1.0
 			self.N = 1
 	def set_params(self):
-		file = open(self.filename, "r")
+		try:
+			file = open(self.filename, "r")
+		except FileNotFoundError:
+			print("Error: {} no encontrado".format(self.filename))
 		I = p2 = N = 0
 		print("Reading file", self.filename, "...")
 		for line in file:
@@ -38,7 +43,10 @@ class PList:
 		self.p2 = p2
 		self.N = N
 	def get(self, N=-1, skip=0):
-		file = open(self.filename, "r")
+		try:
+			file = open(self.filename, "r")
+		except FileNotFoundError:
+			print("Error: {} no encontrado".format(self.filename))
 		parts = []
 		ws = []
 		cont = 0
@@ -63,6 +71,8 @@ class PList:
 		if self.x2z: # Aplico permutacion (x,y,z) -> (y,z,x)
 			E,x,y,z,dx,dy,dz = parts.T
 			parts = np.stack((E,y,z,x,dy,dz,dx), axis=1)
+		parts = parts[ws>0]
+		ws = ws[ws>0]
 		return [parts, ws]
 
 def SSV_read(line):
@@ -96,10 +106,12 @@ def Decay_read(line):
 	part = [E]
 	return [part,w]
 
-def Tripoli_read_part(line):
+def Tripoli_read_pos(line):
 	line = line.split()
 	if line[0] == "NEUTRON" or line[0] == "PHOTON": # Linea de texto es particula
 		[E,x,y,z,dx,dy,dz,w] = np.double(line[1:])
 		part = [x,y,z]
 		return [part,w]
 	return None
+
+readfunmap = {"SSV":SSV_read, "PTRAC":PTRAC_read, "T4part":Tripoli_read_part, "Decay":Decay_read, "T4pos":Tripoli_read_pos}

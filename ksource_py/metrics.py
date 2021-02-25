@@ -15,7 +15,7 @@ class Metric:
 		return parts
 	def inverse_transform(self, vecs):
 		return vecs
-	def jac(self, parts, bw=None):
+	def jac(self, parts):
 		return np.ones(len(parts))
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
@@ -62,15 +62,15 @@ class SepVarMetric (Metric):
 			poss = self.rot.apply(poss) # Posicion
 			dirs = self.rot.apply(dirs) # Direccion
 		return np.concatenate((Es, poss, dirs), axis=1)
-	def jac(self, parts, bw=None):
+	def jac(self, parts):
 		if self.trasl is not None:
 			parts[:,1:4] -= self.trasl
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
-		jac_E = self.E.jac(parts[:,0:1], bw[:self.E.dim])
-		jac_pos = self.pos.jac(parts[:,1:4], bw[self.E.dim:self.E.dim+self.pos.dim])
-		jac_dir = self.dir.jac(parts[:,4:7], bw[self.E.dim+self.pos.dim:])
+		jac_E = self.E.jac(parts[:,0:1])
+		jac_pos = self.pos.jac(parts[:,1:4])
+		jac_dir = self.dir.jac(parts[:,4:7])
 		return jac_E*jac_pos*jac_dir
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
@@ -99,7 +99,7 @@ class Lethargy (Metric):
 		return np.log(self.E0/Es)
 	def inverse_transform(self, us):
 		return self.E0 * np.exp(-us)
-	def jac(self, Es, bw=None):
+	def jac(self, Es):
 		return 1/Es.reshape(-1)
 
 class Vol (Metric):
@@ -126,47 +126,40 @@ class Guide (Metric):
 		xs,ys,zs = poss.T
 		if self.rcurv is not None:
 			rs = np.sqrt((self.rcurv+xs)**2 + zs**2)
-			xs = rs - self.rcurv
-			zs = self.rcurv * np.arctan2(zs, self.rcurv+xs)
-		mask0 = (ys              >  0)              and (ys/self.yheight <  xs/self.xwidth) # espejo x pos, y pos
-		mask1 = (ys/self.yheight >  xs/self.xwidth) and (ys/self.yheight > -xs/self.xwidth) # espejo y pos
-		mask2 = (ys/self.yheight < -xs/self.xwidth) and (ys/self.yheight >  xs/self.xwidth) # espejo x neg
-		mask3 = (ys/self.yheight <  xs/self.xwidth) and (ys/self.yheight < -xs/self.xwidth) # espejo y neg
-		mask4 = (ys/self.yheight > -xs/self.xwidth) and (ys              <  0)              # espejo x pos, y neg
+			xs = np.sign(self.rcurv) * rs - self.rcurv
+			zs = np.abs(self.rcurv) * np.arcsin(zs / rs)
+		mask0 = np.logical_and((ys/self.yheight > -xs/self.xwidth), (ys/self.yheight <  xs/self.xwidth)) # espejo x pos
+		mask1 = np.logical_and((ys/self.yheight >  xs/self.xwidth), (ys/self.yheight > -xs/self.xwidth)) # espejo y pos
+		mask2 = np.logical_and((ys/self.yheight < -xs/self.xwidth), (ys/self.yheight >  xs/self.xwidth)) # espejo x neg
+		mask3 = np.logical_and((ys/self.yheight <  xs/self.xwidth), (ys/self.yheight < -xs/self.xwidth)) # espejo y neg
 		ts = np.zeros_like(xs)
-		ts[mask0] =                                      ys[mask0]
-		ts[mask1] = 0.5*self.yheight + 0.5*self.xwidth - xs[mask1]
-		ts[mask2] = 1.0*self.yheight + 1.0*self.xwidth - ys[mask2]
-		ts[mask3] = 1.5*self.yheight + 1.5*self.xwidth + xs[mask3]
-		ts[mask4] = 2.0*self.yheight + 2.0*self.xwidth + ys[mask3]
+		ts[mask0] = 0.5*self.yheight +                   ys[mask0]
+		ts[mask1] = 1.0*self.yheight + 0.5*self.xwidth - xs[mask1]
+		ts[mask2] = 1.5*self.yheight + 1.0*self.xwidth - ys[mask2]
+		ts[mask3] = 2.0*self.yheight + 1.5*self.xwidth + xs[mask3]
 		return np.stack((zs,ts), axis=1)
 	def inverse_transform(self, poss):
 		zs,ts = poss.T
-		mask0 = (ts < 0.5*self.yheight)                                                             # espejo x pos, y pos
-		mask1 = (ts > 0.5*self.yheight)                 and (ts < 0.5*self.yheight+1.0*self.xwidth) # espejo y pos
-		mask2 = (ts > 0.5*self.yheight+1.0*self.xwidth) and (ts < 1.5*self.yheight+1.0*self.xwidth) # espejo x neg
-		mask3 = (ts > 1.5*self.yheight+1.0*self.xwidth) and (ts < 1.5*self.yheight+2.0*self.xwidth) # espejo y neg
-		mask4 = (ts > 1.5*self.yheight+2.0*self.xwidth)                                             # espejo x pos, y neg
+		mask0 =                                                   (ts <   self.yheight)              # espejo x pos
+		mask1 = np.logical_and((ts >   self.yheight)            , (ts <   self.yheight+self.xwidth)) # espejo y pos
+		mask2 = np.logical_and((ts >   self.yheight+self.xwidth), (ts < 2*self.yheight+self.xwidth)) # espejo x neg
+		mask3 =                (ts > 2*self.yheight+self.xwidth)                                     # espejo y neg
 		xs = np.zeros_like(ts)
 		ys = np.zeros_like(ts)
-		xs[mask0] =  self.xwidth /2; ys[mask0] =  ts[mask0]
-		ys[mask1] =  self.yheight/2; xs[mask1] = -ts[mask1] + 0.5*self.yheight + 0.5*self.xwidth
-		xs[mask2] = -self.xwidth /2; ys[mask2] = -ts[mask2] + 1.0*self.yheight + 1.0*self.xwidth
-		ys[mask3] = -self.yheight/2; xs[mask3] =  ts[mask3] - 1.5*self.yheight - 1.5*self.xwidth
-		xs[mask4] =  self.xwidth /2; ys[mask4] =  ts[mask4] - 2.0*self.yheight - 2.0*self.xwidth
+		xs[mask0] =  self.xwidth /2; ys[mask0] =  ts[mask0] - 0.5*self.yheight
+		ys[mask1] =  self.yheight/2; xs[mask1] = -ts[mask1] + 1.0*self.yheight + 0.5*self.xwidth
+		xs[mask2] = -self.xwidth /2; ys[mask2] = -ts[mask2] + 1.5*self.yheight + 1.0*self.xwidth
+		ys[mask3] = -self.yheight/2; xs[mask3] =  ts[mask3] - 2.0*self.yheight - 1.5*self.xwidth
 		if self.rcurv is not None:
-			rs = self.rcurv + xs
-			angs = np.tan(zs / self.rcurv)
-			xs = rs * np.cos(angs) - self.rcurv
+			rs = (self.rcurv + xs) * np.sign(self.rcurv)
+			angs = zs / np.abs(self.rcurv)
+			xs = np.sign(self.rcurv) * rs * np.cos(angs) - self.rcurv
 			zs = rs * np.sin(angs)
 		return np.stack((xs,ys,zs), axis=1)
 
 class Isotrop (Metric):
 	def __init__(self):
-		super().__init__(["dx","dy","dz"], ["","",""], "sr")
-	def jac(self, parts, bw):
-		fact = np.sqrt(2*np.pi) * bw[0] / (1-np.exp(-2/bw[0]**2))
-		return fact * np.ones(len(parts))
+		super().__init__(["dx","dy","dz"], ["","",""], "")
 	def mean(self, dirs, transform=False):
 		if transform:
 			vecs = self.transform(dirs)
