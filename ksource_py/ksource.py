@@ -151,16 +151,16 @@ class KSource:
 
 	def plot_integr(self, grid, idx, vec0=None, vec1=None, **kwargs):
 		if isinstance(idx, str):
-			idx = self.metric.varnames[idx]
+			idx = self.metric.varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -177,7 +177,7 @@ class KSource:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		lbl = str(vec0)+" < vec < "+str(vec1)
+		lbl = str(vec0)+" <= vec <= "+str(vec1)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
@@ -191,11 +191,11 @@ class KSource:
 	def plot_E(self, grid_E, vec0=None, vec1=None, **kwargs):
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -217,7 +217,7 @@ class KSource:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		lbl = str(vec0)+" < vec < "+str(vec1)
+		lbl = str(vec0)+" <= vec <= "+str(vec1)
 		plt.errorbar(grid_E, scores, errs, fmt='-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
@@ -230,7 +230,7 @@ class KSource:
 
 	def plot2D_point(self, grids, idxs, part0, **kwargs):
 		if isinstance(idxs[0], str):
-			idxs = [varnames[idx] for idx in idxs]
+			idxs = [varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		parts = np.zeros((len(grids[0])*len(grids[1]), 7))
 		parts[:,idxs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
@@ -258,15 +258,15 @@ class KSource:
 
 	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None, **kwargs):
 		if isinstance(idxs[0], str):
-			idxs = [self.metric.varnames[idx] for idx in idxs]
+			idxs = [self.metric.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 < self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs < vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -295,7 +295,7 @@ class KSource:
 		else:
 			units = self.metric.units[idxs[0]] + self.metric.units[idxs[1]]
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
-		title += "\n"+str(vec0)+" < vec < "+str(vec1)
+		title += "\n"+str(vec0)+" <= vec <= "+str(vec1)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[1]], self.metric.units[idxs[1]]))

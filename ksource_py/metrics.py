@@ -93,7 +93,7 @@ class Energy (Metric):
 
 class Lethargy (Metric):
 	def __init__(self, E0):
-		super().__init__(["u"], [""], "MeV")
+		super().__init__(["u"], ["[let]"], "MeV")
 		self.E0 = E0
 	def transform(self, Es):
 		return np.log(self.E0/Es)
@@ -104,11 +104,11 @@ class Lethargy (Metric):
 
 class Vol (Metric):
 	def __init__(self):
-		super().__init__(["x","y","z"], ["cm","cm","cm"], "cm3")
+		super().__init__(["x","y","z"], ["cm","cm","cm"], "cm^3")
 
 class SurfXY (Metric):
 	def __init__(self, z):
-		super().__init__(["x","y"], ["cm","cm"], "cm2")
+		super().__init__(["x","y"], ["cm","cm"], "cm^2")
 		self.z = z
 	def transform(self, poss):
 		return poss[:,:2]
@@ -118,7 +118,7 @@ class SurfXY (Metric):
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, rcurv=None):
-		super().__init__(["z","t"], ["cm","cm"], "cm2")
+		super().__init__(["z","t"], ["cm","cm"], "cm^2")
 		self.xwidth = xwidth
 		self.yheight = yheight
 		self.rcurv = rcurv
@@ -159,7 +159,7 @@ class Guide (Metric):
 
 class Isotrop (Metric):
 	def __init__(self):
-		super().__init__(["dx","dy","dz"], ["","",""], "")
+		super().__init__(["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
 	def mean(self, dirs, transform=False):
 		if transform:
 			vecs = self.transform(dirs)
@@ -176,7 +176,7 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__(["mu","phi"], ["","rad"], "sr")
+		super().__init__(["mu","phi"], ["[mu]","rad"], "sr")
 	def transform(self, dirs):
 		mus = dirs[:,2]
 		phis = np.arctan2(dirs[:,1], dirs[:,0])

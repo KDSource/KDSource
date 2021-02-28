@@ -50,6 +50,7 @@ int PList_next(PList* plist){
 	int part_updated;
 	for(i=0; i<plist->n; i++){
 		part_updated = 0;
+		int j = 0;
 		while(!part_updated){
 			if(plist->files[i]){ // Si hay archivo, leo una linea
 				if(!fgets(plist->line, LINE_MAX_LEN, plist->files[i])){ // Si llego al final, vuelvo al principio
@@ -132,6 +133,13 @@ int Tripoli_read_part(char* line, Part* part, double* w){
 		return 1;
 	}
 	return 0;
+}
+
+int SSV_read(char* line, Part* part, double* w){
+	double aux;
+	int nreaded = sscanf(line, "%le %le %le %le %le %le %le %le %le",
+		&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w, &aux);
+	return (nreaded == 8);
 }
 
 int Decay_read(char* line, Part* part, double* w){

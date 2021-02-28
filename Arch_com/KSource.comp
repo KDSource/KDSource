@@ -82,6 +82,7 @@ INITIALIZE
     trasl[0] = trasl_x; trasl[1] = trasl_y; trasl[2] = trasl_z;
     rot[0] = rot_x; rot[1] = rot_y; rot[2] = rot_z;
 	if(strcmp(format, "PTRAC") == 0) readfun = PTRAC_read;
+	else if(strcmp(format, "SSV") == 0) readfun = SSV_read;
 	else{
 		printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
 	}

@@ -42,6 +42,8 @@ int PTRAC_read(char* line, Part* part, double* w);
 
 int Tripoli_read_part(char* line, Part* part, double* w);
 
+int SSV_read(char* line, Part* part, double* w);
+
 int Decay_read(char* line, Part* part, double* w);
 int Tripoli_read_pos(char* line, Part* part, double* w);
 int Isotrop_read(char* line, Part* part, double* w);

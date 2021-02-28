@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readformat, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True):
+	def __init__(self, readformat, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True, **kwargs):
 		self.filename = filename
 		self.pt = pt
 		if isinstance(readformat, str):
@@ -18,6 +18,10 @@ class PList:
 		self.trasl = trasl
 		self.rot = rot
 		self.x2z = switch_x2z
+		self.start = None
+		if "start" in kwargs: self.start = kwargs["start"]
+		self.end = None
+		if "end" in kwargs: self.end = kwargs["end"]
 		if set_params:
 			self.set_params()
 		else:
@@ -29,14 +33,20 @@ class PList:
 		except FileNotFoundError:
 			print("Error: {} no encontrado".format(self.filename))
 		I = p2 = N = 0
+		if self.start is not None: read = False
+		else: read = True
 		print("Reading file", self.filename, "...")
 		for line in file:
-			part_w = self.read(line)
-			if part_w is not None: # Linea de texto es particula
-				w = part_w[1]
-				I += w
-				p2 += w*w
-				N += 1
+			if not read:
+				if self.start in line: read = True
+			else:
+				if self.end in line: break
+				part_w = self.read(line)
+				if part_w is not None: # Linea de texto es particula
+					w = part_w[1]
+					I += w
+					p2 += w*w
+					N += 1
 		file.close()
 		print("Done")
 		self.I = I
@@ -50,16 +60,22 @@ class PList:
 		parts = []
 		ws = []
 		cont = 0
+		if self.start is not None: read = False
+		else: read = True
 		for line in file:
-			part_w = self.read(line)
-			if part_w is not None: # Linea de texto es particula
-				part,w = part_w
-				if cont >= skip: 
-					parts.append(part)
-					ws.append(w)
-				cont += 1
-				if N>0 and cont==skip+N:
-					break
+			if not read:
+				if self.start in line: read = True
+			else:
+				if self.end is not None and self.end in line: break
+				part_w = self.read(line)
+				if part_w is not None: # Linea de texto es particula
+					part,w = part_w
+					if cont >= skip: 
+						parts.append(part)
+						ws.append(w)
+					cont += 1
+					if N>0 and cont==skip+N:
+						break
 		file.close()
 		parts = np.array(parts)
 		ws = np.array(ws)
@@ -91,11 +107,20 @@ def PTRAC_read(line):
 		return [part,w]
 	return None
 
-def Tripoli_read_part(line):
+def T4stock_read(line):
 	line = line.split()
 	if line[0] == "NEUTRON" or line[0] == "PHOTON": # Linea de texto es particula
 		[E,x,y,z,dx,dy,dz,w] = np.double(line[1:])
 		part = [E,x,y,z,dx,dy,dz]
+		return [part,w]
+	return None
+
+def T4tally_read(line):
+	line = line.split()
+	if len(line) and len(line[0]) and (line[0][0]=="(" and line[0][-1]==")"): # Linea de texto es particula
+		[x,y,z] = np.double(line[0][1:-1].split(sep=","))
+		part = [x,y,z]
+		w = np.double(line[1])
 		return [part,w]
 	return None
 
@@ -106,12 +131,4 @@ def Decay_read(line):
 	part = [E]
 	return [part,w]
 
-def Tripoli_read_pos(line):
-	line = line.split()
-	if line[0] == "NEUTRON" or line[0] == "PHOTON": # Linea de texto es particula
-		[E,x,y,z,dx,dy,dz,w] = np.double(line[1:])
-		part = [x,y,z]
-		return [part,w]
-	return None
-
-readfunmap = {"SSV":SSV_read, "PTRAC":PTRAC_read, "T4part":Tripoli_read_part, "Decay":Decay_read, "T4pos":Tripoli_read_pos}
+readfunmap = {"SSV":SSV_read, "PTRAC":PTRAC_read, "T4stock":T4stock_read, "Decay":Decay_read, "T4tally":T4tally_read}
