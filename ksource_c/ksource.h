@@ -28,10 +28,10 @@ typedef int (*MSSampleFun)(MultiSource* ms, char* pt, Part* part, double* w, int
 typedef struct KSource{
 	double J;
 	PList* plist;
-	Metric* metric;
+	MetricSepVar* metric;
 } KSource;
 
-KSource* KS_create(double J_, PList* plist_, Metric* metric_);
+KSource* KS_create(double J, PList* plist, MetricSepVar* metric);
 int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
 void KS_destroy(KSource* ks);
 
@@ -42,7 +42,7 @@ typedef struct MultiSource{
 	double* cdf; // cdf de los pesos de fuentes
 } MultiSource;
 
-MultiSource* MS_create(int len_, KSource** s_, double* ws_);
+MultiSource* MS_create(int len, KSource** s, double* ws);
 double MS_J(MultiSource* ms);
 int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
 void MS_destroy(MultiSource* ms);

@@ -6,17 +6,33 @@
 #include "ksource.h"
 
 
-PList* PList_create(char pt, double* trasl, double* rot, int switch_x2z, int n, FILE** files, ReadFun* read){
+PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* trasl, double* rot, int switch_x2z){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	plist->pt = pt;
-	plist->trasl = trasl;
-	plist->rot = rot;
+	plist->ord = ord;
+	int i;
+	FILE* files[ord];
+	for(i=0; i<ord; i++)
+		if((files[i]=fopen(filenames[i], "r")) == 0){
+			printf("Error: No se pudo abrir archivo %s\n", filenames[i]);
+			return NULL;
+		}
+	plist->files = (FILE**)malloc(ord * sizeof(FILE*));
+	plist->read = (ReadFun*)malloc(ord * sizeof(ReadFun));
+	for(i=0; i<ord; i++){
+		plist->files[i] = files[i];
+		plist->read[i] = read[i];
+	}
+	if(trasl){
+		plist->trasl = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) plist->trasl[i] = trasl[i];
+	}
+	if(rot){
+		plist->rot = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) plist->rot[i] = rot[i];
+	}
 	plist->x2z = switch_x2z;
-	plist->line = (char*)malloc(LINE_MAX_LEN*sizeof(char));
-	plist->n = n;
-	plist->files = files;
 	plist->part = (Part*)malloc(sizeof(Part));
-	plist->read = read;
 	PList_next(plist);
 	return plist;
 }
@@ -48,9 +64,8 @@ int PList_next(PList* plist){
 	Part part;
 	int i;
 	int part_updated;
-	for(i=0; i<plist->n; i++){
+	for(i=0; i<plist->ord; i++){
 		part_updated = 0;
-		int j = 0;
 		while(!part_updated){
 			if(plist->files[i]){ // Si hay archivo, leo una linea
 				if(!fgets(plist->line, LINE_MAX_LEN, plist->files[i])){ // Si llego al final, vuelvo al principio
@@ -64,58 +79,29 @@ int PList_next(PList* plist){
 	}
 	*plist->part = part;
 	plist->w = w;
-	// Aplicar trasl, rot
 	return 0;
 }
 
 void PList_destroy(PList* plist){
-	free(plist->line);
+	int i;
+	for(i=0; i<plist->ord; i++) fclose(plist->files[i]);
+	free(plist->files);
+	free(plist->read);
+	free(plist->trasl);
+	free(plist->rot);
 	free(plist->part);
 	free(plist);
 }
 
-
-PList* PListSimple_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename, ReadFun read){
-	FILE** files = (FILE**)malloc(sizeof(FILE*));
-	*files = fopen(filename, "r");
-	if(!*files){
-		printf("Error: %s no encontrado\n", filename);
-	}
-	ReadFun* pread = (ReadFun*)malloc(sizeof(ReadFun));
-	*pread = read;
-	return PList_create(pt, trasl, rot, switch_x2z, 1, files, pread);
-}
-
-void PListSimple_destroy(PList* plist){
-	fclose(*plist->files);
-	free(plist->files);
-	free(plist->read);
-	PList_destroy(plist);
+PList* PListSimple_create(char pt, char* filename, ReadFun read, double* trasl, double* rot, int switch_x2z){
+	char* pfilename[] = {filename};
+	ReadFun pread[] = {read};
+	return PList_create(pt, 1, pfilename, pread, trasl, rot, switch_x2z);
 }
 
 
-PList* PListSepVar_create(char pt, double* trasl, double* rot, int switch_x2z, char* filename[3], ReadFun read[3]){
-	FILE** files = (FILE**)malloc(3*sizeof(FILE*));
-	files[0] = fopen(filename[0], "r");
-	files[1] = fopen(filename[1], "r");
-	files[2] = fopen(filename[2], "r");
-	int i;
-	for(i=0; i<3; i++) if(!files[i]){
-		printf("Error: %s no encontrado\n", filename[i]);
-	}
-	ReadFun* pread = (ReadFun*)malloc(3*sizeof(ReadFun));
-	pread[0] = read[0];
-	pread[1] = read[1];
-	pread[2] = read[2];
-	return PList_create(pt, trasl, rot, switch_x2z, 3, files, pread);
-}
-
-void PListSepVar_destroy(PList* plist){
-	int i;
-	for(i=0; i<3; i++) fclose(plist->files[i]);
-	free(plist->files);
-	free(plist->read);
-	PList_destroy(plist);
+PList* PListSepVar_create(char pt, char* filenames[3], ReadFun read[3], double* trasl, double* rot, int switch_x2z){
+	return PList_create(pt, 3, filenames, read, trasl, rot, switch_x2z);
 }
 
 

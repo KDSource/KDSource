@@ -4,11 +4,11 @@
 
 #include "ksource.h"
 
-KSource* KS_create(double J_, PList* plist_, Metric* metric_){
+KSource* KS_create(double J, PList* plist, MetricSepVar* metric){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
-	ks->J = J_;
-	ks->plist = plist_;
-	ks->metric = metric_;
+	ks->J = J;
+	ks->plist = plist;
+	ks->metric = metric;
 	return ks;
 }
 
@@ -17,7 +17,7 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w){
 	if(!normalize_w){
 		PList_get(ks->plist, part, w);
 		PList_next(ks->plist);
-		Metric_next(ks->metric);
+		MetricSepVar_next(ks->metric);
 	}
 	else{ // Normalizo w a 1
 		int resamples = 0;
@@ -26,20 +26,20 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w){
 			if(*w > 1){ // Si w>1, uso 1/w como prob de avanzar en la lista
 				if(rand() < 1/(*w)*RAND_MAX){
 					PList_next(ks->plist);
-					Metric_next(ks->metric);
+					MetricSepVar_next(ks->metric);
 				}
 				break;
 			}
 			else{ // Si w<1, uso w como prob de tomar la particula
 				PList_next(ks->plist);
-				Metric_next(ks->metric);
+				MetricSepVar_next(ks->metric);
 				if(rand() < (*w)*RAND_MAX) break;
 			}
 			if(resamples++ > MAX_RESAMPLES) return 1;
 		}
 		*w = 1;
 	}
-	Metric_perturb(ks->metric, part);
+	MetricSepVar_perturb(ks->metric, part);
 	return 0;
 }
 

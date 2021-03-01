@@ -56,49 +56,41 @@ SHARE
 
 DECLARE
 %{
-	char pt;
-	Part part;
-	double w;
 	int N;
 	double I, p2;
     
-    double trasl[3];
-    double rot[3];
-    ReadFun readfun;
     PList* plist;
-
-    int dims[3] = {1, 2, 2};
-    double bw_E[1];
-    double bw_pos[2];
-    double bw_dir[2];
-    double* bw[3] = {bw_E, bw_pos, bw_dir};
-    PerturbFun perturb[] = {Let_perturb, SurfXY_perturb, Polar_perturb};
-    Metric* metric;
+    MetricSepVar* metric;
 	KSource *ksource;
 %}
 
 INITIALIZE
 %{  
-    trasl[0] = trasl_x; trasl[1] = trasl_y; trasl[2] = trasl_z;
-    rot[0] = rot_x; rot[1] = rot_y; rot[2] = rot_z;
+    ReadFun readfun = NULL;
 	if(strcmp(format, "PTRAC") == 0) readfun = PTRAC_read;
 	else if(strcmp(format, "SSV") == 0) readfun = SSV_read;
-	else{
-		printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
-	}
-	plist = PListSimple_create('n', trasl, rot, switch_x2z, filename, readfun);
+	else printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
+    double trasl[3] = {trasl_x, trasl_y, trasl_z};
+    double rot[3] = {rot_x, rot_y, rot_z};
+	plist = PListSimple_create('n', filename, readfun, trasl, rot, switch_x2z);
 
-    bw_E[0] = bw_u;
-    bw_pos[0] = bw_x; bw_pos[1] = bw_y;
-    bw_dir[0] = bw_mu; bw_dir[1] = bw_phi;
-    metric = MetricSepVar_create(dims, bw, bwfilename, variable_bw, perturb, NULL, NULL, NULL);
+    double bw_E[1] = {bw_u};
+    double bw_pos[2] = {bw_x, bw_y};
+    double bw_dir[2] = {bw_mu, bw_phi};
+    Metric* metrics[3] = {Metric_create(1, bw_E, Let_perturb, NULL),
+                          Metric_create(2, bw_pos, SurfXY_perturb, NULL),
+                          Metric_create(2, bw_dir, Polar_perturb, NULL)};
+    metric = MetricSepVar_create(3, metrics, bwfilename, variable_bw, NULL, NULL);
 
 	ksource = KS_create(1, plist, metric);
 %}
 
 TRACE
 %{
-	double v;
+	char pt;
+	Part part;
+	double w, v;
+
 	KS_sample(ksource, &pt, &part, &w, 1);
 	I += w;
 	p2 += w*w;

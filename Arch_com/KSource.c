@@ -17,39 +17,35 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 /************************************************* Input *****************************************************/
 	
-	static char pt = 'n';
-    static double trasl_plist[3] = {0, 0, 300};
-    static double rot_plist[3] = {0, 0, 0};
-    static int switch_x2z = 0;
-    static char* filename = "../1_guia_n_mlcv/D_tracks.ssv";
-    static ReadFun readfun = SSV_read;
+	char pt = 'n';
+    char* filename = "../1_guia_n_mlcv/D_tracks.ssv";
+    ReadFun readfun = SSV_read;
+    double trasl_plist[3] = {0, 0, 300};
+    double rot_plist[3] = {0, 0, 0};
+    int switch_x2z = 0;
 
-    static double trasl_metric[3] = {0, 0, 300};
-    static double rot_metric[3] = {0, 0, 0};
-    static double gp_E[] = {};
-    static double gp_pos[] = {7, 20, 92900};
-    static double gp_dir[] = {};
-    static double bw_E[1] = {0};
-    static double bw_pos[2] = {0,0};
-    static double bw_dir[3] = {0,0,0};
-    static char* bwfilename = NULL;
-    static int variable_bw = 0;
-    static PerturbFun perturb[] = {Let_perturb, Guide_perturb, Isotrop_perturb};
+    int dims[3] = {1, 2, 3};
+    double bw_E[1] = {0};
+    double bw_pos[2] = {0,0};
+    double bw_dir[3] = {0,0,0};
+    char* bwfilename = NULL;
+    int variable_bw = 0;
+    PerturbFun perturb[] = {Let_perturb, Guide_perturb, Isotrop_perturb};
+    int n_gp[3] = {0, 3, 0};
+    double gp_E[] = {};
+    double gp_pos[] = {7, 20, 92900};
+    double gp_dir[] = {};
+    double trasl_metric[3] = {0, 0, 300};
+    double rot_metric[3] = {0, 0, 0};
 
 /*********************************************** Fin Input ***************************************************/
 
    // *********************************** Declaracion variables globales **************************************
 
-	static Part part;
-	static double w;
 	static long int N_simul;
 
-    static int dims[3] = {1, 2, 3};
-    static double* bw[3] = {bw_E, bw_pos, bw_dir};
-    static double* geom_par[3] = {gp_E, gp_pos, gp_dir};
-
     static PList* plist;
-    static Metric* metric;
+    static MetricSepVar* metric;
 	static KSource *ksource;
 
 	// **************************************** Inicializacion ************************************************
@@ -58,8 +54,11 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(initialized == 0){
 		printf("\nCargando fuentes...  ");
 		
-		plist = PListSimple_create(pt, trasl_plist, rot_plist, switch_x2z, filename, readfun);
-		metric = MetricSepVar_create(dims, bw, bwfilename, variable_bw, perturb, trasl_metric, rot_metric, geom_par);
+		plist = PListSimple_create(pt, filename, readfun, trasl_plist, rot_plist, switch_x2z);
+    	Metric* metrics[3] = {Metric_create(dims[0], bw_E, perturb[0], n_gp[0], gp_E),
+    	                      Metric_create(dims[1], bw_pos, perturb[1], n_gp[1], gp_pos),
+    	                      Metric_create(dims[2], bw_dir, perturb[2], n_gp[2], gp_dir)};
+    	metric = MetricSepVar_create(3, metrics, bwfilename, variable_bw, trasl_metric, rot_metric);
 		ksource = KS_create(1, plist, metric);
 
 		N_simul = param[0];
@@ -72,11 +71,17 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 	// ********************************************** Sorteo ***********************************************************
 
+	Part part;
+	double w;
+
 	KS_sample(ksource, &pt, &part, &w, 1);
 
 	if(pt == 'n') *ipt = 1;
 	else if(pt == 'p') *ipt = 2;
-	else *ipt = 1;
+	else{
+		printf("Error: Particula no reconocida. Se tomara como neutron.\n");
+		*ipt = 1;
+	}
 	*x = part.pos[0];
 	*y = part.pos[1];
 	*z = part.pos[2];
