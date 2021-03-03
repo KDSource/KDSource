@@ -3,3 +3,4 @@
 from .metrics import *
 from .plists import *
 from .ksource import *
+from .tally import *
