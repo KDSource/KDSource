@@ -5,12 +5,15 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readformat, filename, pt="n", trasl=None, rot=None, switch_x2z=False, set_params=True, **kwargs):
+	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True, **kwargs):
+		if isinstance(readformat, str):
+			self.readformat = readformat
+			exec("self.readfun = "+readformat+"_read")
+		else:
+			self.readfun = readformat
+			self.readformat = readformat.__name__[:-5]
 		self.filename = filename
 		self.pt = pt
-		if isinstance(readformat, str):
-			readformat = readfunmap[readformat]
-		self.read = readformat
 		if trasl is not None:
 			trasl = np.array(trasl)
 		if rot is not None:
@@ -27,6 +30,7 @@ class PList:
 		else:
 			self.I = self.p2 = 1.0
 			self.N = 1
+
 	def set_params(self):
 		try:
 			file = open(self.filename, "r")
@@ -40,8 +44,8 @@ class PList:
 			if not read:
 				if self.start in line: read = True
 			else:
-				if self.end in line: break
-				part_w = self.read(line)
+				if self.end is not None and self.end in line: break
+				part_w = self.readfun(line)
 				if part_w is not None: # Linea de texto es particula
 					w = part_w[1]
 					I += w
@@ -52,6 +56,7 @@ class PList:
 		self.I = I
 		self.p2 = p2
 		self.N = N
+
 	def get(self, N=-1, skip=0):
 		try:
 			file = open(self.filename, "r")
@@ -67,7 +72,7 @@ class PList:
 				if self.start in line: read = True
 			else:
 				if self.end is not None and self.end in line: break
-				part_w = self.read(line)
+				part_w = self.readfun(line)
 				if part_w is not None: # Linea de texto es particula
 					part,w = part_w
 					if cont >= skip: 
@@ -80,24 +85,37 @@ class PList:
 		parts = np.array(parts)
 		ws = np.array(ws)
 		if self.trasl is not None: # Aplico traslacion
-			parts[:,1:4] += self.trasl
+			if parts.shape[1] == 7:
+				parts[:,1:4] += self.trasl
+			if parts.shape[1] == 3:
+				parts += self.trasl
 		if self.rot is not None: # Aplico rotacion
-			parts[:,1:4] = self.rot.apply(parts[:,1:4]) # Posicion
-			parts[:,4:7] = self.rot.apply(parts[:,4:7]) # Direccion
+			if parts.shape[1] == 7:
+				parts[:,1:4] = self.rot.apply(parts[:,1:4]) # Posicion
+				parts[:,4:7] = self.rot.apply(parts[:,4:7]) # Direccion
+			if parts.shape[1] == 3:
+				parts = self.rot.apply(parts)
 		if self.x2z: # Aplico permutacion (x,y,z) -> (y,z,x)
-			E,x,y,z,dx,dy,dz = parts.T
-			parts = np.stack((E,y,z,x,dy,dz,dx), axis=1)
+			if parts.shape[1] == 7:
+				E,x,y,z,dx,dy,dz = parts.T
+				parts = np.stack((E,y,z,x,dy,dz,dx), axis=1)
+			if parts.shape[1] == 3:
+				x,y,z = parts.T
+				parts = np.stack((y,z,x), axis=1)
 		parts = parts[ws>0]
 		ws = ws[ws>0]
 		return [parts, ws]
 
-def SSV_read(line):
-	line = line.split()
-	if len(line) == 8: # Linea de texto es particula
-		[E,x,y,z,dx,dy,dz,w] = np.double(line)
-		part = [E,x,y,z,dx,dy,dz]
-		return [part,w]
-	return None
+	def save(self, file):
+		file.write(self.plist.pt+'\n')
+		file.write(self.plist.readformat+'\n')
+		file.write(self.plist.filename+'\n')
+		if self.trasl is not None: np.savetxt(file, self.trasl)
+		else: file.write('\n')
+		if self.rot is not None: np.savetxt(file, self.rot)
+		else: file.write('\n')
+		file.write("%d" % (self.switch_x2z))
+
 
 def PTRAC_read(line):
 	line = line.split()
@@ -115,6 +133,14 @@ def T4stock_read(line):
 		return [part,w]
 	return None
 
+def SSV_read(line):
+	line = line.split()
+	if len(line) == 8: # Linea de texto es particula
+		[E,x,y,z,dx,dy,dz,w] = np.double(line)
+		part = [E,x,y,z,dx,dy,dz]
+		return [part,w]
+	return None
+
 def T4tally_read(line):
 	line = line.split()
 	if len(line) and len(line[0]) and (line[0][0]=="(" and line[0][-1]==")"): # Linea de texto es particula
@@ -128,7 +154,5 @@ def Decay_read(line):
 	line = line.split()
 	E = np.double(line[0])
 	w = np.double(line[2])
-	part = [E]
-	return [part,w]
-
-readfunmap = {"SSV":SSV_read, "PTRAC":PTRAC_read, "T4stock":T4stock_read, "Decay":Decay_read, "T4tally":T4tally_read}
+	E = np.array([E])
+	return [E,w]

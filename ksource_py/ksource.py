@@ -13,7 +13,8 @@ units = ["MeV", "cm","cm","cm", "","",""]
 R_gaussian = 1 / (2*np.pi) # Roughness of gaussian kernel
 
 class KSource:
-	def __init__(self, metric, bw="silv", J=1):
+	def __init__(self, plist, metric, bw="silv", J=1):
+		self.plist = plist
 		self.metric = metric
 		if isinstance(bw, str):
 			self.bw = None
@@ -29,11 +30,10 @@ class KSource:
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.J = J
 
-	def fit(self, plist, N, skip=0, **kwargs):
-		self.plist = plist
-		parts,ws = plist.get(N=N, skip=skip)
+	def fit(self, N=-1, skip=0, **kwargs):
+		parts,ws = self.plist.get(N, skip)
 		if len(parts) == 0:
-			print("Error: No se pudieron obtener particulas para entrenamiento")
+			print("Error: No hay particulas para entrenamiento")
 			return
 		print("Usando {} particulas para entrenamiento".format(len(parts)))
 		self.vecs = self.metric.transform(parts)
@@ -52,6 +52,18 @@ class KSource:
 		scores *= self.J * jacs
 		errs *= self.J * jacs
 		return np.array([scores, errs])
+
+	def save(self, filename):
+		file = open(filename, "w")
+		file.write("# J [1/s]:\n")
+		file.write("%le\n" % (self.J))
+		file.write("# PList:\n")
+		self.plist.save(file)
+		file.write("# Metric\n")
+		file.metric.save(file)
+		if len(self.bw.shape) == 2: file.write("1\n") # Ancho de banda variable
+		else: file.write("0\n")
+		np.savetxt(file, self.bw.reshape(-1,self.metric.dim))
 
 	def save_bw(self, bwfilename, append=False):
 		if append:
@@ -75,13 +87,17 @@ class KSource:
 		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
 			C_silv = 0.9397 # Cte de Silverman (revisar)
 			bw_silv = C_silv * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
+			if "shift" in kwargs: bw_silv *= kwargs["shift"]
 			#
-			nsteps = 20 # Cantidad de pasos para bw
-			max_fact = 1.5 # Rango de bw entre bw_silv/max_fact y bw_silv*max_fact
+			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
+			else:  nsteps = 20
+			if "max_fact" in kwargs: max_fact = kwargs["max_fact"] # Rango de bw entre bw_silv/max_fact y bw_silv*max_fact
+			else: max_fact = 1.5
 			max_log = np.log10(max_fact)
 			bw_grid = np.logspace(-max_log,max_log,nsteps) # Grilla de bandwidths
 			#
-			cv = 10
+			if "cv" in kwargs: cv = kwargs["cv"] # CV folds
+			else:  cv = 10
 			grid = GridSearchCV(KernelDensity(kernel='gaussian'),
 			                                  {'bandwidth': bw_grid},
 			                                  cv=cv,
@@ -98,8 +114,10 @@ class KSource:
 			self.bw = bw_mlcv
 		#
 		elif self.bw_method == 'knn': # Metodo K Nearest Neighbours
-			K = 10
-			batch_size = 10000
+			if "K" in kwargs: K = kwargs["K"] # Cantidad de vecinos
+			else:  K = 10
+			if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
+			else:  batch_size = 10000
 			k = round(K * batch_size/N_tot)
 			if k == 0:
 				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(N_tot/batch_size))

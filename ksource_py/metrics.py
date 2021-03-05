@@ -26,6 +26,10 @@ class Metric:
 			vecs = self.transform(parts)
 		mn = np.mean(vecs, axis=0)
 		return np.std(vecs-mn, axis=0)
+	def save(self, file):
+		file.write(self.__class__.__name__+'\n')
+		file.write("{}\n".format(self.dim))
+		file.write('\n')
 
 class SepVarMetric (Metric):
 	def __init__(self, metric_E, metric_pos, metric_dir, trasl=None, rot=None):
@@ -86,6 +90,17 @@ class SepVarMetric (Metric):
 		std_poss = self.pos.std(vecs=vecs[:,self.E.dim:self.E.dim+self.pos.dim])
 		std_dirs = self.dir.std(vecs=vecs[:,self.E.dim+self.pos.dim:])
 		return np.concatenate((std_Es, std_poss, std_dirs))
+	def save(self, file):
+		if self.trasl is not None: np.savetxt(file, self.trasl)
+		else: file.write('\n')
+		if self.rot is not None: np.savetxt(file, self.rot)
+		else: file.write('\n')
+		file.write("# E:\n")
+		self.E.save(file)
+		file.write("# pos:\n")
+		self.pos.save(file)
+		file.write("# dir:\n")
+		self.dir.save(file)
 
 class Energy (Metric):
 	def __init__(self):
@@ -101,6 +116,10 @@ class Lethargy (Metric):
 		return self.E0 * np.exp(-us)
 	def jac(self, Es):
 		return 1/Es.reshape(-1)
+	def save(self, file):
+		file.write(self.__class__.__name__+'\n')
+		file.write("{}\n".format(self.dim))
+		file.write("{}\n".format(self.E0))
 
 class Vol (Metric):
 	def __init__(self):
@@ -115,6 +134,10 @@ class SurfXY (Metric):
 	def inverse_transform(self, poss):
 		z_col = np.broadcast_to(self.z, (*poss.shape[:-1],1))
 		return np.concatenate((poss, z_col), axis=1)
+	def save(self, file):
+		file.write(self.__class__.__name__+'\n')
+		file.write("{}\n".format(self.dim))
+		file.write("{}\n".format(self.z))
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, rcurv=None):
@@ -156,6 +179,12 @@ class Guide (Metric):
 			xs = np.sign(self.rcurv) * rs * np.cos(angs) - self.rcurv
 			zs = rs * np.sin(angs)
 		return np.stack((xs,ys,zs), axis=1)
+	def save(self, file):
+		file.write(self.__class__.__name__+'\n')
+		file.write("{}\n".format(self.dim))
+		rcurv = self.rcurv
+		if rcurv is None: rcurv = 0
+		file.write("{} {} {}\n".format(self.xwidth, self.yheight, rcurv))
 
 class Isotrop (Metric):
 	def __init__(self):

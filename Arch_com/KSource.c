@@ -18,22 +18,22 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 /************************************************* Input *****************************************************/
 	
 	char pt = 'n';
-    char* filename = "../1_guia_n_mlcv/D_tracks.ssv";
+    char* filename = "../1_guia_n_knn/D_tracks.ssv";
     ReadFun readfun = SSV_read;
     double trasl_plist[3] = {0, 0, 300};
-    double rot_plist[3] = {0, 0, 0};
+    double rot_plist[3] = {0, 0, M_PI};
     int switch_x2z = 0;
 
     int dims[3] = {1, 2, 3};
     double bw_E[1] = {0};
     double bw_pos[2] = {0,0};
     double bw_dir[3] = {0,0,0};
-    char* bwfilename = NULL;
-    int variable_bw = 0;
+    char* bwfilename = "../1_guia_n_knn/D_tracks_bw_knn.txt"; // NULL;
+    int variable_bw = 1;
     PerturbFun perturb[] = {Let_perturb, Guide_perturb, Isotrop_perturb};
     int n_gp[3] = {0, 3, 0};
     double gp_E[] = {};
-    double gp_pos[] = {7, 20, 92900};
+    double gp_pos[] = {7, 20, -92900};
     double gp_dir[] = {};
     double trasl_metric[3] = {0, 0, 300};
     double rot_metric[3] = {0, 0, 0};

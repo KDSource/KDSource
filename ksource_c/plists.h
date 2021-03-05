@@ -39,12 +39,12 @@ PList* PListSepVar_create(char pt, char* filenames[3], ReadFun read[3], double* 
 
 int PTRAC_read(char* line, Part* part, double* w);
 
-int Tripoli_read_part(char* line, Part* part, double* w);
+int T4stock_read(char* line, Part* part, double* w);
 
 int SSV_read(char* line, Part* part, double* w);
 
 int Decay_read(char* line, Part* part, double* w);
-int Tripoli_read_pos(char* line, Part* part, double* w);
+int T4pos_read(char* line, Part* part, double* w);
 int Isotrop_read(char* line, Part* part, double* w);
 
 

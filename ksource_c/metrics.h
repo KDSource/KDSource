@@ -16,7 +16,7 @@ typedef int (*PerturbFun)(Metric* metric, Part* part);
 typedef struct Metric{
 	int dim; // Dimensiones de cada submetrica
 	double* bw; // Anchos de banda
-	PerturbFun perturb; // Funciones de perturbacion
+	PerturbFun perturb; // Funcion de perturbacion
 	int n_gp; // Cantidad de parametros geometricos
 	double* geom_par; // Parametros geometricos de cada submetrica
 } Metric;
@@ -33,7 +33,7 @@ typedef struct MetricSepVar{
 	double* rot; // Rotacion de la metrica
 } MetricSepVar;
 
-MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double trasl[3], double rot[3]);
+MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
 int MetricSepVar_perturb(MetricSepVar* metric, Part* part);
 int MetricSepVar_next(MetricSepVar* metric);
 void MetricSepVar_destroy(MetricSepVar* metric);

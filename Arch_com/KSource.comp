@@ -77,9 +77,9 @@ INITIALIZE
     double bw_E[1] = {bw_u};
     double bw_pos[2] = {bw_x, bw_y};
     double bw_dir[2] = {bw_mu, bw_phi};
-    Metric* metrics[3] = {Metric_create(1, bw_E, Let_perturb, NULL),
-                          Metric_create(2, bw_pos, SurfXY_perturb, NULL),
-                          Metric_create(2, bw_dir, Polar_perturb, NULL)};
+    Metric* metrics[3] = {Metric_create(1, bw_E, Let_perturb, 0, NULL),
+                          Metric_create(2, bw_pos, SurfXY_perturb, 0, NULL),
+                          Metric_create(2, bw_dir, Polar_perturb, 0, NULL)};
     metric = MetricSepVar_create(3, metrics, bwfilename, variable_bw, NULL, NULL);
 
 	ksource = KS_create(1, plist, metric);

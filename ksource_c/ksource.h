@@ -9,6 +9,8 @@
 #include "plists.h"
 
 #define MAX_RESAMPLES 1000
+#define LINE_MAX_LEN 256
+#define NAME_MAX_LEN 96
 
 
 typedef struct KSource KSource;

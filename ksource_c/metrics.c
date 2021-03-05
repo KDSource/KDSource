@@ -32,7 +32,12 @@ MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, i
 	metric->ms = (Metric**)malloc(ord * sizeof(Metric*));
 	for(i=0; i<ord; i++) metric->ms[i] = metrics[i];
 	if(bwfilename && strlen(bwfilename)){
-		metric->file_bw = fopen(bwfilename, "r");
+		FILE* file_bw;
+		if((file_bw=fopen(bwfilename, "r")) == 0){
+			printf("Error: No se pudo abrir archivo %s\n", bwfilename);
+			return NULL;
+		}
+		metric->file_bw = file_bw;
 		MetricSepVar_next(metric);
 		if(!variable_bw){
 			fclose(metric->file_bw);
@@ -71,7 +76,7 @@ int MetricSepVar_next(MetricSepVar* metric){
 			for(j=0; j<metric->ms[i]->dim; j++)
 				readed += fscanf(metric->file_bw, "%lf", &metric->ms[i]->bw[j]);
 		if(readed < dim){ // Si llego al final del archivo, vuelvo al inicio y releo
-			if(readed != 0) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
+			if(readed != -dim) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
 			rewind(metric->file_bw);
 			readed = 0;
 			for(i=0; i<metric->ord; i++)
