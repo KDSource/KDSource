@@ -12,34 +12,28 @@ class T4Tally:
 
 	def __init__(self, filename, tallyname, J=1):
 		self.J = J
-		try:
-			file = open(filename, "r")
-		except FileNotFoundError:
-			print("Error: {} no encontrado".format(filename))
+		file = open(filename, "r")
 		# Buscar bloque de SCOREs
 		for line in file:
 			if "SCORE" in line:
 				break
 		else:
-			print("Error: Archivo no tiene SCORE")
 			file.close()
-			return
+			raise Exception("Archivo no tiene SCORE")
 		# Buscar tally deseado
 		for line in file:
 			if tallyname in line:
 				break
 			if "END_SCORE" in line:
-				print("Error: No se encontro score {}".format(tallyname))
 				file.close()
-				return
+				raise Exception("No se encontro score {}".format(tallyname))
 		file.readline() # Response
 		file.readline() # Estimator
 		file.readline() # Energy grid
 		# Leer grilla
 		if not "EXTENDED_MESH" in file.readline():
-			print("Error: La grilla debe ser EXTENDED_MESH")
 			file.close()
-			return
+			raise Exception("La grilla debe ser EXTENDED_MESH")
 		file.readline() # WINDOW
 		mins = np.double(file.readline().split())
 		maxs = np.double(file.readline().split())
@@ -50,9 +44,8 @@ class T4Tally:
 		self.grids = [grid1, grid2, grid3]
 		# Leer coordenadas
 		if not "FRAME CARTESIAN" in file.readline():
-			print("Error: Se debe tener FRAME CARTESIAN")
 			file.close()
-			return
+			raise Exception("Se debe tener FRAME CARTESIAN")
 		self.origin = np.double(file.readline().split())
 		self.dx1 = np.double(file.readline().split())
 		self.dx2 = np.double(file.readline().split())
@@ -65,9 +58,8 @@ class T4Tally:
 			if "SCORE NAME : "+tallyname in line:
 				break
 		else:
-			print("Error: No se encontro tally {}".format(tallyname))
 			file.close()
-			return
+			raise Exception("No se encontro tally {}".format(tallyname))
 		for line in file:
 			if "Energy range" in line:
 				break

@@ -12,6 +12,7 @@ class PList:
 		else:
 			self.readfun = readformat
 			self.readformat = readformat.__name__[:-5]
+		file = open(filename); file.close() # Chequear que archivo existe
 		self.filename = filename
 		self.pt = pt
 		if trasl is not None:
@@ -33,10 +34,7 @@ class PList:
 			self.N = 1
 
 	def set_params(self):
-		try:
-			file = open(self.filename, "r")
-		except FileNotFoundError:
-			print("Error: {} no encontrado".format(self.filename))
+		file = open(self.filename, "r")
 		I = p2 = N = 0
 		if self.start is not None: read = False
 		else: read = True
@@ -63,10 +61,7 @@ class PList:
 		self.params_set = True
 
 	def get(self, N=-1, skip=0):
-		try:
-			file = open(self.filename, "r")
-		except FileNotFoundError:
-			print("Error: {} no encontrado".format(self.filename))
+		file = open(self.filename, "r")
 		parts = []
 		ws = []
 		cont = 0

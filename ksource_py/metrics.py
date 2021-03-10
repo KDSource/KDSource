@@ -205,15 +205,15 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__(["mu","phi"], ["[mu]","rad"], "sr")
+		super().__init__(["mu","phi"], ["[mu]","deg"], "[mu]deg")
 	def transform(self, dirs):
 		mus = dirs[:,2]
-		phis = np.arctan2(dirs[:,1], dirs[:,0])
+		phis = np.arctan2(dirs[:,1], dirs[:,0]) * 180/np.pi
 		return np.stack((mus, phis), axis=1)
 	def inverse_transform(self, tps):
 		mus = tps[:,0]
 		phis = tps[:,1]
-		xs = np.sqrt(1-mus**2) * np.cos(phis)
-		ys = np.sqrt(1-mus**2) * np.sin(phis)
-		zs = mus
-		return np.stack((xs, ys, zs), axis=1)
+		dxs = np.sqrt(1-mus**2) * np.cos(phis*np.pi/180)
+		dys = np.sqrt(1-mus**2) * np.sin(phis*np.pi/180)
+		dzs = mus
+		return np.stack((dxs, dys, dzs), axis=1)

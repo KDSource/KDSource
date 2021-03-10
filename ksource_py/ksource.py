@@ -29,15 +29,14 @@ class KSource:
 			self.bw = bw * np.ones((metric.dim))
 			self.bw_method = None
 		else:
-			print("Error: Invalid bandwidth")
+			raise Exceprion("Invalid bandwidth")
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.J = J
 
 	def fit(self, N=-1, skip=0, **kwargs):
 		parts,ws = self.plist.get(N, skip)
 		if len(parts) == 0:
-			print("Error: No hay particulas para entrenamiento")
-			return
+			raise Exceprion("No hay particulas para entrenamiento")
 		print("Usando {} particulas para entrenamiento".format(len(parts)))
 		self.vecs = self.metric.transform(parts)
 		self.ws = ws
@@ -142,7 +141,7 @@ class KSource:
 			self.bw = bw_knn
 		#
 		else:
-			print("Error: Invalid method")
+			raise Exceprion("Invalid method")
 
 	def plot_point(self, grid, idx, part0, **kwargs):
 		if isinstance(idx, str):
@@ -158,7 +157,7 @@ class KSource:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		lbl = "part = "+str(part0)
+		lbl = "part = "+np.array_str(np.array(part0), precision=2)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
@@ -198,7 +197,7 @@ class KSource:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		lbl = str(vec0)+" <= vec <= "+str(vec1)
+		lbl = np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
@@ -221,8 +220,7 @@ class KSource:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		if sum(mask) == 0:
-			print("Error: No hay tracks en el rango pedido")
-			return
+			raise Exception("No hay tracks en el rango pedido")
 		vecs = self.vecs[:,0][mask].reshape(-1,1)
 		ws = self.ws[mask]
 		bw = self.bw[0]
@@ -238,7 +236,7 @@ class KSource:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		lbl = str(vec0)+" <= vec <= "+str(vec1)
+		lbl = np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
 		plt.errorbar(grid_E, scores, errs, fmt='-s', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
@@ -270,7 +268,7 @@ class KSource:
 		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
 		plt.colorbar()
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.volunits)
-		title += "\npart = "+str(part0)
+		title += "\npart = "+np.array_str(np.array(part0), precision=2)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(varnames[idxs[1]], units[idxs[1]]))
@@ -317,7 +315,7 @@ class KSource:
 		else:
 			units = self.metric.units[idxs[0]] + self.metric.units[idxs[1]]
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
-		title += "\n"+str(vec0)+" <= vec <= "+str(vec1)
+		title += "\n"+np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[1]], self.metric.units[idxs[1]]))
