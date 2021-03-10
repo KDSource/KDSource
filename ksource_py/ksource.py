@@ -6,11 +6,14 @@ import matplotlib.colors as col
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 
+from .aux import R_gaussian,C_gaussian
+
+np.set_printoptions(precision=3)
+
+
 varnames = ["E", "x","y","z", "dx","dy","dz"]
 varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm","cm","cm", "","",""]
-
-R_gaussian = 1 / (2*np.pi) # Roughness of gaussian kernel
 
 class KSource:
 	def __init__(self, plist, metric, bw="silv", J=1):
@@ -48,7 +51,8 @@ class KSource:
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts, bw=self.bw)
 		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
-		errs = np.sqrt(scores * R_gaussian**self.metric.dim / (len(parts) * np.prod(self.bw)))
+		N_eff = np.sum(self.ws)**2 / np.sum(self.ws**2)
+		errs = np.sqrt(scores * R_gaussian**self.metric.dim / (N_eff * np.prod(self.bw)))
 		scores *= self.J * jacs
 		errs *= self.J * jacs
 		return np.array([scores, errs])
@@ -80,13 +84,11 @@ class KSource:
 		std = self.metric.std(vecs=vecs)
 		#
 		if self.bw_method == 'silv': # Metodo de Silverman
-			C_silv = 0.9397 # Cte de Silverman (revisar)
-			bw_silv = C_silv * std * N_tot**(-1/(4+self.metric.dim))
+			bw_silv = C_gaussian(self.metric.dim) * std * N_tot**(-1/(4+self.metric.dim))
 			self.bw = bw_silv
 		#
 		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
-			C_silv = 0.9397 # Cte de Silverman (revisar)
-			bw_silv = C_silv * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
+			bw_silv = C_gaussian(self.metric.dim) * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
 			if "shift" in kwargs: bw_silv *= kwargs["shift"]
 			#
 			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
@@ -188,7 +190,8 @@ class KSource:
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
 		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
-		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
+		N_eff = np.sum(ws)**2 / np.sum(ws**2)
+		errs = np.sqrt(scores * R_gaussian / (N_eff * bw))
 		scores *= self.J
 		errs *= self.J
 		if "fact" in kwargs:
@@ -295,7 +298,8 @@ class KSource:
 		kde.fit(vecs/bw, sample_weight=ws)
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
 		scores = 1/np.prod(bw) * np.exp(kde.score_samples(grid/bw))
-		errs = np.sqrt(scores * R_gaussian**2 / (len(vecs) * bw[0]*bw[1]))
+		N_eff = np.sum(ws)**2 / np.sum(ws**2)
+		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * bw[0]*bw[1]))
 		scores *= self.J
 		errs *= self.J
 		if "fact" in kwargs:

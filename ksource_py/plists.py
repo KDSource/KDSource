@@ -25,6 +25,7 @@ class PList:
 		if "start" in kwargs: self.start = kwargs["start"]
 		self.end = None
 		if "end" in kwargs: self.end = kwargs["end"]
+		self.params_set = False
 		if set_params:
 			self.set_params()
 		else:
@@ -53,9 +54,13 @@ class PList:
 					N += 1
 		file.close()
 		print("Done")
+		print("I =", I)
+		print("p2 =", p2)
+		print("N =", N)
 		self.I = I
 		self.p2 = p2
 		self.N = N
+		self.params_set = True
 
 	def get(self, N=-1, skip=0):
 		try:
