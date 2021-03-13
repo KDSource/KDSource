@@ -101,10 +101,12 @@ void MetricSepVar_destroy(MetricSepVar* metric){
 
 int E_perturb(Metric* metric, Part* part){
 	part->E += metric->bw[0] * rand_norm();
+	if(part->E < E_MIN) part->E = E_MIN;
 	return 0;
 }
 int Let_perturb(Metric* metric, Part* part){
 	part->E *= exp(metric->bw[0] * rand_norm());
+	if(part->E < E_MIN) part->E = E_MIN;
 	return 0;
 }
 
@@ -112,42 +114,45 @@ int Vol_perturb(Metric* metric, Part* part){
 	part->pos[0] += metric->bw[0] * rand_norm();
 	part->pos[1] += metric->bw[1] * rand_norm();
 	part->pos[2] += metric->bw[2] * rand_norm();
+	if(part->pos[0] < metric->geom_par[0]) part->pos[0] = metric->geom_par[0];
+	else if(part->pos[0] > metric->geom_par[1]) part->pos[0] = metric->geom_par[1];
+	if(part->pos[1] < metric->geom_par[2]) part->pos[1] = metric->geom_par[2];
+	else if(part->pos[1] > metric->geom_par[3]) part->pos[1] = metric->geom_par[3];
+	if(part->pos[2] < metric->geom_par[4]) part->pos[2] = metric->geom_par[4];
+	else if(part->pos[2] > metric->geom_par[5]) part->pos[2] = metric->geom_par[5];
 	return 0;
 }
 int SurfXY_perturb(Metric* metric, Part* part){
 	part->pos[0] += metric->bw[0] * rand_norm();
 	part->pos[1] += metric->bw[1] * rand_norm();
+	if(part->pos[0] < metric->geom_par[0]) part->pos[0] = metric->geom_par[0];
+	else if(part->pos[0] > metric->geom_par[1]) part->pos[0] = metric->geom_par[1];
+	if(part->pos[1] < metric->geom_par[2]) part->pos[1] = metric->geom_par[2];
+	else if(part->pos[1] > metric->geom_par[3]) part->pos[1] = metric->geom_par[3];
 	return 0;
 }
 int Guide_perturb(Metric* metric, Part* part){
-	double x=part->pos[0], y=part->pos[1], z=part->pos[2];
-	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], rcurv=metric->geom_par[2];
+	double t, x=part->pos[0], y=part->pos[1], z=part->pos[2];
+	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zlength=metric->geom_par[2], rcurv=metric->geom_par[3];
 	if(rcurv != 0){
 		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
 		x = copysign(1, rcurv) * r - rcurv;
 		z = fabs(rcurv) * asin(z / r);
 	}
+	if     ((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth)) t = 0.5*yheight + y;              // espejo x pos
+	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)) t = 1.0*yheight + 0.5*xwidth - x; // espejo y pos
+	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)) t = 1.5*yheight + 1.0*xwidth - y; // espejo x neg
+	else                                                        t = 2.0*yheight + 1.5*xwidth + x; // espejo y neg
 	z += metric->bw[0] * rand_norm();
-	if( (y/yheight > -x/xwidth) && (y/yheight <  x/xwidth) ){ // espejo x pos
-		y += metric->bw[1] * rand_norm();
-		if(y >  yheight/2){ x -=  y-yheight/2; y =  yheight/2; }
-		if(y < -yheight/2){ x -= -y-yheight/2; y = -yheight/2; }
-	}
-	if( (y/yheight >  x/xwidth) && (y/yheight > -x/xwidth) ){ // espejo y pos
-		x += metric->bw[1] * rand_norm();
-		if(x >  xwidth/2){ y -=  x-xwidth/2; x =  xwidth/2; }
-		if(x < -xwidth/2){ y -= -x-xwidth/2; x = -xwidth/2; }
-	}
-	if( (y/yheight < -x/xwidth) && (y/yheight >  x/xwidth) ){ // espejo x neg
-		y += metric->bw[1] * rand_norm();
-		if(y >  yheight/2){ x +=  y-yheight/2; y =  yheight/2; }
-		if(y < -yheight/2){ x += -y-yheight/2; y = -yheight/2; }
-	}
-	if( (y/yheight <  x/xwidth) && (y/yheight < -x/xwidth) ){ // espejo y neg
-		x += metric->bw[1] * rand_norm();
-		if(x >  xwidth/2){ y +=  x-xwidth/2; x =  xwidth/2; }
-		if(x < -xwidth/2){ y += -x-xwidth/2; x = -xwidth/2; }
-	}
+	t += metric->bw[1] * rand_norm();
+	if(z < 0) z = 0;
+	else if(z > zlength) z = zlength;
+	while(t < 0) t += 2*(xwidth+yheight);
+	while(t > 2*(xwidth+yheight)) t -= 2*(xwidth+yheight);
+	if     (t < yheight)                                    {x =  xwidth /2; y =  t - 0.5*yheight;             } // espejo x pos
+	else if((t > yheight)        && (t <   yheight+xwidth)) {y =  yheight/2; x = -t + 1.0*yheight + 0.5*xwidth;} // espejo y pos
+	else if((t > yheight+xwidth) && (t < 2*yheight+xwidth)) {x = -xwidth /2; y = -t + 1.5*yheight + 1.0*xwidth;} // espejo x neg
+	else                                                    {y = -yheight/2; x =  t - 2.0*yheight - 1.5*xwidth;} // espejo y neg
 	if(rcurv != 0){
 		double r = (rcurv + x) * copysign(1, rcurv);
 		double ang = z / fabs(rcurv);
@@ -161,21 +166,30 @@ int Guide_perturb(Metric* metric, Part* part){
 }
 
 int Isotrop_perturb(Metric* metric, Part* part){
-	double xi = (double)rand()/RAND_MAX;
-	double w = 1;
-	if(metric->bw[2] > BW_MIN) w += metric->bw[2]*metric->bw[2] * log(xi+(1-xi)*exp(-2/(metric->bw[2]*metric->bw[2])));
-	double phi = 2.*M_PI*rand()/RAND_MAX;
-	double uv = sqrt(1-w*w), u = uv*cos(phi), v = uv*sin(phi);
-	double x=part->dir[0], y=part->dir[1], z=part->dir[2];
-	if(part->dir[2] > 0){
-		part->dir[0] = u*z + w*x - (v*x-u*y)*y/(1+z);
-		part->dir[1] = v*z + w*y + (v*x-u*y)*x/(1+z);
+	if(metric->bw[0] == INFINITY){
+		part->dir[2] = -1 + 2.*rand()/RAND_MAX;
+		double dxy = sqrt(1-part->dir[2]*part->dir[2]);
+		double phi = 2.*M_PI*rand()/RAND_MAX;
+		part->dir[0] = dxy*cos(phi);
+		part->dir[1] = dxy*sin(phi);
 	}
 	else{
-		part->dir[0] = u*z + w*x + (v*x-u*y)*y/(1-z);
-		part->dir[1] = v*z + w*y - (v*x-u*y)*x/(1-z);
+		double xi = (double)rand()/RAND_MAX;
+		double w = 1;
+		if(metric->bw[2] > BW_MIN) w += metric->bw[2]*metric->bw[2] * log(xi+(1-xi)*exp(-2/(metric->bw[2]*metric->bw[2])));
+		double phi = 2.*M_PI*rand()/RAND_MAX;
+		double uv = sqrt(1-w*w), u = uv*cos(phi), v = uv*sin(phi);
+		double x=part->dir[0], y=part->dir[1], z=part->dir[2];
+		if(part->dir[2] > 0){
+			part->dir[0] = u*z + w*x - (v*x-u*y)*y/(1+z);
+			part->dir[1] = v*z + w*y + (v*x-u*y)*x/(1+z);
+		}
+		else{
+			part->dir[0] = u*z + w*x + (v*x-u*y)*y/(1-z);
+			part->dir[1] = v*z + w*y - (v*x-u*y)*x/(1-z);
+		}
+		part->dir[2] = w*z - u*x - v*y;
 	}
-	part->dir[2] = w*z - u*x - v*y;
 	return 0;
 }
 

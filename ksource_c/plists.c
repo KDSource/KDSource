@@ -13,10 +13,13 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 	int i;
 	FILE* files[ord];
 	for(i=0; i<ord; i++)
-		if((files[i]=fopen(filenames[i], "r")) == 0){
-			printf("Error: No se pudo abrir archivo %s\n", filenames[i]);
-			return NULL;
+		if(filenames[i]){
+			if((files[i]=fopen(filenames[i], "r")) == 0){
+				printf("Error: No se pudo abrir archivo %s\n", filenames[i]);
+				return NULL;
+			}
 		}
+		else files[i] = NULL;
 	plist->files = (FILE**)malloc(ord * sizeof(FILE*));
 	plist->read = (ReadFun*)malloc(ord * sizeof(ReadFun));
 	for(i=0; i<ord; i++){
@@ -61,20 +64,19 @@ int PList_get(PList* plist, Part* part, double* w){
 
 int PList_next(PList* plist){
 	double w=1, wi;
-	Part part;
-	int i;
-	int part_updated;
+	Part part = {1, {0,0,0}, {0,0,1}};
+	int i, cont=0;
 	for(i=0; i<plist->ord; i++){
-		part_updated = 0;
-		while(!part_updated){
-			if(plist->files[i]){ // Si hay archivo, leo una linea
+		wi = 1;
+		if(plist->files[i])  // Si hay archivo, tengo que actualizar part
+			while(cont++ < MAX_SEARCH){
 				if(!fgets(plist->line, LINE_MAX_LEN, plist->files[i])){ // Si llego al final, vuelvo al principio
 					rewind(plist->files[i]);
 					fgets(plist->line, LINE_MAX_LEN, plist->files[i]);
 				}
+				if(plist->read[i](plist->line, &part, &wi)) break; // Extraigo linea
 			}
-			if(plist->read[i](plist->line, &part, &wi)) part_updated = 1; // Extraigo linea
-		}
+		if(cont > MAX_SEARCH) printf("Warning en PList_next: No se encontro particula\n");
 		w *= wi;
 	}
 	*plist->part = part;
@@ -112,7 +114,7 @@ int PTRAC_read(char* line, Part* part, double* w){
 	return (nreaded == 9);
 }
 
-int Tripoli_read_part(char* line, Part* part, double* w){
+int T4stock_part(char* line, Part* part, double* w){
 	if(strncmp(line,"NEUTRON",7)==0 || strncmp(line,"PHOTON",6)==0){
 		sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
 			&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w);
@@ -130,25 +132,13 @@ int SSV_read(char* line, Part* part, double* w){
 
 int Decay_read(char* line, Part* part, double* w){
 	double aux;
-	sscanf(line, "%lf,%lf,%lf", &part->E, &aux, w);
-	return 1;
+	int nreaded = sscanf(line, "%lf,%lf,%lf", &part->E, &aux, w);
+	part->E /= 1000;
+	return (nreaded == 3);
 }
-
-int Tripoli_read_pos(char* line, Part* part, double* w){
+int SSVtally_read(char* line, Part* part, double* w){
 	double aux;
-	if(strncmp(line,"NEUTRON",7)==0 || strncmp(line,"PHOTON",6)==0){
-		sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
-			&aux, &part->pos[0], &part->pos[1], &part->pos[2], &aux, &aux, &aux, w);
-		return 1;
-	}
-	return 0;
-}
-
-int Isotrop_read(char* line, Part* part, double* w){
-	*w = 1;
-	part->dir[2] = -1 + 2.*rand()/RAND_MAX;
-	double dxy = sqrt(1-part->dir[2]*part->dir[2]);
-	double phi = 2.*M_PI*rand()/RAND_MAX;
-	part->dir[0] = dxy*cos(phi);
-	part->dir[1] = dxy*sin(phi);
+	int nreaded = sscanf(line, "%le %le %le %le %le",
+		&part->pos[0], &part->pos[1], &part->pos[2], w, &aux);
+	return (nreaded == 4);
 }

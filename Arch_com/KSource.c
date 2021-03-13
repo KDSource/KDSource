@@ -17,25 +17,26 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 /************************************************* Input *****************************************************/
 	
+	#define ord 3
 	char pt = 'n';
-    char* filename = "../1_guia_n_knn/D_tracks.ssv";
-    ReadFun readfun = SSV_read;
-    double trasl_plist[3] = {0, 0, 300};
-    double rot_plist[3] = {0, 0, M_PI};
+    char* filenames[ord] = {"../Decay/Fe59.csv", "../2_bunker_n_bw0/activ_fe.ssv", NULL};
+    ReadFun readfuns[ord] = {Decay_read, SSVtally_read, NULL};
+    double trasl_plist[3] = {0, 0, 0};
+    double rot_plist[3] = {0, 0, 0};
     int switch_x2z = 0;
 
-    int dims[3] = {1, 2, 3};
+    int dims[3] = {1, 3, 3};
     double bw_E[1] = {0};
-    double bw_pos[2] = {0,0};
-    double bw_dir[3] = {0,0,0};
-    char* bwfilename = "../1_guia_n_knn/D_tracks_bw_knn.txt"; // NULL;
-    int variable_bw = 1;
-    PerturbFun perturb[] = {Let_perturb, Guide_perturb, Isotrop_perturb};
-    int n_gp[3] = {0, 3, 0};
+    double bw_pos[3] = {1.831, 2.362, 126.326};
+    double bw_dir[3] = {INFINITY,INFINITY,INFINITY};
+    char* bwfilename = NULL; // "../1_guia_n_knn/D_tracks_bw_knn.txt"; // 
+    int variable_bw = 0;
+    PerturbFun perturb[] = {Let_perturb, Vol_perturb, Isotrop_perturb};
+    int n_gp[3] = {0, 6, 0};
     double gp_E[] = {};
-    double gp_pos[] = {7, 20, -92900};
+    double gp_pos[] = {-10,30,-15,15,0,2360}; // {7, 20, -92900};
     double gp_dir[] = {};
-    double trasl_metric[3] = {0, 0, 300};
+    double trasl_metric[3] = {0, 0, 0};
     double rot_metric[3] = {0, 0, 0};
 
 /*********************************************** Fin Input ***************************************************/
@@ -54,7 +55,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(initialized == 0){
 		printf("\nCargando fuentes...  ");
 		
-		plist = PListSimple_create(pt, filename, readfun, trasl_plist, rot_plist, switch_x2z);
+		plist = PList_create(pt, ord, filenames, readfuns, trasl_plist, rot_plist, switch_x2z);
     	Metric* metrics[3] = {Metric_create(dims[0], bw_E, perturb[0], n_gp[0], gp_E),
     	                      Metric_create(dims[1], bw_pos, perturb[1], n_gp[1], gp_pos),
     	                      Metric_create(dims[2], bw_dir, perturb[2], n_gp[2], gp_dir)};

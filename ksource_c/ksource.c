@@ -5,6 +5,12 @@
 
 #include "ksource.h"
 
+
+void Part_print(Part part){
+	printf("(%.3le, (%.3lf, %.3lf, %.3lf), (%.3lf, %.3lf, %.3lf))\n",
+		part.E, part.pos[0], part.pos[1], part.pos[2], part.dir[0], part.dir[1], part.dir[2]);
+}
+
 KSource* KS_create(double J, PList* plist, MetricSepVar* metric){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
 	ks->J = J;

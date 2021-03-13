@@ -6,6 +6,7 @@
 #define PLISTS_H
 
 
+#define MAX_SEARCH 1E5
 #define LINE_MAX_LEN 256
 
 typedef struct Part Part;
@@ -44,7 +45,7 @@ int T4stock_read(char* line, Part* part, double* w);
 int SSV_read(char* line, Part* part, double* w);
 
 int Decay_read(char* line, Part* part, double* w);
-int T4pos_read(char* line, Part* part, double* w);
+int SSVtally_read(char* line, Part* part, double* w);
 int Isotrop_read(char* line, Part* part, double* w);
 
 

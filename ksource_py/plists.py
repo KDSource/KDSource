@@ -5,14 +5,9 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class PList:
-	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True, **kwargs):
-		if isinstance(readformat, str):
-			self.readformat = readformat
-			exec("self.readfun = "+readformat+"_read")
-		else:
-			self.readfun = readformat
-			self.readformat = readformat.__name__[:-5]
-		file = open(filename); file.close() # Chequear que archivo existe
+	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
+		self.readformat = readformat
+		exec("self.readfun = "+readformat+"_read")
 		self.filename = filename
 		self.pt = pt
 		if trasl is not None:
@@ -22,10 +17,6 @@ class PList:
 		self.trasl = trasl
 		self.rot = rot
 		self.x2z = switch_x2z
-		self.start = None
-		if "start" in kwargs: self.start = kwargs["start"]
-		self.end = None
-		if "end" in kwargs: self.end = kwargs["end"]
 		self.params_set = False
 		if set_params:
 			self.set_params()
@@ -36,25 +27,17 @@ class PList:
 	def set_params(self):
 		file = open(self.filename, "r")
 		I = p2 = N = 0
-		if self.start is not None: read = False
-		else: read = True
 		print("Reading file", self.filename, "...")
 		for line in file:
-			if not read:
-				if self.start in line: read = True
-			else:
-				if self.end is not None and self.end in line: break
-				part_w = self.readfun(line)
-				if part_w is not None: # Linea de texto es particula
-					w = part_w[1]
-					I += w
-					p2 += w*w
-					N += 1
+			part_w = self.readfun(line)
+			if part_w is not None: # Linea de texto es particula
+				w = part_w[1]
+				I += w
+				p2 += w*w
+				N += 1
 		file.close()
 		print("Done")
-		print("I =", I)
-		print("p2 =", p2)
-		print("N =", N)
+		print("I = {}\np2 = {}\nN = {}".format(I, p2, N))
 		self.I = I
 		self.p2 = p2
 		self.N = N
@@ -65,22 +48,20 @@ class PList:
 		parts = []
 		ws = []
 		cont = 0
-		if self.start is not None: read = False
-		else: read = True
 		for line in file:
-			if not read:
-				if self.start in line: read = True
-			else:
-				if self.end is not None and self.end in line: break
-				part_w = self.readfun(line)
-				if part_w is not None: # Linea de texto es particula
-					part,w = part_w
-					if cont >= skip: 
-						parts.append(part)
-						ws.append(w)
-					cont += 1
-					if N>0 and cont==skip+N:
-						break
+			part_w = self.readfun(line)
+			if part_w is not None: # Linea de texto es particula
+				cont += 1
+				if cont == skip: break
+		cont = 0
+		for line in file:
+			part_w = self.readfun(line)
+			if part_w is not None: # Linea de texto es particula
+				part,w = part_w
+				parts.append(part)
+				ws.append(w)
+				cont += 1
+				if cont==N: break
 		file.close()
 		parts = np.array(parts)
 		ws = np.array(ws)
@@ -141,18 +122,17 @@ def SSV_read(line):
 		return [part,w]
 	return None
 
-def T4tally_read(line):
-	line = line.split()
-	if len(line) and len(line[0]) and (line[0][0]=="(" and line[0][-1]==")"): # Linea de texto es particula
-		[x,y,z] = np.double(line[0][1:-1].split(sep=","))
-		part = [x,y,z]
-		w = np.double(line[1])
-		return [part,w]
-	return None
-
 def Decay_read(line):
 	line = line.split()
 	E = np.double(line[0])
 	w = np.double(line[2])
 	E = np.array([E])
 	return [E,w]
+
+def SSVtally_read(line):
+	line = line.split()
+	if len(line) == 4: # Linea de texto es particula
+		[x,y,z,w] = np.double(line)
+		pos = [x,y,z]
+		return [pos,w]
+	return None

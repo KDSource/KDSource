@@ -27,33 +27,59 @@ class T4Tally:
 			if "END_SCORE" in line:
 				file.close()
 				raise Exception("No se encontro score {}".format(tallyname))
-		file.readline() # Response
-		file.readline() # Estimator
-		file.readline() # Energy grid
-		# Leer grilla
-		if not "EXTENDED_MESH" in file.readline():
+		# Buscar grilla
+		for line in file:
+			if "EXTENDED_MESH" in line:
+				break
+			if "NAME" in line or "END_SCORE" in line:
+				file.close()
+				raise Exception("No se encontro grilla EXTENDED_MESH")
+		# Leer grillas
+		buf = []
+		idx = line.split().index("EXTENDED_MESH")
+		buf.extend(line.split()[idx+1:]) # Acumular datos luego de EXTENDED_MESH
+		for line in file:
+			if "FRAME" in line:
+				break
+			buf.extend(line.split())
+		idx = line.split().index("FRAME")
+		buf.extend(line.split()[:idx]) # Acumular datos antes de FRAME
+		if len(buf) != 10:
 			file.close()
-			raise Exception("La grilla debe ser EXTENDED_MESH")
-		file.readline() # WINDOW
-		mins = np.double(file.readline().split())
-		maxs = np.double(file.readline().split())
-		Ns = list(map(int, file.readline().split()))
+			raise Exception("No se pudo leer EXTENDED_MESH")
+		mins = np.double(buf[1:4])
+		maxs = np.double(buf[4:7])
+		Ns = list(map(int, buf[7:10]))
 		grid1 = np.linspace(mins[0], maxs[0], Ns[0]+1)
 		grid2 = np.linspace(mins[1], maxs[1], Ns[1]+1)
 		grid3 = np.linspace(mins[2], maxs[2], Ns[2]+1)
 		self.grids = [grid1, grid2, grid3]
 		# Leer coordenadas
-		if not "FRAME CARTESIAN" in file.readline():
+		if not "FRAME CARTESIAN" in line:
 			file.close()
 			raise Exception("Se debe tener FRAME CARTESIAN")
-		self.origin = np.double(file.readline().split())
-		self.dx1 = np.double(file.readline().split())
-		self.dx2 = np.double(file.readline().split())
-		self.dx3 = np.double(file.readline().split())
-		# Crear array 3D para almacenar tally
+		buf = []
+		idx = line.split().index("CARTESIAN")
+		buf.extend(line.split()[idx+1:]) # Acumular datos luego de CARTESIAN
+		for line in file:
+			if "NAME" in line:
+				idx = line.split().index("NAME")
+				break
+			if "END_SCORE" in line:
+				idx = line.split().index("END_SCORE")
+				break
+			buf.extend(line.split())
+		buf.extend(line.split()[:idx]) # Acumular datos antes de NAME o END_SCORE
+		if len(buf) != 12:
+			file.close()
+			raise Exception("No se pudo leer FRAME CARTESIAN")
+		self.origin = np.double(buf[:3])
+		self.dx1 = np.double(buf[3:6])
+		self.dx2 = np.double(buf[6:9])
+		self.dx3 = np.double(buf[9:12])
+		# Buscar tally
 		I = []
 		err = []
-		# Buscar tally
 		for line in file:
 			if "SCORE NAME : "+tallyname in line:
 				break
@@ -76,23 +102,45 @@ class T4Tally:
 		self.I = np.reshape(I, Ns)
 		self.err = np.reshape(err, Ns)
 
-	def plot(self, idx, cells=[0,0], **kwargs):
+	def save_tracks(self, filename):
+		grids = [(grid[:-1]+grid[1:])/2 for grid in self.grids]
+		poss = np.reshape(np.meshgrid(*grids, indexing='ij'),(3,-1)).T
+		ws = self.I.reshape(-1)
+		poss = poss[ws>0]
+		ws = ws[ws>0]
+		ws /= ws.mean()
+		poss_ws = np.concatenate((poss, ws[:,np.newaxis]), axis=1)
+		np.savetxt(filename, poss_ws)
+		print("Lista de tracks guardada exitosamente")
+
+	def plot(self, idx, cells=None, **kwargs):
 		if isinstance(idx, str):
 			idx = self.varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
-		slc = cells.copy()
-		slc.insert(idx, slice(None))
-		scores = self.J * self.I[tuple(slc)]
-		errs = self.J * self.err[tuple(slc)]
+		idxs = [0,1,2]
+		idxs.remove(idx)
+		if cells is None: # Promediar en las otras variables
+			scores = np.mean(self.I, axis=idxs)
+			errs = np.sqrt(np.sum(self.err**2, axis=idxs)) / (self.err.shape[idxs[0]]*self.err.shape[idxs[1]])
+		else: # Graficar para las celdas indicada
+			slc = cells.copy()
+			slc.insert(idx, slice(None))
+			scores = self.J * self.I[tuple(slc)]
+			errs = self.J * self.err[tuple(slc)]
+		if np.sum(scores) == 0:
+			print("Tally nulo en la region a graficar")
+			return [None, [scores,errs]]
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
-		idxs = [0,1,2]
-		idxs.remove(idx)
-		lbl = str(self.grids[idxs[0]][cells[0]])+" <= "+self.varnames[idxs[0]]+" <= "+str(self.grids[idxs[0]][cells[0]+1])
-		lbl += str(self.grids[idxs[1]][cells[1]])+" <= "+self.varnames[idxs[1]]+" <= "+str(self.grids[idxs[1]][cells[1]+1])
+		if cells is None:
+			lbl = str(self.grids[idxs[0]][0])+" <= "+self.varnames[idxs[0]]+" <= "+str(self.grids[idxs[0]][-1])
+			lbl += str(self.grids[idxs[1]][0])+" <= "+self.varnames[idxs[1]]+" <= "+str(self.grids[idxs[1]][-1])
+		else:
+			lbl = str(self.grids[idxs[0]][cells[0]])+" <= "+self.varnames[idxs[0]]+" <= "+str(self.grids[idxs[0]][cells[0]+1])
+			lbl += str(self.grids[idxs[1]][cells[1]])+" <= "+self.varnames[idxs[1]]+" <= "+str(self.grids[idxs[1]][cells[1]+1])
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
@@ -103,7 +151,7 @@ class T4Tally:
 		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot2D(self, idxs, cell=0, **kwargs):
+	def plot2D(self, idxs, cell=None, **kwargs):
 		if isinstance(idxs[0], str):
 			idxs = [self.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "log"
@@ -111,16 +159,25 @@ class T4Tally:
 		idx.remove(idxs[0])
 		idx.remove(idxs[1])
 		idx = idx[0]
-		slc = 2 * [slice(None)]
-		slc.insert(idx, cell)
-		scores = self.J * self.I[tuple(slc)]
-		errs = self.J * self.err[tuple(slc)]
+		if cell is None: # Promediar en la variable idx
+			scores = np.mean(self.I, axis=idx)
+			errs = np.sqrt(np.sum(self.err**2, axis=idx)) / self.err.shape[idx]
+		else: # Graficar para la celda indicada
+			slc = 2 * [slice(None)]
+			slc.insert(idx, cell)
+			scores = self.J * self.I[tuple(slc)]
+			errs = self.J * self.err[tuple(slc)]
+		if np.sum(scores) == 0:
+			print("Tally nulo en la region a graficar")
+			return [None, [scores,errs]]
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
-		if idxs[1] > idxs[0]:
+		if idxs[0] > idxs[1]:
 			scores = np.transpose(scores)
 			errs = np.transpose(errs)
+		scores = np.rot90(scores)
+		errs = np.rot90(errs)
 		#
 		if kwargs["scale"] == "log": norm = col.LogNorm()
 		else: norm = None
@@ -128,7 +185,10 @@ class T4Tally:
 		plt.imshow(scores, extent=extent, cmap="jet", norm=norm, aspect='auto')
 		plt.colorbar()
 		title = "Tally"
-		title += "\n"+str(self.grids[idx][cell])+" <= "+self.varnames[idx]+" <= "+str(self.grids[idx][cell+1])
+		if cell is None:
+			title += "\n"+str(self.grids[idx][0])+" <= "+self.varnames[idx]+" <= "+str(self.grids[idx][-1])
+		else:
+			title += "\n"+str(self.grids[idx][cell])+" <= "+self.varnames[idx]+" <= "+str(self.grids[idx][cell+1])
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.varnames[idxs[0]], self.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.varnames[idxs[1]], self.units[idxs[1]]))

@@ -24,6 +24,8 @@ typedef struct Part{
 	double dir[3];
 } Part;
 
+void Part_print(Part part);
+
 typedef int (*KSSampleFun)(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
 typedef int (*MSSampleFun)(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
 

@@ -6,6 +6,7 @@
 #define METRICS_H
 
 #define BW_MIN 1e-5
+#define E_MIN 1e-11
 
 
 typedef struct Part Part;
