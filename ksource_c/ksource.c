@@ -19,7 +19,7 @@ KSource* KS_create(double J, PList* plist, MetricSepVar* metric){
 	return ks;
 }
 
-int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w){
+int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w, WeightFun bias){
 	*pt = ks->plist->pt;
 	if(!normalize_w){
 		PList_get(ks->plist, part, w);
@@ -27,24 +27,27 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w){
 		MetricSepVar_next(ks->metric);
 	}
 	else{ // Normalizo w a 1
+		double bs;
 		int resamples = 0;
 		while(1){
 			PList_get(ks->plist, part, w);
-			if(*w > 1){ // Si w>1, uso 1/w como prob de avanzar en la lista
-				if(rand() < 1/(*w)*RAND_MAX){
+			if(bias) bs = bias(part);
+			else bs = 1;
+			if(*w*bs > 1){ // Si w*bs>1, uso 1/w*bs como prob de avanzar en la lista
+				if(rand() < 1/(*w*bs)*RAND_MAX){
 					PList_next(ks->plist);
 					MetricSepVar_next(ks->metric);
 				}
 				break;
 			}
-			else{ // Si w<1, uso w como prob de tomar la particula
+			else{ // Si w*bs<1, uso w*bs como prob de tomar la particula
 				PList_next(ks->plist);
 				MetricSepVar_next(ks->metric);
-				if(rand() < (*w)*RAND_MAX) break;
+				if(rand() < (*w*bs)*RAND_MAX) break;
 			}
 			if(resamples++ > MAX_RESAMPLES) return 1;
 		}
-		*w = 1;
+		*w = 1/bs;
 	}
 	MetricSepVar_perturb(ks->metric, part);
 	return 0;
@@ -74,12 +77,12 @@ double MS_J(MultiSource* ms){
 	return J;
 }
 
-int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w){
+int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w, WeightFun bias){
 	double y = rand() / ((double)RAND_MAX+1);
 	int i;
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
-	return KS_sample(ms->s[i], pt, part, w, normalize_w);
+	return KS_sample(ms->s[i], pt, part, w, normalize_w, bias);
 }
 
 void MS_destroy(MultiSource* ms){

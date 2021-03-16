@@ -46,7 +46,6 @@ int SSV_read(char* line, Part* part, double* w);
 
 int Decay_read(char* line, Part* part, double* w);
 int SSVtally_read(char* line, Part* part, double* w);
-int Isotrop_read(char* line, Part* part, double* w);
 
 
 #endif

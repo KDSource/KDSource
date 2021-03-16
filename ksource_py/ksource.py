@@ -32,6 +32,7 @@ class KSource:
 			raise Exceprion("Invalid bandwidth")
 		self.kde = KernelDensity(bandwidth=1.0)
 		self.J = J
+		self.fitted = False
 
 	def fit(self, N=-1, skip=0, **kwargs):
 		parts,ws = self.plist.get(N, skip)
@@ -45,8 +46,11 @@ class KSource:
 			self.optimize_bw(**kwargs)
 			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
 		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
+		self.fitted = True
 
 	def score(self, parts):
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
 		vecs = self.metric.transform(parts)
 		jacs = self.metric.jac(parts, bw=self.bw)
 		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
@@ -64,7 +68,7 @@ class KSource:
 		self.plist.save(file)
 		file.write("# Metric\n")
 		file.metric.save(file)
-		if len(self.bw.shape) == 2: file.write("1\n") # Ancho de banda variable
+		if self.bw.ndim == 2: file.write("1\n") # Ancho de banda variable
 		else: file.write("0\n")
 		np.savetxt(file, self.bw.reshape(-1,self.metric.dim))
 
@@ -72,9 +76,15 @@ class KSource:
 		if append:
 			bwfilename = open(bwfilename, "a")
 		np.savetxt(bwfilename, self.bw.reshape(-1,self.metric.dim))
-		
-	def optimize_bw(self, **kwargs):
+
+	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
 		vecs = self.vecs.copy()
+		ws = self.ws.copy()
+		if weightfun is not None: ws *= weightfun(vecs)
+		mask = (ws > 0)
+		if maskfun is not None: mask = np.logical_and(mask, maskfun(vecs))
+		vecs = vecs[mask]
+		ws = ws[mask]
 		N = len(vecs)
 		if "N_tot" in kwargs:
 			N_tot = kwargs["N_tot"]
@@ -144,6 +154,8 @@ class KSource:
 			raise Exceprion("Invalid method")
 
 	def plot_point(self, grid, idx, part0, **kwargs):
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idx, str):
 			idx = varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
@@ -169,11 +181,13 @@ class KSource:
 		return [plt.gcf(), [scores,errs]]
 
 	def plot_integr(self, grid, idx, vec0=None, vec1=None, **kwargs):
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idx, str):
 			idx = self.metric.varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
-		trues = np.array(len(self.vecs)*[True])
+		trues = np.ones(len(self.vecs), dtype=bool)
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
 		else:
@@ -209,7 +223,9 @@ class KSource:
 		return [plt.gcf(), [scores,errs]]
 
 	def plot_E(self, grid_E, vec0=None, vec1=None, **kwargs):
-		trues = np.array(len(self.vecs)*[True])
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
+		trues = np.ones(len(self.vecs), dtype=bool)
 		if vec0 is not None:
 			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
 		else:
@@ -248,6 +264,8 @@ class KSource:
 		return [plt.gcf(), [scores,errs]]
 
 	def plot2D_point(self, grids, idxs, part0, **kwargs):
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idxs[0], str):
 			idxs = [varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
@@ -276,6 +294,8 @@ class KSource:
 		return [plt.gcf(), [scores,errs]]
 
 	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None, **kwargs):
+		if self.fitted == False:
+			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idxs[0], str):
 			idxs = [self.metric.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"

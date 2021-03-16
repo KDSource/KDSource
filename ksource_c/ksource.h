@@ -28,6 +28,7 @@ void Part_print(Part part);
 
 typedef int (*KSSampleFun)(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
 typedef int (*MSSampleFun)(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
+typedef double (*WeightFun)(Part* part);
 
 typedef struct KSource{
 	double J;
@@ -36,7 +37,7 @@ typedef struct KSource{
 } KSource;
 
 KSource* KS_create(double J, PList* plist, MetricSepVar* metric);
-int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w);
+int KS_sample(KSource* ks, char* pt, Part* part, double* w, int normalize_w, WeightFun bias);
 void KS_destroy(KSource* ks);
 
 typedef struct MultiSource{
@@ -48,7 +49,7 @@ typedef struct MultiSource{
 
 MultiSource* MS_create(int len, KSource** s, double* ws);
 double MS_J(MultiSource* ms);
-int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w);
+int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, int normalize_w, WeightFun bias);
 void MS_destroy(MultiSource* ms);
 
 
