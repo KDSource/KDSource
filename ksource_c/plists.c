@@ -93,15 +93,15 @@ int PList_get(PList* plist, Part* part, double* w){
 int PList_next(PList* plist){
 	double w=1, wi;
 	Part part = {1, {0,0,0}, {0,0,1}};
-	int i, cont=0;
+	int i, cont=0, ret=0;
 	for(i=0; i<plist->ord; i++){
 		wi = 1;
 		while(cont++ < MAX_SEARCH){
 			if(plist->files[i]){  // Si hay archivo, leo una linea
 				if(!fgets(plist->line, LINE_MAX_LEN, plist->files[i])){ // Si llego al final, vuelvo al principio
-					printf("Rebobinando lista de tracks\n");
 					rewind(plist->files[i]);
 					fgets(plist->line, LINE_MAX_LEN, plist->files[i]);
+					ret = 1;
 				}
 			}
 			if(plist->read[i](plist->line, &part, &wi)) break; // Extraigo linea
@@ -111,7 +111,7 @@ int PList_next(PList* plist){
 	}
 	plist->part = part;
 	plist->w = w;
-	return 0;
+	return ret;
 }
 
 void PList_destroy(PList* plist){

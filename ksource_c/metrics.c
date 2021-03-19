@@ -41,7 +41,7 @@ MetricSepVar* MSV_create(int ord, Metric** metrics, char* bwfilename, int variab
 	metric->ord = ord;
 	int i;
 	metric->ms = (Metric**)malloc(ord * sizeof(Metric*));
-	for(i=0; i<ord; i++) metric->ms[i] = Metric_copy(metrics[i]);
+	for(i=0; i<ord; i++) metric->ms[i] = metrics[i];
 	strcpy(metric->bwfilename, bwfilename);
 	if(strlen(bwfilename)){
 		FILE* bwfile;
@@ -114,7 +114,6 @@ int MSV_next(MetricSepVar* metric){
 				readed += fscanf(metric->bwfile, "%lf", &metric->ms[i]->bw[j]);
 		if(readed < dim){ // Si llego al final del archivo, vuelvo al inicio y releo
 			if(readed != -dim) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
-			printf("Rebobinando archivo de anchos de banda\n");
 			rewind(metric->bwfile);
 			readed = 0;
 			for(i=0; i<metric->ord; i++)

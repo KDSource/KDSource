@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
 
 R_gaussian = 1 / (2*np.sqrt(np.pi)) # Roughness of gaussian kernel
@@ -14,6 +15,19 @@ def odd_fact(n):
 
 def C_gaussian(q): # Silverman costant for gaussian kernel and dimension q
 	return (4/(2+q))**(1/(4+q))
+
+def H10Factor(pt='n'):
+	if pt == 'n':
+		E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ARN_neutron", unpack=True)
+	elif pt == 'p':
+		E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ARN_photon", unpack=True)
+	else:
+		raise ValueError("Tipo de particula invalido")
+	log_E = np.log(1E-6*E)
+	log_H10 = np.log(1E-12*H10)
+	lin_interp = interpolate.interp1d(log_E, log_H10)
+	log_interp = lambda EE: np.exp(lin_interp(np.log(EE)))
+	return log_interp
 
 class BoxMask:
 	def __init__(self, vec1, vec2):

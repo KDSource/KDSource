@@ -20,7 +20,9 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 /************************************************* Input *****************************************************/
 	
-	char filename[] = "/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt";
+	#define len 1
+	char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt"};
+	double ws[len] = {1};
 
 /*********************************************** Fin Input ***************************************************/
 
@@ -28,7 +30,8 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 	static long int N_simul;
 
-	static KSource *ksource;
+	static MultiSource *msource;
+	static double w_crit;
 
 	// **************************************** Inicializacion ************************************************
 
@@ -36,9 +39,10 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(initialized == 0){
 		printf("\nCargando fuentes...  ");
 
-		ksource = KS_open(filename);
+		msource = MS_open(len, filenames, ws);
+		w_crit = MS_w_mean(msource, 1000);
 
-		N_simul = param[0];
+		N_simul = (param[0]-1)*param[1] + 500 + 1000;
 
 		srand(time(NULL));
 
@@ -52,7 +56,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	double w;
 	char pt;
 
-	KS_sample(ksource, &pt, &part, &w, 1e-2, NULL);
+	KS_sample(msource, &pt, &part, &w, w_crit, NULL);
 
 	if(pt == 'n') *ipt = 1;
 	else if(pt == 'p') *ipt = 2;
@@ -76,7 +80,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(N%N_simul == 0){
 		printf("\nDestruyendo fuentes...  ");
 		
-		KS_destroy(ksource);
+		KS_destroy(msource);
 
 		initialized = 0;
 		printf("Hecho\n");

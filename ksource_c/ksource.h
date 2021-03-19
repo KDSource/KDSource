@@ -10,7 +10,6 @@
 
 #define MAX_RESAMPLES 1000
 #define LINE_MAX_LEN 256
-#define W_MIN 1E-6
 
 
 typedef struct KSource KSource;
@@ -35,19 +34,21 @@ typedef struct KSource{
 KSource* KS_create(double J, PList* plist, MetricSepVar* metric);
 KSource* KS_open(char* filename);
 int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, WeightFun bias);
+double KS_w_mean(KSource* ks, int N);
 void KS_destroy(KSource* ks);
 
 typedef struct MultiSource{
 	int len;
 	KSource** s;
+	double J; // Corriente total
 	double* ws; // Pesos de cada fuente
 	double* cdf; // cdf de los pesos de fuentes
 } MultiSource;
 
 MultiSource* MS_create(int len, KSource** s, double* ws);
 MultiSource* MS_open(int len, char** filenames, double* ws);
-double MS_J(MultiSource* ms);
 int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, double w_crit, WeightFun bias);
+double MS_w_mean(MultiSource* ms, int N);
 void MS_destroy(MultiSource* ms);
 
 

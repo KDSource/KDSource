@@ -14,8 +14,8 @@ void Part_print(Part* part){
 KSource* KS_create(double J, PList* plist, MetricSepVar* metric){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
 	ks->J = J;
-	ks->plist = PList_copy(plist);
-	ks->metric = MSV_copy(metric);
+	ks->plist = plist;
+	ks->metric = metric;
 	return ks;
 }
 
@@ -163,9 +163,6 @@ KSource* KS_open(char* filename){
 	free(bwfilename);
 	free(bw_E); free(bw_pos); free(bw_dir);
 	for(i=0; i<ord; i++) free(tracksfiles[i]);
-	PList_destroy(plist);
-	Metric_destroy(metric_E); Metric_destroy(metric_pos); Metric_destroy(metric_dir);
-	MSV_destroy(metric);
 	fclose(file);
 
 	return s;
@@ -173,7 +170,7 @@ KSource* KS_open(char* filename){
 
 int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, WeightFun bias){
 	*pt = ks->plist->pt;
-	if(w_crit < W_MIN){
+	if(w_crit <= 0){
 		PList_get(ks->plist, part, w);
 		PList_next(ks->plist);
 		MSV_next(ks->metric);
@@ -205,6 +202,18 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, Weigh
 	return 0;
 }
 
+double KS_w_mean(KSource* ks, int N){
+	int i;
+	char pt;
+	Part part;
+	double w, w_mean=0;
+	for(i=0; i<N; i++){
+		KS_sample(ks, &pt, &part, &w, -1, NULL);
+		w_mean += w;
+	}
+	return w_mean / N;
+}
+
 void KS_destroy(KSource* ks){
 	PList_destroy(ks->plist);
 	MSV_destroy(ks->metric);
@@ -217,10 +226,12 @@ MultiSource* MS_create(int len, KSource** s, double* ws){
 	ms->len = len;
 	ms->s = (KSource**)malloc(len*sizeof(KSource*));
 	ms->ws = (double*)malloc(len*sizeof(double));
+	ms->J = 0;
 	int i;
 	for(i=0; i<len; i++){
 		ms->s[i] = s[i];
 		ms->ws[i] = ws[i];
+		ms->J += s[i]->J;
 	}
 	ms->cdf = (double*)malloc(ms->len*sizeof(double));
 	for(i=0; i<ms->len; i++) ms->cdf[i] = ms->ws[i];
@@ -235,19 +246,21 @@ MultiSource* MS_open(int len, char** filenames, double* ws){
 	return MS_create(len, s, ws);
 }
 
-double MS_J(MultiSource* ms){
-	double J = 0;
-	int i;
-	for(i=0; i<ms->len; i++) J += ms->s[i]->J;
-	return J;
-}
-
 int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, double w_crit, WeightFun bias){
 	double y = rand() / ((double)RAND_MAX+1);
-	int i;
+	int i, ret;
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
-	return KS_sample(ms->s[i], pt, part, w, w_crit, bias);
+	ret = KS_sample(ms->s[i], pt, part, w, w_crit, bias);
+	*w *= ms->s[i]->J / (ms->J/ms->len);
+	return ret;
+}
+
+double MS_w_mean(MultiSource* ms, int N){
+	double w_mean=0;
+	int i;
+	for(i=0; i<ms->len; i++) w_mean += KS_w_mean(ms->s[i], N);
+	return w_mean / ms->len;
 }
 
 void MS_destroy(MultiSource* ms){

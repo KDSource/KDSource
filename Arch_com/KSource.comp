@@ -39,7 +39,7 @@
 
 DEFINE COMPONENT KSource
 DEFINITION PARAMETERS ()
-SETTING PARAMETERS (string filename, string format="PTRAC",
+SETTING PARAMETERS (string filename, string format="SSV",
 	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_mu=0.0, bw_phi=0.0, string bwfilename=NULL, variable_bw=0,
 	trasl_x=0.0, trasl_y=0.0, trasl_z=0.0,
 	rot_x=0.0, rot_y=0.0, rot_z=0.0, switch_x2z=1)
