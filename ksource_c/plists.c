@@ -13,16 +13,19 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 	int i;
 	FILE* files[ord];
 	for(i=0; i<ord; i++)
-		if(filenames[i]){
+		if(strlen(filenames[i])){
 			if((files[i]=fopen(filenames[i], "r")) == 0){
-				printf("Error: No se pudo abrir archivo %s\n", filenames[i]);
+				printf("Error en PList_create: No se pudo abrir archivo %s\n", filenames[i]);
 				return NULL;
 			}
 		}
 		else files[i] = NULL;
+	plist->filenames = (char**)malloc(ord * sizeof(char*));
 	plist->files = (FILE**)malloc(ord * sizeof(FILE*));
 	plist->read = (ReadFun*)malloc(ord * sizeof(ReadFun));
 	for(i=0; i<ord; i++){
+		plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+		strcpy(plist->filenames[i], filenames[i]);
 		plist->files[i] = files[i];
 		plist->read[i] = read[i];
 	}
@@ -30,18 +33,43 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 		plist->trasl = (double*)malloc(3 * sizeof(double));
 		for(int i=0; i<3; i++) plist->trasl[i] = trasl[i];
 	}
+	else plist->trasl = NULL;
 	if(rot){
 		plist->rot = (double*)malloc(3 * sizeof(double));
 		for(int i=0; i<3; i++) plist->rot[i] = rot[i];
 	}
+	else plist->rot = NULL;
 	plist->x2z = switch_x2z;
-	plist->part = (Part*)malloc(sizeof(Part));
 	PList_next(plist);
 	return plist;
 }
 
+PList* PList_copy(PList* plist_){
+	PList* plist = (PList*)malloc(sizeof(PList));
+	*plist = *plist_;
+	plist->filenames = (char**)malloc(plist->ord * sizeof(char*));
+	plist->files = (FILE**)malloc(plist->ord * sizeof(FILE*));
+	plist->read = (ReadFun*)malloc(plist->ord * sizeof(ReadFun));
+	int i;
+	for(i=0; i<plist->ord; i++){
+		plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+		strcpy(plist->filenames[i], plist->filenames[i]);
+		plist->files[i] = fopen(plist_->filenames[i], "r");
+		plist->read[i] = plist_->read[i];
+	}
+	if(plist_->trasl){
+		plist->trasl = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) plist->trasl[i] = plist_->trasl[i];
+	}
+	if(plist_->rot){
+		plist->rot = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) plist->rot[i] = plist_->rot[i];
+	}
+	return plist;
+}
+
 int PList_get(PList* plist, Part* part, double* w){
-	*part = (*plist->part);
+	*part = plist->part;
 	*w = plist->w;
 	if(plist->trasl)
 		traslv(part->pos, plist->trasl, 0);
@@ -68,30 +96,35 @@ int PList_next(PList* plist){
 	int i, cont=0;
 	for(i=0; i<plist->ord; i++){
 		wi = 1;
-		if(plist->files[i])  // Si hay archivo, tengo que actualizar part
-			while(cont++ < MAX_SEARCH){
+		while(cont++ < MAX_SEARCH){
+			if(plist->files[i]){  // Si hay archivo, leo una linea
 				if(!fgets(plist->line, LINE_MAX_LEN, plist->files[i])){ // Si llego al final, vuelvo al principio
+					printf("Rebobinando lista de tracks\n");
 					rewind(plist->files[i]);
 					fgets(plist->line, LINE_MAX_LEN, plist->files[i]);
 				}
-				if(plist->read[i](plist->line, &part, &wi)) break; // Extraigo linea
 			}
+			if(plist->read[i](plist->line, &part, &wi)) break; // Extraigo linea
+		}
 		if(cont > MAX_SEARCH) printf("Warning en PList_next: No se encontro particula\n");
 		w *= wi;
 	}
-	*plist->part = part;
+	plist->part = part;
 	plist->w = w;
 	return 0;
 }
 
 void PList_destroy(PList* plist){
 	int i;
-	for(i=0; i<plist->ord; i++) fclose(plist->files[i]);
+	for(i=0; i<plist->ord; i++){
+		free(plist->filenames[i]);
+		fclose(plist->files[i]);
+	}
+	free(plist->filenames);
 	free(plist->files);
 	free(plist->read);
 	free(plist->trasl);
 	free(plist->rot);
-	free(plist->part);
 	free(plist);
 }
 
@@ -114,7 +147,7 @@ int PTRAC_read(char* line, Part* part, double* w){
 	return (nreaded == 9);
 }
 
-int T4stock_part(char* line, Part* part, double* w){
+int T4stock_read(char* line, Part* part, double* w){
 	if(strncmp(line,"NEUTRON",7)==0 || strncmp(line,"PHOTON",6)==0){
 		sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
 			&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w);
@@ -141,4 +174,12 @@ int SSVtally_read(char* line, Part* part, double* w){
 	int nreaded = sscanf(line, "%le %le %le %le %le",
 		&part->pos[0], &part->pos[1], &part->pos[2], w, &aux);
 	return (nreaded == 4);
+}
+int Isotrop_read(char* line, Part* part, double* w){
+	part->dir[2] = -1 + 2.*rand()/RAND_MAX;
+	double dxy = sqrt(1-part->dir[2]*part->dir[2]);
+	double phi = 2.*M_PI*rand()/RAND_MAX;
+	part->dir[0] = dxy*cos(phi);
+	part->dir[1] = dxy*sin(phi);
+	return 1;
 }

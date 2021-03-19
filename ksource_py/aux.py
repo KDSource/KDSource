@@ -17,6 +17,10 @@ def C_gaussian(q): # Silverman costant for gaussian kernel and dimension q
 
 class BoxMask:
 	def __init__(self, vec1, vec2):
+		if vec1 is None:
+			vec1 = len(vec2)*[None]
+		if vec2 is None:
+			vec2 = len(vec1)*[None]
 		if len(vec1) != len(vec2):
 			raise ValueError("vec1 y vec2 deben tener la misma longitud")
 		self.dim = len(vec1)
@@ -42,6 +46,8 @@ def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
 class TracksStats:
 	def __init__(self, vecs, ws, weightfun=None, maskfun=None):
 		self.vecs, self.ws = apply_weight_mask(vecs, ws, weightfun, maskfun)
+		if len(ws) == 0:
+			raise Exception("Lista de tracks vacia")
 		self.dim = vecs.shape[1]
 	def intensity(self, steps=1, weightfun=None, maskfun=None):
 		vecs, ws = apply_weight_mask(self.vecs, self.ws, weightfun, maskfun)

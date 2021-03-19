@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
+import os
 
 class PList:
 	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
@@ -12,6 +13,9 @@ class PList:
 		for rformat in readformat: exec("self.readfuns.append("+rformat+"_read)")
 		if np.isscalar(filename): filename = [filename]
 		self.filenames = filename
+		self.ord = len(self.readformats)
+		if len(self.filenames) != self.ord:
+			raise Exception("La cantidad de readformats y filenames debe ser igual")
 		self.pt = pt
 		if trasl is not None:
 			trasl = np.array(trasl)
@@ -117,13 +121,14 @@ class PList:
 
 	def save(self, file):
 		file.write(self.pt+'\n')
-		file.write(self.readformats+'\n')
-		file.write(self.filenames+'\n')
+		file.write("{}\n".format(self.ord))
+		for readformat in self.readformats: file.write(readformat+'\n')
+		for filename in self.filenames: file.write(os.path.abspath(filename)+'\n')
 		if self.trasl is not None: np.savetxt(file, self.trasl)
 		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot)
+		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])
 		else: file.write('\n')
-		file.write("%d" % (self.switch_x2z))
+		file.write("%d\n" % (self.x2z))
 
 
 def PTRAC_read(line):

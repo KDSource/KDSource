@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
+import os
 from sklearn.neighbors import KernelDensity
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 
@@ -60,17 +61,21 @@ class KSource:
 		errs *= self.J * jacs
 		return np.array([scores, errs])
 
-	def save(self, filename):
+	def save(self, filename, bwfilename=None):
 		file = open(filename, "w")
 		file.write("# J [1/s]:\n")
 		file.write("%le\n" % (self.J))
 		file.write("# PList:\n")
 		self.plist.save(file)
-		file.write("# Metric\n")
-		file.metric.save(file)
-		if self.bw.ndim == 2: file.write("1\n") # Ancho de banda variable
-		else: file.write("0\n")
-		np.savetxt(file, self.bw.reshape(-1,self.metric.dim))
+		file.write("# Metric:\n")
+		self.metric.save(file)
+		if self.bw.ndim == 2: # Ancho de banda variable
+			file.write("1\n")
+			file.write(os.path.abspath(bwfilename)+"\n")
+		else:
+			file.write("0\n")
+			np.savetxt(file, self.bw[np.newaxis,:])
+		file.close()
 
 	def save_bw(self, bwfilename, append=False):
 		if append:

@@ -20,31 +20,43 @@ Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double*
 	return metric;
 }
 
+Metric* Metric_copy(Metric* metric_){
+	Metric* metric = (Metric*)malloc(sizeof(Metric));
+	*metric = *metric_;
+	int i;
+	metric->bw = (double*)malloc(metric->dim*sizeof(double));
+	for(i=0; i<metric->dim; i++) metric->bw[i] = metric_->bw[i];
+	metric->geom_par = (double*)malloc(metric->n_gp * sizeof(double));
+	for(i=0; i<metric->n_gp; i++) metric->geom_par[i] = metric_->geom_par[i];
+	return metric;
+}
+
 void Metric_destroy(Metric* metric){
 	free(metric->bw);
 	free(metric);
 }
 
-MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot){
+MetricSepVar* MSV_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot){
 	MetricSepVar* metric = (MetricSepVar*)malloc(sizeof(MetricSepVar));
 	metric->ord = ord;
 	int i;
 	metric->ms = (Metric**)malloc(ord * sizeof(Metric*));
-	for(i=0; i<ord; i++) metric->ms[i] = metrics[i];
-	if(bwfilename && strlen(bwfilename)){
-		FILE* file_bw;
-		if((file_bw=fopen(bwfilename, "r")) == 0){
-			printf("Error: No se pudo abrir archivo %s\n", bwfilename);
+	for(i=0; i<ord; i++) metric->ms[i] = Metric_copy(metrics[i]);
+	strcpy(metric->bwfilename, bwfilename);
+	if(strlen(bwfilename)){
+		FILE* bwfile;
+		if((bwfile=fopen(bwfilename, "r")) == 0){
+			printf("Error en MSV_create: No se pudo abrir archivo %s\n", bwfilename);
 			return NULL;
 		}
-		metric->file_bw = file_bw;
-		MetricSepVar_next(metric);
+		metric->bwfile = bwfile;
+		MSV_next(metric);
 		if(!variable_bw){
-			fclose(metric->file_bw);
-			metric->file_bw = NULL;
+			fclose(metric->bwfile);
+			metric->bwfile = NULL;
 		}
 	}
-	else metric->file_bw = NULL;
+	else metric->bwfile = NULL;
 	if(trasl){
 		metric->trasl = (double*)malloc(3 * sizeof(double));
 		for(int i=0; i<3; i++) metric->trasl[i] = trasl[i];
@@ -58,7 +70,32 @@ MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, i
 	return metric;
 }
 
-int MetricSepVar_perturb(MetricSepVar* metric, Part* part){
+MetricSepVar* MSV_copy(MetricSepVar* metric_){
+	MetricSepVar* metric = (MetricSepVar*)malloc(sizeof(MetricSepVar));
+	*metric = *metric_;
+	int i;
+	metric->ms = (Metric**)malloc(metric->ord * sizeof(Metric*));
+	for(i=0; i<metric->ord; i++) metric->ms[i] = Metric_copy(metric_->ms[i]);
+	strcpy(metric->bwfilename, metric_->bwfilename);
+	if(metric->bwfile){
+		metric->bwfile = fopen(metric->bwfilename, "r");
+		MSV_next(metric);
+	}
+	else metric->bwfile = NULL;
+	if(metric_->trasl){
+		metric->trasl = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) metric->trasl[i] = metric_->trasl[i];
+	}
+	else metric->trasl = NULL;
+	if(metric_->rot){
+		metric->rot = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) metric->rot[i] = metric_->rot[i];
+	}
+	else metric->rot = NULL;
+	return metric;
+}
+
+int MSV_perturb(MetricSepVar* metric, Part* part){
 	int i, ret=0;
 	if(metric->trasl) traslv(part->pos, metric->trasl, 1);
 	if(metric->rot){ rotv(part->pos, metric->rot, 1); rotv(part->dir, metric->rot, 1); }
@@ -68,20 +105,21 @@ int MetricSepVar_perturb(MetricSepVar* metric, Part* part){
 	return ret;
 }
 
-int MetricSepVar_next(MetricSepVar* metric){
-	if(metric->file_bw){
+int MSV_next(MetricSepVar* metric){
+	if(metric->bwfile){
 		int i, j, dim=0, readed=0;
 		for(i=0; i<metric->ord; i++) dim += metric->ms[i]->dim;
 		for(i=0; i<metric->ord; i++)
 			for(j=0; j<metric->ms[i]->dim; j++)
-				readed += fscanf(metric->file_bw, "%lf", &metric->ms[i]->bw[j]);
+				readed += fscanf(metric->bwfile, "%lf", &metric->ms[i]->bw[j]);
 		if(readed < dim){ // Si llego al final del archivo, vuelvo al inicio y releo
 			if(readed != -dim) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
-			rewind(metric->file_bw);
+			printf("Rebobinando archivo de anchos de banda\n");
+			rewind(metric->bwfile);
 			readed = 0;
 			for(i=0; i<metric->ord; i++)
 				for(j=0; j<metric->ms[i]->dim; j++)
-					readed += fscanf(metric->file_bw, "%lf", &metric->ms[i]->bw[j]);
+					readed += fscanf(metric->bwfile, "%lf", &metric->ms[i]->bw[j]);
 		}
 		if(readed < dim){
 			printf("Error: No se pudo leer ancho de banda\n");
@@ -91,7 +129,9 @@ int MetricSepVar_next(MetricSepVar* metric){
 	return 0;
 }
 
-void MetricSepVar_destroy(MetricSepVar* metric){
+void MSV_destroy(MetricSepVar* metric){
+	int i;
+	for(i=0; i<metric->ord; i++) Metric_destroy(metric->ms[i]);
 	free(metric->ms);
 	free(metric->trasl);
 	free(metric->rot);

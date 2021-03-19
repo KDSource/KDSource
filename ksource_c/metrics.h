@@ -7,6 +7,7 @@
 
 #define BW_MIN 1e-5
 #define E_MIN 1e-11
+#define NAME_MAX_LEN 96
 
 
 typedef struct Part Part;
@@ -23,21 +24,24 @@ typedef struct Metric{
 } Metric;
 
 Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double* geom_par);
+Metric* Metric_copy(Metric* metric);
 void Metric_destroy(Metric* metric);
 
 typedef struct MetricSepVar{
 	int ord; // Cantidad de submetricas
 	Metric** ms; // Submetricas
-	FILE* file_bw; // Archivo con anchos de banda
+	char bwfilename[NAME_MAX_LEN]; // Archivo con anchos de banda
+	FILE* bwfile; // Archivo con anchos de banda
 
 	double* trasl; // Traslacion de la metrica
 	double* rot; // Rotacion de la metrica
 } MetricSepVar;
 
-MetricSepVar* MetricSepVar_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
-int MetricSepVar_perturb(MetricSepVar* metric, Part* part);
-int MetricSepVar_next(MetricSepVar* metric);
-void MetricSepVar_destroy(MetricSepVar* metric);
+MetricSepVar* MSV_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
+MetricSepVar* MSV_copy(MetricSepVar* metric);
+int MSV_perturb(MetricSepVar* metric, Part* part);
+int MSV_next(MetricSepVar* metric);
+void MSV_destroy(MetricSepVar* metric);
 
 int E_perturb(Metric* metric, Part* part);
 int Let_perturb(Metric* metric, Part* part);

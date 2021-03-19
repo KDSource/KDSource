@@ -29,7 +29,7 @@ class Metric:
 	def save(self, file):
 		file.write(self.__class__.__name__+'\n')
 		file.write("{}\n".format(self.dim))
-		file.write('\n')
+		file.write('0\n')
 
 class SepVarMetric (Metric):
 	def __init__(self, metric_E, metric_pos, metric_dir, trasl=None, rot=None):
@@ -91,16 +91,16 @@ class SepVarMetric (Metric):
 		std_dirs = self.dir.std(vecs=vecs[:,self.E.dim+self.pos.dim:])
 		return np.concatenate((std_Es, std_poss, std_dirs))
 	def save(self, file):
-		if self.trasl is not None: np.savetxt(file, self.trasl)
-		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot)
-		else: file.write('\n')
 		file.write("# E:\n")
 		self.E.save(file)
 		file.write("# pos:\n")
 		self.pos.save(file)
 		file.write("# dir:\n")
 		self.dir.save(file)
+		if self.trasl is not None: np.savetxt(file, self.trasl)
+		else: file.write('\n')
+		if self.rot is not None: np.savetxt(file, self.rot)
+		else: file.write('\n')
 
 class Energy (Metric):
 	def __init__(self):
@@ -119,16 +119,30 @@ class Lethargy (Metric):
 	def save(self, file):
 		file.write(self.__class__.__name__+'\n')
 		file.write("{}\n".format(self.dim))
-		file.write("{}\n".format(self.E0))
+		file.write("1 {}\n".format(self.E0))
 
 class Vol (Metric):
-	def __init__(self):
+	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf, zmax=np.inf):
 		super().__init__(["x","y","z"], ["cm","cm","cm"], "cm^3")
+		self.xmin = xmin
+		self.xmax = xmax
+		self.ymin = ymin
+		self.ymax = ymax
+		self.zmin = zmin
+		self.zmax = zmax
+	def save(self, file):
+		file.write(self.__class__.__name__+'\n')
+		file.write("{}\n".format(self.dim))
+		file.write("6 {} {} {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax))
 
 class SurfXY (Metric):
-	def __init__(self, z):
+	def __init__(self, z, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf):
 		super().__init__(["x","y"], ["cm","cm"], "cm^2")
 		self.z = z
+		self.xmin = xmin
+		self.xmax = xmax
+		self.ymin = ymin
+		self.ymax = ymax
 	def transform(self, poss):
 		return poss[:,:2]
 	def inverse_transform(self, poss):
@@ -137,13 +151,14 @@ class SurfXY (Metric):
 	def save(self, file):
 		file.write(self.__class__.__name__+'\n')
 		file.write("{}\n".format(self.dim))
-		file.write("{}\n".format(self.z))
+		file.write("4 {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax))
 
 class Guide (Metric):
-	def __init__(self, xwidth, yheight, rcurv=None):
+	def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
 		super().__init__(["z","t"], ["cm","cm"], "cm^2")
 		self.xwidth = xwidth
 		self.yheight = yheight
+		self.zmax = zmax
 		self.rcurv = rcurv
 	def transform(self, poss):
 		xs,ys,zs = poss.T
@@ -184,7 +199,7 @@ class Guide (Metric):
 		file.write("{}\n".format(self.dim))
 		rcurv = self.rcurv
 		if rcurv is None: rcurv = 0
-		file.write("{} {} {}\n".format(self.xwidth, self.yheight, rcurv))
+		file.write("4 {} {} {} {}\n".format(self.xwidth, self.yheight, self.zmax, rcurv))
 
 class Isotrop (Metric):
 	def __init__(self):
