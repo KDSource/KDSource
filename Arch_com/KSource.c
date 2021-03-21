@@ -56,7 +56,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	double w;
 	char pt;
 
-	KS_sample(msource, &pt, &part, &w, w_crit, NULL);
+	MS_sample(msource, &pt, &part, &w, w_crit, NULL);
 
 	if(pt == 'n') *ipt = 1;
 	else if(pt == 'p') *ipt = 2;
@@ -80,7 +80,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(N%N_simul == 0){
 		printf("\nDestruyendo fuentes...  ");
 		
-		KS_destroy(msource);
+		MS_destroy(msource);
 
 		initialized = 0;
 		printf("Hecho\n");

@@ -78,19 +78,22 @@ KSource* KS_open(char* filename){
 	fscanf(file, "%d\n", &dim_E); // Leer dim
 	fscanf(file, "%d", &ngp_E); // Leer ngp_E
 	gp_E = (double*)malloc(ngp_E*sizeof(double));
-	for(i=0; i<ngp_E; i++) fscanf(file, "%lf\n", &gp_E[i]); // Leer gp_E
+	if(ngp_E) for(i=0; i<ngp_E; i++) fscanf(file, "%lf\n", &gp_E[i]); // Leer gp_E
+	else fgets(buffer, LINE_MAX_LEN, file);
 	fgets(buffer, LINE_MAX_LEN, file); // # pos
 	fgets(metricposname, NAME_MAX_LEN, file); // Leer metricposname
 	fscanf(file, "%d\n", &dim_pos); // Leer dim
 	fscanf(file, "%d", &ngp_pos); // Leer ngp_pos
 	gp_pos = (double*)malloc(ngp_pos*sizeof(double));
-	for(i=0; i<ngp_pos; i++) fscanf(file, "%lf\n", &gp_pos[i]); // Leer gp_pos
+	if(ngp_pos) for(i=0; i<ngp_pos; i++) fscanf(file, "%lf\n", &gp_pos[i]); // Leer gp_pos
+	else fgets(buffer, LINE_MAX_LEN, file);
 	fgets(buffer, LINE_MAX_LEN, file); // # dir
 	fgets(metricdirname, NAME_MAX_LEN, file); // Leer metricdirname
 	fscanf(file, "%d\n", &dim_dir); // Leer dim
 	fscanf(file, "%d", &ngp_dir); // Leer ngp_dir
 	gp_dir = (double*)malloc(ngp_dir*sizeof(double));
-	for(i=0; i<ngp_dir; i++) fscanf(file, "%lf\n", &gp_dir[i]); // Leer gp_dir
+	if(ngp_dir) for(i=0; i<ngp_dir; i++) fscanf(file, "%lf\n", &gp_dir[i]); // Leer gp_dir
+	else fgets(buffer, LINE_MAX_LEN, file);
 	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de Metric
 	if(strlen(buffer)){
 		trasl_metric = (double*)malloc(3 * sizeof(double));
