@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class Metric:
-	def __init__(self, varnames, units, volunits):
+	def __init__(self, partdim, varnames, units, volunits):
+		self.partdim = partdim
 		self.varnames = varnames
 		self.varmap = {name:idx for idx,name in enumerate(varnames)}
 		self.units = units
@@ -31,15 +32,14 @@ class Metric:
 		file.write("{}\n".format(self.dim))
 		file.write('0\n')
 
-class SepVarMetric (Metric):
-	def __init__(self, metric_E, metric_pos, metric_dir, trasl=None, rot=None):
-		varnames = metric_E.varnames+metric_pos.varnames+metric_dir.varnames
-		units = metric_E.units+metric_pos.units+metric_dir.units
-		volunits = metric_E.volunits+" "+metric_pos.volunits+" "+metric_dir.volunits
-		super().__init__(varnames, units, volunits)
-		self.E = metric_E
-		self.pos = metric_pos
-		self.dir = metric_dir
+class Geometry (Metric):
+	def __init__(self, metrics, trasl=None, rot=None):
+		partdim = sum([metric.partdim for metric in metrics])
+		varnames = sum([metric.varnames for metric in metrics], [])
+		units = sum([metric.units for metric in metrics], [])
+		volunits = "".join([metric.volunits+" " for metric in metrics])[:-1]
+		super().__init__(partdim, varnames, units, volunits)
+		self.ms = metrics
 		if trasl is not None:
 			trasl = np.array(trasl)
 		if rot is not None:
@@ -52,63 +52,76 @@ class SepVarMetric (Metric):
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
-		transf_Es = self.E.transform(parts[:,0:1])
-		transf_poss = self.pos.transform(parts[:,1:4])
-		transf_dirs = self.dir.transform(parts[:,4:7])
-		return np.concatenate((transf_Es, transf_poss, transf_dirs), axis=1)
+		vecss = []
+		end = 0
+		for metric in self.ms:
+			start = end
+			end = start + metric.partdim
+			vecss.append(metric.transform(parts[:,start:end]))
+		return np.concatenate(vecss, axis=1)
 	def inverse_transform(self, vecs):
-		Es = self.E.inverse_transform(vecs[:,0:self.E.dim])
-		poss = self.pos.inverse_transform(vecs[:,self.E.dim:self.E.dim+self.pos.dim])
-		dirs = self.dir.inverse_transform(vecs[:,self.E.dim+self.pos.dim:])
+		partss = []
+		end = 0
+		for metric in self.ms:
+			start = end
+			end = start + metric.dim
+			partss.append(metric.inverse_transform(vecs[:,start:end]))
+		parts = np.concatenate(partss, axis=1)
 		if self.trasl is not None:
-			poss += self.trasl
+			parts[:,1:4] += self.trasl
 		if self.rot is not None:
-			poss = self.rot.apply(poss) # Posicion
-			dirs = self.rot.apply(dirs) # Direccion
-		return np.concatenate((Es, poss, dirs), axis=1)
+			parts[:,1:4] = self.rot.apply(parts[:,1:4]) # Posicion
+			parts[:,4:7] = self.rot.apply(parts[:,4:7]) # Direccion
+		return parts
 	def jac(self, parts):
 		if self.trasl is not None:
 			parts[:,1:4] -= self.trasl
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
-		jac_E = self.E.jac(parts[:,0:1])
-		jac_pos = self.pos.jac(parts[:,1:4])
-		jac_dir = self.dir.jac(parts[:,4:7])
-		return jac_E*jac_pos*jac_dir
+		jacs = []
+		end = 0
+		for metric in self.ms:
+			start = end
+			end = start + metric.partdim
+			jacs.append(metric.jac(parts[:,start:end]))
+		return np.prod(jacs, axis=1)
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
-		mean_Es = self.E.mean(vecs=vecs[:,0:self.E.dim])
-		mean_poss = self.pos.mean(vecs=vecs[:,self.E.dim:self.E.dim+self.pos.dim])
-		mean_dirs = self.dir.mean(vecs=vecs[:,self.E.dim+self.pos.dim:])
-		return np.concatenate((mean_Es, mean_poss, mean_dirs))
+		means = []
+		end = 0
+		for metric in self.ms:
+			start = end
+			end = start + metric.dim
+			means.append(metric.mean(vecs=vecs[:,start:end]))
+		return np.concatenate(means)
 	def std(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
-		std_Es = self.E.std(vecs=vecs[:,0:self.E.dim])
-		std_poss = self.pos.std(vecs=vecs[:,self.E.dim:self.E.dim+self.pos.dim])
-		std_dirs = self.dir.std(vecs=vecs[:,self.E.dim+self.pos.dim:])
-		return np.concatenate((std_Es, std_poss, std_dirs))
+		stds = []
+		end = 0
+		for metric in self.ms:
+			start = end
+			end = start + metric.dim
+			stds.append(metric.std(vecs=vecs[:,start:end]))
+		return np.concatenate(stds)
 	def save(self, file):
-		file.write("# E:\n")
-		self.E.save(file)
-		file.write("# pos:\n")
-		self.pos.save(file)
-		file.write("# dir:\n")
-		self.dir.save(file)
-		if self.trasl is not None: np.savetxt(file, self.trasl)
+		file.write("{}\n".format(len(self.ms)))
+		for metric in self.ms:
+			metric.save(file)
+		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
 		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot)
+		if self.rot is not None: np.savetxt(file, self.rot[np.newaxis,:])
 		else: file.write('\n')
 
 class Energy (Metric):
 	def __init__(self):
-		super().__init__(["E"], ["MeV"], "MeV")
+		super().__init__(1, ["E"], ["MeV"], "MeV")
 
 class Lethargy (Metric):
 	def __init__(self, E0):
-		super().__init__(["u"], ["[let]"], "MeV")
+		super().__init__(1, ["u"], ["[let]"], "MeV")
 		self.E0 = E0
 	def transform(self, Es):
 		return np.log(self.E0/Es)
@@ -123,7 +136,7 @@ class Lethargy (Metric):
 
 class Vol (Metric):
 	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf, zmax=np.inf):
-		super().__init__(["x","y","z"], ["cm","cm","cm"], "cm^3")
+		super().__init__(3, ["x","y","z"], ["cm","cm","cm"], "cm^3")
 		self.xmin = xmin
 		self.xmax = xmax
 		self.ymin = ymin
@@ -137,7 +150,7 @@ class Vol (Metric):
 
 class SurfXY (Metric):
 	def __init__(self, z, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf):
-		super().__init__(["x","y"], ["cm","cm"], "cm^2")
+		super().__init__(3, ["x","y"], ["cm","cm"], "cm^2")
 		self.z = z
 		self.xmin = xmin
 		self.xmax = xmax
@@ -155,17 +168,18 @@ class SurfXY (Metric):
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
-		super().__init__(["z","t"], ["cm","cm"], "cm^2")
+		super().__init__(6, ["z","t","theta","phi"], ["cm","cm","deg","deg"], "cm^2 sr")
 		self.xwidth = xwidth
 		self.yheight = yheight
 		self.zmax = zmax
 		self.rcurv = rcurv
-	def transform(self, poss):
-		xs,ys,zs = poss.T
+	def transform(self, posdirs):
+		xs,ys,zs,dxs,dys,dzs = posdirs.T
 		if self.rcurv is not None:
 			rs = np.sqrt((self.rcurv+xs)**2 + zs**2)
-			xs = np.sign(self.rcurv) * rs - self.rcurv
-			zs = np.abs(self.rcurv) * np.arcsin(zs / rs)
+			xs = np.sign(self.rcurv) * rs - self.rcurv; zs = np.abs(self.rcurv) * np.arcsin(zs / rs)
+			dxs2 = dxs; dzs2 = dzs; angs = zs/self.rcurv
+			dxs = dxs2*np.cos(angs) + dzs2*np.sin(angs); dzs = -dxs2*np.sin(angs) + dzs2*np.cos(angs)
 		mask0 = np.logical_and((ys/self.yheight > -xs/self.xwidth), (ys/self.yheight <  xs/self.xwidth)) # espejo x pos
 		mask1 = np.logical_and((ys/self.yheight >  xs/self.xwidth), (ys/self.yheight > -xs/self.xwidth)) # espejo y pos
 		mask2 = np.logical_and((ys/self.yheight < -xs/self.xwidth), (ys/self.yheight >  xs/self.xwidth)) # espejo x neg
@@ -175,25 +189,53 @@ class Guide (Metric):
 		ts[mask1] = 1.0*self.yheight + 0.5*self.xwidth - xs[mask1]
 		ts[mask2] = 1.5*self.yheight + 1.0*self.xwidth - ys[mask2]
 		ts[mask3] = 2.0*self.yheight + 1.5*self.xwidth + xs[mask3]
-		return np.stack((zs,ts), axis=1)
-	def inverse_transform(self, poss):
-		zs,ts = poss.T
+		thetas = np.zeros_like(dxs); phis = np.zeros_like(dxs)
+		thetas[mask0] = np.arccos( dxs[mask0]); phis[mask0] = np.arctan2(-dys[mask0], dzs[mask0])
+		thetas[mask1] = np.arccos( dys[mask1]); phis[mask1] = np.arctan2( dxs[mask1], dzs[mask1])
+		thetas[mask2] = np.arccos(-dxs[mask2]); phis[mask2] = np.arctan2( dys[mask2], dzs[mask2])
+		thetas[mask3] = np.arccos(-dys[mask3]); phis[mask3] = np.arctan2(-dxs[mask3], dzs[mask3])
+		thetas *= 180/np.pi; phis *= 180/np.pi
+		return np.stack((zs,ts,thetas,phis), axis=1)
+	def inverse_transform(self, posdirs):
+		zs,ts,thetas,phis = posdirs.T
+		thetas *= np.pi/180; phis *= np.pi/180
 		mask0 =                                                   (ts <   self.yheight)              # espejo x pos
 		mask1 = np.logical_and((ts >   self.yheight)            , (ts <   self.yheight+self.xwidth)) # espejo y pos
 		mask2 = np.logical_and((ts >   self.yheight+self.xwidth), (ts < 2*self.yheight+self.xwidth)) # espejo x neg
 		mask3 =                (ts > 2*self.yheight+self.xwidth)                                     # espejo y neg
-		xs = np.zeros_like(ts)
-		ys = np.zeros_like(ts)
+		xs = np.zeros_like(ts); ys = np.zeros_like(ts)
 		xs[mask0] =  self.xwidth /2; ys[mask0] =  ts[mask0] - 0.5*self.yheight
 		ys[mask1] =  self.yheight/2; xs[mask1] = -ts[mask1] + 1.0*self.yheight + 0.5*self.xwidth
 		xs[mask2] = -self.xwidth /2; ys[mask2] = -ts[mask2] + 1.5*self.yheight + 1.0*self.xwidth
 		ys[mask3] = -self.yheight/2; xs[mask3] =  ts[mask3] - 2.0*self.yheight - 1.5*self.xwidth
+		dxs = np.zeros_like(thetas); dys = np.zeros_like(thetas); dzs = np.zeros_like(thetas)
+		dxs[mask0] =  np.cos(thetas[mask0]); dzs[mask0] = np.sin(thetas[mask0])*np.cos(phis[mask0]); dys[mask0] = -np.sin(thetas[mask0])*np.sin(phis[mask0])
+		dys[mask1] =  np.cos(thetas[mask1]); dzs[mask1] = np.sin(thetas[mask1])*np.cos(phis[mask1]); dxs[mask1] =  np.sin(thetas[mask1])*np.sin(phis[mask1])
+		dxs[mask2] = -np.cos(thetas[mask2]); dzs[mask2] = np.sin(thetas[mask2])*np.cos(phis[mask2]); dys[mask2] =  np.sin(thetas[mask2])*np.sin(phis[mask2])
+		dys[mask3] = -np.cos(thetas[mask3]); dzs[mask3] = np.sin(thetas[mask3])*np.cos(phis[mask3]); dxs[mask3] = -np.sin(thetas[mask3])*np.sin(phis[mask3])
 		if self.rcurv is not None:
-			rs = (self.rcurv + xs) * np.sign(self.rcurv)
-			angs = zs / np.abs(self.rcurv)
-			xs = np.sign(self.rcurv) * rs * np.cos(angs) - self.rcurv
-			zs = rs * np.sin(angs)
-		return np.stack((xs,ys,zs), axis=1)
+			rs = (self.rcurv + xs) * np.sign(self.rcurv); angs = zs/self.rcurv
+			xs = np.sign(self.rcurv) * rs * np.cos(zs/self.rcurv) - self.rcurv; zs = rs * np.sin(np.abs(zs/self.rcurv))
+			dxs2 = dxs; dzs2 = dzs
+			dxs = dxs2*np.cos(angs) - dzs2*np.sin(angs); dzs = dxs2*np.sin(angs) + dzs2*np.cos(angs)
+		return np.stack((xs,ys,zs,dxs,dys,dzs), axis=1)
+	def jac(self, posdirs):
+		xs,ys,zs,dxs,dys,dzs = posdirs.T
+		if self.rcurv is not None:
+			rs = np.sqrt((self.rcurv+xs)**2 + zs**2)
+			xs = np.sign(self.rcurv) * rs - self.rcurv; zs = np.abs(self.rcurv) * np.arcsin(zs / rs)
+			dxs2 = dxs; dzs2 = dzs; angs = zs/self.rcurv
+			dxs = dxs2*np.cos(angs) + dzs2*np.sin(angs); dzs = -dxs2*np.sin(angs) + dzs2*np.cos(angs)
+		mask0 = np.logical_and((ys/self.yheight > -xs/self.xwidth), (ys/self.yheight <  xs/self.xwidth)) # espejo x pos
+		mask1 = np.logical_and((ys/self.yheight >  xs/self.xwidth), (ys/self.yheight > -xs/self.xwidth)) # espejo y pos
+		mask2 = np.logical_and((ys/self.yheight < -xs/self.xwidth), (ys/self.yheight >  xs/self.xwidth)) # espejo x neg
+		mask3 = np.logical_and((ys/self.yheight <  xs/self.xwidth), (ys/self.yheight < -xs/self.xwidth)) # espejo y neg
+		thetas = np.zeros_like(dxs)
+		thetas[mask0] = np.arccos( dxs[mask0])
+		thetas[mask1] = np.arccos( dys[mask1])
+		thetas[mask2] = np.arccos(-dxs[mask2])
+		thetas[mask3] = np.arccos(-dys[mask3])
+		return (180/np.pi)**2 / np.sin(thetas)
 	def save(self, file):
 		file.write(self.__class__.__name__+'\n')
 		file.write("{}\n".format(self.dim))
@@ -203,7 +245,7 @@ class Guide (Metric):
 
 class Isotrop (Metric):
 	def __init__(self):
-		super().__init__(["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
+		super().__init__(3, ["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
 	def mean(self, dirs, transform=False):
 		if transform:
 			vecs = self.transform(dirs)
@@ -220,15 +262,17 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__(["mu","phi"], ["[mu]","deg"], "[mu]deg")
+		super().__init__(3, ["mu","phi"], ["deg","deg"], "sr^2")
 	def transform(self, dirs):
-		mus = dirs[:,2]
+		thetas = np.arccos(dirs[:,2]) * 180/np.pi
 		phis = np.arctan2(dirs[:,1], dirs[:,0]) * 180/np.pi
-		return np.stack((mus, phis), axis=1)
+		return np.stack((thetas, phis), axis=1)
 	def inverse_transform(self, tps):
-		mus = tps[:,0]
-		phis = tps[:,1]
-		dxs = np.sqrt(1-mus**2) * np.cos(phis*np.pi/180)
-		dys = np.sqrt(1-mus**2) * np.sin(phis*np.pi/180)
-		dzs = mus
+		thetas,phis = tps.T
+		dxs = np.sin(thetas*np.pi/180) * np.cos(phis*np.pi/180)
+		dys = np.sin(thetas*np.pi/180) * np.sin(phis*np.pi/180)
+		dzs = np.cos(thetas*np.pi/180)
 		return np.stack((dxs, dys, dzs), axis=1)
+	def jac(self, dirs):
+		thetas = np.arccos(dirs[:,2])
+		return (180/np.pi)**2 / np.sin(thetas)

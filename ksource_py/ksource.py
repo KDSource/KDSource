@@ -17,9 +17,9 @@ varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm","cm","cm", "","",""]
 
 class KSource:
-	def __init__(self, plist, metric, bw="silv", J=1):
+	def __init__(self, plist, geom, bw="silv", J=1):
 		self.plist = plist
-		self.metric = metric
+		self.geom = geom
 		if isinstance(bw, str):
 			self.bw = None
 			self.bw_method = bw
@@ -27,7 +27,7 @@ class KSource:
 			self.bw = np.array(bw)
 			self.bw_method = None
 		elif np.isscalar(bw):
-			self.bw = bw * np.ones((metric.dim))
+			self.bw = bw * np.ones((geom.dim))
 			self.bw_method = None
 		else:
 			raise Exceprion("Invalid bandwidth")
@@ -40,7 +40,7 @@ class KSource:
 		if len(parts) == 0:
 			raise Exceprion("No hay particulas para entrenamiento")
 		print("Usando {} particulas para entrenamiento".format(len(parts)))
-		self.vecs = self.metric.transform(parts)
+		self.vecs = self.geom.transform(parts)
 		self.ws = ws
 		if self.bw_method is not None:
 			print("Calculando bw ... ")
@@ -52,11 +52,11 @@ class KSource:
 	def score(self, parts):
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
-		vecs = self.metric.transform(parts)
-		jacs = self.metric.jac(parts, bw=self.bw)
+		vecs = self.geom.transform(parts)
+		jacs = self.geom.jac(parts, bw=self.bw)
 		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
 		N_eff = np.sum(self.ws)**2 / np.sum(self.ws**2)
-		errs = np.sqrt(scores * R_gaussian**self.metric.dim / (N_eff * np.prod(self.bw)))
+		errs = np.sqrt(scores * R_gaussian**self.geom.dim / (N_eff * np.prod(self.bw)))
 		scores *= self.J * jacs
 		errs *= self.J * jacs
 		return np.array([scores, errs])
@@ -68,7 +68,7 @@ class KSource:
 		file.write("# PList:\n")
 		self.plist.save(file)
 		file.write("# Metric:\n")
-		self.metric.save(file)
+		self.geom.save(file)
 		if self.bw.ndim == 2: # Ancho de banda variable
 			file.write("1\n")
 			file.write(os.path.abspath(bwfilename)+"\n")
@@ -80,7 +80,7 @@ class KSource:
 	def save_bw(self, bwfilename, append=False):
 		if append:
 			bwfilename = open(bwfilename, "a")
-		np.savetxt(bwfilename, self.bw.reshape(-1,self.metric.dim))
+		np.savetxt(bwfilename, self.bw.reshape(-1,self.geom.dim))
 
 	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
 		vecs = self.vecs.copy()
@@ -95,14 +95,14 @@ class KSource:
 			N_tot = kwargs["N_tot"]
 		else:
 			N_tot = N
-		std = self.metric.std(vecs=vecs)
+		std = self.geom.std(vecs=vecs)
 		#
 		if self.bw_method == 'silv': # Metodo de Silverman
-			bw_silv = C_gaussian(self.metric.dim) * std * N_tot**(-1/(4+self.metric.dim))
+			bw_silv = C_gaussian(self.geom.dim) * std * N_tot**(-1/(4+self.geom.dim))
 			self.bw = bw_silv
 		#
 		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
-			bw_silv = C_gaussian(self.metric.dim) * std * N**(-1/(4+self.metric.dim)) # Regla del dedo de Silverman
+			bw_silv = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
 			if "shift" in kwargs: bw_silv *= kwargs["shift"]
 			#
 			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
@@ -125,7 +125,7 @@ class KSource:
 			plt.ylabel("mean CV score")
 			plt.show()
 			bw_mlcv = bw_silv * grid.best_params_['bandwidth']
-			bw_mlcv *= (N_tot/N)**(-1/(4+self.metric.dim))
+			bw_mlcv *= (N_tot/N)**(-1/(4+self.geom.dim))
 			#
 			self.bw = bw_mlcv
 		#
@@ -140,7 +140,7 @@ class KSource:
 				k = 1
 			batches = int(N / batch_size)
 			vecs /= std
-			bw_knn = np.zeros((0,self.metric.dim))
+			bw_knn = np.zeros((0,self.geom.dim))
 			for batch in range(batches):
 				print("batch =", batch+1, "/", batches)
 				if batch < batches-1:
@@ -179,7 +179,7 @@ class KSource:
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idx], units[idx]))
-		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.metric.volunits))
+		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.geom.volunits))
 		plt.grid()
 		plt.legend()
 		#
@@ -189,7 +189,7 @@ class KSource:
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idx, str):
-			idx = self.metric.varmap[idx]
+			idx = self.geom.varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		trues = np.ones(len(self.vecs), dtype=bool)
@@ -220,8 +220,8 @@ class KSource:
 		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
-		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idx], self.metric.units[idx]))
-		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.metric.units[idx]))
+		plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[idx], self.geom.units[idx]))
+		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.geom.units[idx]))
 		plt.grid()
 		plt.legend()
 		#
@@ -247,8 +247,8 @@ class KSource:
 		bw = self.bw[0]
 		kde = KernelDensity(bandwidth=1.0)
 		kde.fit(vecs/bw, sample_weight=ws)
-		grid = self.metric.E.transform(grid_E)
-		jacs = self.metric.E.jac(grid_E)
+		grid = self.geom.ms[0].transform(grid_E)
+		jacs = self.geom.ms[0].jac(grid_E)
 		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
 		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
 		scores *= self.J * jacs
@@ -290,7 +290,7 @@ class KSource:
 		else: norm = None
 		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
 		plt.colorbar()
-		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.metric.volunits)
+		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
 		title += "\npart = "+np.array_str(np.array(part0), precision=2)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
@@ -302,7 +302,7 @@ class KSource:
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
 		if isinstance(idxs[0], str):
-			idxs = [self.metric.varmap[idx] for idx in idxs]
+			idxs = [self.geom.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.vecs)*[True])
 		if vec0 is not None:
@@ -335,14 +335,14 @@ class KSource:
 		else: norm = None
 		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
 		plt.colorbar()
-		if self.metric.units[idxs[0]] == self.metric.units[idxs[1]]:
-			units = self.metric.units[idxs[0]]+"^2"
+		if self.geom.units[idxs[0]] == self.geom.units[idxs[1]]:
+			units = self.geom.units[idxs[0]]+"^2"
 		else:
-			units = self.metric.units[idxs[0]] + self.metric.units[idxs[1]]
+			units = self.geom.units[idxs[0]] + self.geom.units[idxs[1]]
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
 		title += "\n"+np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
 		plt.title(title)
-		plt.xlabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[0]], self.metric.units[idxs[0]]))
-		plt.ylabel(r"${}\ [{}]$".format(self.metric.varnames[idxs[1]], self.metric.units[idxs[1]]))
+		plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[idxs[0]], self.geom.units[idxs[0]]))
+		plt.ylabel(r"${}\ [{}]$".format(self.geom.varnames[idxs[1]], self.geom.units[idxs[1]]))
 		#
 		return [plt.gcf(), [scores,errs]]

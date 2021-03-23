@@ -36,7 +36,7 @@ typedef struct PList{
 } PList;
 
 PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* trasl, double* rot, int switch_x2z);
-PList* PList_copy(PList* plist);
+PList* PList_copy(PList* from);
 int PList_get(PList* plist, Part* part, double* w);
 int PList_next(PList* plist);
 void PList_destroy(PList* plist);

@@ -20,14 +20,14 @@ Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double*
 	return metric;
 }
 
-Metric* Metric_copy(Metric* metric_){
+Metric* Metric_copy(Metric* from){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
-	*metric = *metric_;
+	*metric = *from;
 	int i;
 	metric->bw = (double*)malloc(metric->dim*sizeof(double));
-	for(i=0; i<metric->dim; i++) metric->bw[i] = metric_->bw[i];
+	for(i=0; i<metric->dim; i++) metric->bw[i] = from->bw[i];
 	metric->geom_par = (double*)malloc(metric->n_gp * sizeof(double));
-	for(i=0; i<metric->n_gp; i++) metric->geom_par[i] = metric_->geom_par[i];
+	for(i=0; i<metric->n_gp; i++) metric->geom_par[i] = from->geom_par[i];
 	return metric;
 }
 
@@ -36,89 +36,95 @@ void Metric_destroy(Metric* metric){
 	free(metric);
 }
 
-MetricSepVar* MSV_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot){
-	MetricSepVar* metric = (MetricSepVar*)malloc(sizeof(MetricSepVar));
-	metric->ord = ord;
+Geometry* Geom_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot){
+	Geometry* geom = (Geometry*)malloc(sizeof(Geometry));
+	geom->ord = ord;
 	int i;
-	metric->ms = (Metric**)malloc(ord * sizeof(Metric*));
-	for(i=0; i<ord; i++) metric->ms[i] = metrics[i];
-	strcpy(metric->bwfilename, bwfilename);
-	if(strlen(bwfilename)){
+	geom->ms = (Metric**)malloc(ord * sizeof(Metric*));
+	for(i=0; i<ord; i++) geom->ms[i] = metrics[i];
+	geom->bwfilename = NULL;
+	geom->bwfile = NULL;
+	if(bwfilename) if(strlen(bwfilename)){
 		FILE* bwfile;
 		if((bwfile=fopen(bwfilename, "r")) == 0){
-			printf("Error en MSV_create: No se pudo abrir archivo %s\n", bwfilename);
+			printf("Error en Geom_create: No se pudo abrir archivo %s\n", bwfilename);
 			return NULL;
 		}
-		metric->bwfile = bwfile;
-		MSV_next(metric);
+		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+		strcpy(geom->bwfilename, bwfilename);
+		geom->bwfile = bwfile;
+		Geom_next(geom);
 		if(!variable_bw){
-			fclose(metric->bwfile);
-			metric->bwfile = NULL;
+			fclose(geom->bwfile);
+			geom->bwfile = NULL;
 		}
 	}
-	else metric->bwfile = NULL;
 	if(trasl){
-		metric->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) metric->trasl[i] = trasl[i];
+		geom->trasl = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) geom->trasl[i] = trasl[i];
 	}
-	else metric->trasl = NULL;
+	else geom->trasl = NULL;
 	if(rot){
-		metric->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) metric->rot[i] = rot[i];
+		geom->rot = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) geom->rot[i] = rot[i];
 	}
-	else metric->rot = NULL;
-	return metric;
+	else geom->rot = NULL;
+	return geom;
 }
 
-MetricSepVar* MSV_copy(MetricSepVar* metric_){
-	MetricSepVar* metric = (MetricSepVar*)malloc(sizeof(MetricSepVar));
-	*metric = *metric_;
+Geometry* Geom_copy(Geometry* from){
+	Geometry* geom = (Geometry*)malloc(sizeof(Geometry));
+	*geom = *from;
 	int i;
-	metric->ms = (Metric**)malloc(metric->ord * sizeof(Metric*));
-	for(i=0; i<metric->ord; i++) metric->ms[i] = Metric_copy(metric_->ms[i]);
-	strcpy(metric->bwfilename, metric_->bwfilename);
-	if(metric->bwfile){
-		metric->bwfile = fopen(metric->bwfilename, "r");
-		MSV_next(metric);
+	geom->ms = (Metric**)malloc(geom->ord * sizeof(Metric*));
+	for(i=0; i<geom->ord; i++) geom->ms[i] = Metric_copy(from->ms[i]);
+	geom->bwfilename = NULL;
+	geom->bwfile = NULL;
+	if(geom->bwfile){
+		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+		strcpy(geom->bwfilename, from->bwfilename);
+		geom->bwfile = fopen(geom->bwfilename, "r");
+		Geom_next(geom);
 	}
-	else metric->bwfile = NULL;
-	if(metric_->trasl){
-		metric->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) metric->trasl[i] = metric_->trasl[i];
+	if(from->trasl){
+		geom->trasl = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) geom->trasl[i] = from->trasl[i];
 	}
-	else metric->trasl = NULL;
-	if(metric_->rot){
-		metric->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) metric->rot[i] = metric_->rot[i];
+	else geom->trasl = NULL;
+	if(from->rot){
+		geom->rot = (double*)malloc(3 * sizeof(double));
+		for(int i=0; i<3; i++) geom->rot[i] = from->rot[i];
 	}
-	else metric->rot = NULL;
-	return metric;
+	else geom->rot = NULL;
+	return geom;
 }
 
-int MSV_perturb(MetricSepVar* metric, Part* part){
+int Geom_perturb(Geometry* geom, Part* part){
 	int i, ret=0;
-	if(metric->trasl) traslv(part->pos, metric->trasl, 1);
-	if(metric->rot){ rotv(part->pos, metric->rot, 1); rotv(part->dir, metric->rot, 1); }
-	for(i=0; i<metric->ord; i++) ret += metric->ms[i]->perturb(metric->ms[i], part);
-	if(metric->rot){ rotv(part->pos, metric->rot, 0); rotv(part->dir, metric->rot, 0); }
-	if(metric->trasl) traslv(part->pos, metric->trasl, 0);
+	if(geom->trasl) traslv(part->pos, geom->trasl, 1);
+	if(geom->rot){ rotv(part->pos, geom->rot, 1); rotv(part->dir, geom->rot, 1); }
+	for(i=0; i<geom->ord; i++){
+		ret += geom->ms[i]->perturb(geom->ms[i], part);
+	}
+	if(geom->rot){ rotv(part->pos, geom->rot, 0); rotv(part->dir, geom->rot, 0); }
+	if(geom->trasl) traslv(part->pos, geom->trasl, 0);
 	return ret;
 }
 
-int MSV_next(MetricSepVar* metric){
-	if(metric->bwfile){
+int Geom_next(Geometry* geom){
+	if(geom->bwfile){
 		int i, j, dim=0, readed=0;
-		for(i=0; i<metric->ord; i++) dim += metric->ms[i]->dim;
-		for(i=0; i<metric->ord; i++)
-			for(j=0; j<metric->ms[i]->dim; j++)
-				readed += fscanf(metric->bwfile, "%lf", &metric->ms[i]->bw[j]);
+		for(i=0; i<geom->ord; i++) dim += geom->ms[i]->dim;
+		for(i=0; i<geom->ord; i++)
+			for(j=0; j<geom->ms[i]->dim; j++)
+				readed += fscanf(geom->bwfile, "%lf", &geom->ms[i]->bw[j]);
 		if(readed < dim){ // Si llego al final del archivo, vuelvo al inicio y releo
 			if(readed != -dim) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
-			rewind(metric->bwfile);
+			rewind(geom->bwfile);
 			readed = 0;
-			for(i=0; i<metric->ord; i++)
-				for(j=0; j<metric->ms[i]->dim; j++)
-					readed += fscanf(metric->bwfile, "%lf", &metric->ms[i]->bw[j]);
+			for(i=0; i<geom->ord; i++)
+				for(j=0; j<geom->ms[i]->dim; j++)
+					readed += fscanf(geom->bwfile, "%lf", &geom->ms[i]->bw[j]);
 		}
 		if(readed < dim){
 			printf("Error: No se pudo leer ancho de banda\n");
@@ -128,13 +134,13 @@ int MSV_next(MetricSepVar* metric){
 	return 0;
 }
 
-void MSV_destroy(MetricSepVar* metric){
+void Geom_destroy(Geometry* geom){
 	int i;
-	for(i=0; i<metric->ord; i++) Metric_destroy(metric->ms[i]);
-	free(metric->ms);
-	free(metric->trasl);
-	free(metric->rot);
-	free(metric);
+	for(i=0; i<geom->ord; i++) Metric_destroy(geom->ms[i]);
+	free(geom->ms);
+	free(geom->trasl);
+	free(geom->rot);
+	free(geom);
 }
 
 
@@ -171,36 +177,73 @@ int SurfXY_perturb(Metric* metric, Part* part){
 	return 0;
 }
 int Guide_perturb(Metric* metric, Part* part){
-	double t, x=part->pos[0], y=part->pos[1], z=part->pos[2];
-	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zlength=metric->geom_par[2], rcurv=metric->geom_par[3];
-	if(rcurv != 0){
+	double x=part->pos[0], y=part->pos[1], z=part->pos[2], dx=part->dir[0], dy=part->dir[1], dz=part->dir[2];
+	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zmax=metric->geom_par[2], rcurv=metric->geom_par[3];
+	double t, theta, phi, theta0, dx2, dz2;
+	int cont=0;
+	if(rcurv != 0){ // Transformar a variables de guia curva
 		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
-		x = copysign(1, rcurv) * r - rcurv;
-		z = fabs(rcurv) * asin(z / r);
+		x = copysign(1, rcurv) * r - rcurv; z = fabs(rcurv) * asin(z / r);
+		dx2 = dx; dz2 = dz; dx = dx2*cos(z/rcurv) + dz2*sin(z/rcurv); dz = -dx2*sin(z/rcurv) + dz2*cos(z/rcurv);
 	}
-	if     ((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth)) t = 0.5*yheight + y;              // espejo x pos
-	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)) t = 1.0*yheight + 0.5*xwidth - x; // espejo y pos
-	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)) t = 1.5*yheight + 1.0*xwidth - y; // espejo x neg
-	else                                                        t = 2.0*yheight + 1.5*xwidth + x; // espejo y neg
+	// Transformar de (x,y,z,dx,dy,dz) a (z,t,theta,phi)
+	if((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth)){      // espejo x pos
+		t = 0.5*yheight + y;
+		theta0 = acos(dx); phi = atan2(-dy, dz);
+	}
+	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)){ // espejo y pos
+		t = 1.0*yheight + 0.5*xwidth - x;
+		theta0 = acos(dy); phi = atan2(dx, dz);
+	}
+	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)){ // espejo x neg
+		t = 1.5*yheight + 1.0*xwidth - y;
+		theta0 = acos(-dx); phi = atan2(dy, dz);
+	}
+	else{                                                        // espejo y neg
+		t = 2.0*yheight + 1.5*xwidth + x;
+		theta0 = acos(-dy); phi = atan2(-dx, dz);
+	}
+	// Perturbar
 	z += metric->bw[0] * rand_norm();
 	t += metric->bw[1] * rand_norm();
+	theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
+	while((theta0-M_PI/2)*(theta-M_PI/2) < 0){ // Evitar que perturbacion cambie sentido de propagacion
+		theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
+		if(cont++ == MAX_RESAMPLES){
+			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
+			break;
+		}
+	}
+	phi += metric->bw[3]*M_PI/180 * rand_norm();
+	// Aplicar restricciones a perturbaciones
 	if(z < 0) z = 0;
-	else if(z > zlength) z = zlength;
+	else if(z > zmax) z = zmax;
 	while(t < 0) t += 2*(xwidth+yheight);
 	while(t > 2*(xwidth+yheight)) t -= 2*(xwidth+yheight);
-	if     (t < yheight)                                    {x =  xwidth /2; y =  t - 0.5*yheight;             } // espejo x pos
-	else if((t > yheight)        && (t <   yheight+xwidth)) {y =  yheight/2; x = -t + 1.0*yheight + 0.5*xwidth;} // espejo y pos
-	else if((t > yheight+xwidth) && (t < 2*yheight+xwidth)) {x = -xwidth /2; y = -t + 1.5*yheight + 1.0*xwidth;} // espejo x neg
-	else                                                    {y = -yheight/2; x =  t - 2.0*yheight - 1.5*xwidth;} // espejo y neg
-	if(rcurv != 0){
-		double r = (rcurv + x) * copysign(1, rcurv);
-		double ang = z / fabs(rcurv);
-		x = copysign(1, rcurv) * r * cos(ang) - rcurv;
-		z = r * sin(ang);
+	// Antitransformar de (z,t,theta_n,theta_t) a (x,y,z,dx,dy,dz)
+	if(t < yheight){                                         // espejo x pos
+		x =  xwidth/2; y =  t - 0.5*yheight;
+		dx = cos(theta); dz = sin(theta)*cos(phi); dy = -sin(theta)*sin(phi);
 	}
-	part->pos[0] = x;
-	part->pos[1] = y;
-	part->pos[2] = z;
+	else if((t > yheight) && (t <   yheight+xwidth)){        // espejo y pos
+		y =  yheight/2; x = -t + yheight + 0.5*xwidth;
+		dy = cos(theta); dz = sin(theta)*cos(phi); dx = sin(theta)*sin(phi);
+	}
+	else if((t > yheight+xwidth) && (t < 2*yheight+xwidth)){ // espejo x neg
+		x = -xwidth/2; y = -t + 1.5*yheight + xwidth;
+		dx = -cos(theta); dz = sin(theta)*cos(phi); dy = sin(theta)*sin(phi);
+	}
+	else{                                                    // espejo y neg
+		y = -yheight/2; x =  t - 2*yheight - 1.5*xwidth;
+		dy = -cos(theta); dz = sin(theta)*cos(phi); dx = -sin(theta)*sin(phi);
+	}
+	if(rcurv != 0){ // Antitransformar de variables de guia curva
+		double r = (rcurv + x) * copysign(1, rcurv), ang = z / rcurv;
+		x = copysign(1, rcurv) * r * cos(ang) - rcurv; z = r * sin(fabs(ang));
+		dx2 = dx; dz2 = dz; dx = dx2*cos(ang) - dz2*sin(ang); dz = dx2*sin(ang) + dz2*cos(ang);
+	}
+	part->pos[0] = x; part->pos[1] = y; part->pos[2] = z;
+	part->dir[0] = dx; part->dir[1] = dy; part->dir[2] = dz;
 	return 0;
 }
 
@@ -212,10 +255,10 @@ int Isotrop_perturb(Metric* metric, Part* part){
 		part->dir[0] = dxy*cos(phi);
 		part->dir[1] = dxy*sin(phi);
 	}
-	else{
+	else if(metric->bw[0] > 0){
 		double xi = (double)rand()/RAND_MAX;
 		double w = 1;
-		if(metric->bw[2] > BW_MIN) w += metric->bw[2]*metric->bw[2] * log(xi+(1-xi)*exp(-2/(metric->bw[2]*metric->bw[2])));
+		w += metric->bw[0]*metric->bw[0] * log(xi+(1-xi)*exp(-2/(metric->bw[0]*metric->bw[0])));
 		double phi = 2.*M_PI*rand()/RAND_MAX;
 		double uv = sqrt(1-w*w), u = uv*cos(phi), v = uv*sin(phi);
 		double x=part->dir[0], y=part->dir[1], z=part->dir[2];
@@ -233,11 +276,19 @@ int Isotrop_perturb(Metric* metric, Part* part){
 }
 
 int Polar_perturb(Metric* metric, Part* part){
-	double theta, phi;
-	theta = acos(part->dir[2]);
+	double theta, phi, theta0;
+	int cont=0;
+	theta0 = acos(part->dir[2]);
 	phi   = atan2(part->dir[1], part->dir[0]);
-	theta += metric->bw[0] * rand_norm();
-	phi   += metric->bw[1] * rand_norm();
+	theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
+	while((theta0-M_PI/2)*(theta-M_PI/2) < 0){ // Evitar que perturbacion cambie sentido de propagacion
+		theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
+		if(cont++ == MAX_RESAMPLES){
+			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
+			break;
+		}
+	}
+	phi   += metric->bw[1]*M_PI/180 * rand_norm();
 	part->dir[0] = sin(theta) * cos(phi);
 	part->dir[1] = sin(theta) * sin(phi);
 	part->dir[2] = cos(theta);

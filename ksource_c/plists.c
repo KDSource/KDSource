@@ -12,20 +12,24 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 	plist->ord = ord;
 	int i;
 	FILE* files[ord];
-	for(i=0; i<ord; i++)
-		if(strlen(filenames[i])){
+	for(i=0; i<ord; i++){
+		files[i] = NULL;
+		if(filenames[i]) if(strlen(filenames[i])){
 			if((files[i]=fopen(filenames[i], "r")) == 0){
 				printf("Error en PList_create: No se pudo abrir archivo %s\n", filenames[i]);
 				return NULL;
 			}
 		}
-		else files[i] = NULL;
+	}
 	plist->filenames = (char**)malloc(ord * sizeof(char*));
 	plist->files = (FILE**)malloc(ord * sizeof(FILE*));
 	plist->read = (ReadFun*)malloc(ord * sizeof(ReadFun));
 	for(i=0; i<ord; i++){
-		plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
-		strcpy(plist->filenames[i], filenames[i]);
+		plist->filenames[i] = NULL;
+		if(files[i]){
+			plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+			strcpy(plist->filenames[i], filenames[i]);
+		}
 		plist->files[i] = files[i];
 		plist->read[i] = read[i];
 	}
@@ -44,26 +48,29 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 	return plist;
 }
 
-PList* PList_copy(PList* plist_){
+PList* PList_copy(PList* from){
 	PList* plist = (PList*)malloc(sizeof(PList));
-	*plist = *plist_;
+	*plist = *from;
 	plist->filenames = (char**)malloc(plist->ord * sizeof(char*));
 	plist->files = (FILE**)malloc(plist->ord * sizeof(FILE*));
 	plist->read = (ReadFun*)malloc(plist->ord * sizeof(ReadFun));
 	int i;
 	for(i=0; i<plist->ord; i++){
-		plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
-		strcpy(plist->filenames[i], plist->filenames[i]);
-		plist->files[i] = fopen(plist_->filenames[i], "r");
-		plist->read[i] = plist_->read[i];
+		plist->filenames[i] = NULL;
+		if(from->filenames[i]) if(strlen(from->filenames[i])){
+			plist->filenames[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+			strcpy(plist->filenames[i], from->filenames[i]);
+		}
+		plist->files[i] = fopen(from->filenames[i], "r");
+		plist->read[i] = from->read[i];
 	}
-	if(plist_->trasl){
+	if(from->trasl){
 		plist->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->trasl[i] = plist_->trasl[i];
+		for(int i=0; i<3; i++) plist->trasl[i] = from->trasl[i];
 	}
-	if(plist_->rot){
+	if(from->rot){
 		plist->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->rot[i] = plist_->rot[i];
+		for(int i=0; i<3; i++) plist->rot[i] = from->rot[i];
 	}
 	return plist;
 }

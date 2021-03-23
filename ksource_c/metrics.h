@@ -1,11 +1,10 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
 
 #ifndef METRICS_H
 #define METRICS_H
 
-#define BW_MIN 1e-5
+#define MAX_RESAMPLES 1000
 #define E_MIN 1e-11
 #define NAME_MAX_LEN 96
 
@@ -24,24 +23,24 @@ typedef struct Metric{
 } Metric;
 
 Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double* geom_par);
-Metric* Metric_copy(Metric* metric);
+Metric* Metric_copy(Metric* from);
 void Metric_destroy(Metric* metric);
 
-typedef struct MetricSepVar{
+typedef struct Geometry{
 	int ord; // Cantidad de submetricas
 	Metric** ms; // Submetricas
-	char bwfilename[NAME_MAX_LEN]; // Archivo con anchos de banda
+	char* bwfilename; // Nombre de archivo con anchos de banda
 	FILE* bwfile; // Archivo con anchos de banda
 
 	double* trasl; // Traslacion de la metrica
 	double* rot; // Rotacion de la metrica
-} MetricSepVar;
+} Geometry;
 
-MetricSepVar* MSV_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
-MetricSepVar* MSV_copy(MetricSepVar* metric);
-int MSV_perturb(MetricSepVar* metric, Part* part);
-int MSV_next(MetricSepVar* metric);
-void MSV_destroy(MetricSepVar* metric);
+Geometry* Geom_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
+Geometry* Geom_copy(Geometry* from);
+int Geom_perturb(Geometry* geom, Part* part);
+int Geom_next(Geometry* geom);
+void Geom_destroy(Geometry* geom);
 
 int E_perturb(Metric* metric, Part* part);
 int Let_perturb(Metric* metric, Part* part);

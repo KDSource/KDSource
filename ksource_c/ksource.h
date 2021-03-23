@@ -8,9 +8,6 @@
 #include "metrics.h"
 #include "plists.h"
 
-#define MAX_RESAMPLES 1000
-#define LINE_MAX_LEN 256
-
 
 typedef struct KSource KSource;
 typedef struct MultiSource MultiSource;
@@ -28,10 +25,10 @@ typedef double (*WeightFun)(Part* part);
 typedef struct KSource{
 	double J;
 	PList* plist;
-	MetricSepVar* metric;
+	Geometry* geom;
 } KSource;
 
-KSource* KS_create(double J, PList* plist, MetricSepVar* metric);
+KSource* KS_create(double J, PList* plist, Geometry* geom);
 KSource* KS_open(char* filename);
 int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, WeightFun bias);
 double KS_w_mean(KSource* ks, int N);

@@ -9,6 +9,8 @@
 #include "plists.h"
 #include "aux.h"
 
+#define EPSILON_GEO 1E-4
+
 
 static int initialized = 0;
 static long int N = 0;
@@ -23,6 +25,8 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	#define len 1
 	char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt"};
 	double ws[len] = {1};
+
+	WeightFun bias = NULL; // Funcion de bias
 
 /*********************************************** Fin Input ***************************************************/
 
@@ -56,7 +60,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	double w;
 	char pt;
 
-	MS_sample(msource, &pt, &part, &w, w_crit, NULL);
+	MS_sample(msource, &pt, &part, &w, w_crit, bias);
 
 	if(pt == 'n') *ipt = 1;
 	else if(pt == 'p') *ipt = 2;
@@ -72,6 +76,10 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	*dz = part.dir[2];
 	*e = part.E;
 	*we = w;
+
+	*x += *dx * EPSILON_GEO;
+	*y += *dy * EPSILON_GEO;
+	*z += *dz * EPSILON_GEO;
 
 	N++;
 

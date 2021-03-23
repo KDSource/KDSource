@@ -124,7 +124,7 @@ class PList:
 		file.write("{}\n".format(self.ord))
 		for readformat in self.readformats: file.write(readformat+'\n')
 		for filename in self.filenames: file.write(os.path.abspath(filename)+'\n')
-		if self.trasl is not None: np.savetxt(file, self.trasl)
+		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
 		else: file.write('\n')
 		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])
 		else: file.write('\n')

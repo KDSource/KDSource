@@ -11,34 +11,27 @@ void Part_print(Part* part){
 		part->E, part->pos[0], part->pos[1], part->pos[2], part->dir[0], part->dir[1], part->dir[2]);
 }
 
-KSource* KS_create(double J, PList* plist, MetricSepVar* metric){
+KSource* KS_create(double J, PList* plist, Geometry* geom){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
 	ks->J = J;
 	ks->plist = plist;
-	ks->metric = metric;
+	ks->geom = geom;
 	return ks;
 }
 
 KSource* KS_open(char* filename){
-	int i;
+	int i, j;
 	char buffer[LINE_MAX_LEN], *pbuffer;
 	double J;
 
 	char pt;
-	int ord;
-	//char *format[ord], *tracksfiles[ord];
-	//ReadFun reads[ord];
+	int ord_plist;
 	double *trasl_plist=NULL, *rot_plist=NULL;
 
-	int dim_E, dim_pos, dim_dir;
-	char metricEname[NAME_MAX_LEN], metricposname[NAME_MAX_LEN], metricdirname[NAME_MAX_LEN];
-	int ngp_E=0, ngp_pos=0, ngp_dir=0;
-	double *gp_E=NULL, *gp_pos=NULL, *gp_dir=NULL;
+	int ord_geom;
 	double *trasl_metric=NULL, *rot_metric=NULL;
 	int switch_x2z, variable_bw;
-	double *bw_E=NULL, *bw_pos=NULL, *bw_dir=NULL;
 	char* bwfilename=NULL;
-	PerturbFun perturb_E, perturb_pos, perturb_dir;
 
 	// Leer archivo
 	FILE* file;
@@ -51,56 +44,49 @@ KSource* KS_open(char* filename){
 	// PList
 	fgets(buffer, LINE_MAX_LEN, file); // # PList
 	fscanf(file, "%c\n", &pt); // Leer pt
-	fscanf(file, "%d\n", &ord); // Leer ord
-	char formats[ord][NAME_MAX_LEN], *tracksfiles[ord];
-	ReadFun reads[ord];
-	for(i=0; i<ord; i++) fgets(formats[i], NAME_MAX_LEN, file); // Leer formatos
-	for(i=0; i<ord; i++){
+	fscanf(file, "%d\n", &ord_plist); // Leer ord_plist
+	char formats[ord_plist][NAME_MAX_LEN], *tracksfiles[ord_plist];
+	ReadFun reads[ord_plist];
+	for(i=0; i<ord_plist; i++) fgets(formats[i], NAME_MAX_LEN, file); // Leer formatos
+	for(i=0; i<ord_plist; i++){
 		tracksfiles[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		fgets(tracksfiles[i], NAME_MAX_LEN, file); // Leer nombres de archivos de tracks
 		tracksfiles[i][strcspn(tracksfiles[i], "\n")] = 0;
 	}
 	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de PList
-	if(strlen(buffer)){
+	if(strlen(buffer) > 1){
 		trasl_plist = (double*)malloc(3 * sizeof(double));
 		sscanf(buffer, "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
 	}
 	fgets(buffer, LINE_MAX_LEN, file); // Leer rotacion de PList
-	if(strlen(buffer)){
+	if(strlen(buffer) > 1){
 		rot_plist = (double*)malloc(3 * sizeof(double));
 		sscanf(buffer, "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
 	}
 	fscanf(file, "%d\n", &switch_x2z); // Leer switch_x2z
 	// Metric
 	fgets(buffer, LINE_MAX_LEN, file); // # Metric
-	fgets(buffer, LINE_MAX_LEN, file); // # E
-	fgets(metricEname, NAME_MAX_LEN, file); // Leer metricEname
-	fscanf(file, "%d\n", &dim_E); // Leer dim
-	fscanf(file, "%d", &ngp_E); // Leer ngp_E
-	gp_E = (double*)malloc(ngp_E*sizeof(double));
-	if(ngp_E) for(i=0; i<ngp_E; i++) fscanf(file, "%lf\n", &gp_E[i]); // Leer gp_E
-	else fgets(buffer, LINE_MAX_LEN, file);
-	fgets(buffer, LINE_MAX_LEN, file); // # pos
-	fgets(metricposname, NAME_MAX_LEN, file); // Leer metricposname
-	fscanf(file, "%d\n", &dim_pos); // Leer dim
-	fscanf(file, "%d", &ngp_pos); // Leer ngp_pos
-	gp_pos = (double*)malloc(ngp_pos*sizeof(double));
-	if(ngp_pos) for(i=0; i<ngp_pos; i++) fscanf(file, "%lf\n", &gp_pos[i]); // Leer gp_pos
-	else fgets(buffer, LINE_MAX_LEN, file);
-	fgets(buffer, LINE_MAX_LEN, file); // # dir
-	fgets(metricdirname, NAME_MAX_LEN, file); // Leer metricdirname
-	fscanf(file, "%d\n", &dim_dir); // Leer dim
-	fscanf(file, "%d", &ngp_dir); // Leer ngp_dir
-	gp_dir = (double*)malloc(ngp_dir*sizeof(double));
-	if(ngp_dir) for(i=0; i<ngp_dir; i++) fscanf(file, "%lf\n", &gp_dir[i]); // Leer gp_dir
-	else fgets(buffer, LINE_MAX_LEN, file);
+	fscanf(file, "%d\n", &ord_geom); // Leer ord_geom
+	int dims[ord_geom], ngps[ord_geom];
+	char metricnames[ord_geom][NAME_MAX_LEN];
+	double *gps[ord_geom];
+	double *bws[ord_geom];
+	PerturbFun perturbs[ord_geom];
+	for(i=0; i<ord_geom; i++){
+		fgets(metricnames[i], NAME_MAX_LEN, file); // Leer metricname
+		fscanf(file, "%d\n", &dims[i]); // Leer dim
+		fscanf(file, "%d", &ngps[i]); // Leer ngp
+		gps[i] = (double*)malloc(ngps[i]*sizeof(double));
+		for(j=0; j<ngps[i]; j++) fscanf(file, "%lf", &gps[i][j]); // Leer gp
+		fgets(buffer, LINE_MAX_LEN, file);
+	}
 	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de Metric
-	if(strlen(buffer)){
+	if(strlen(buffer) > 1){
 		trasl_metric = (double*)malloc(3 * sizeof(double));
 		sscanf(buffer, "%lf %lf %lf", &trasl_metric[0], &trasl_metric[1], &trasl_metric[2]);
 	}
 	fgets(buffer, LINE_MAX_LEN, file); // Leer rotacion de Metric
-	if(strlen(buffer)){
+	if(strlen(buffer) > 1){
 		rot_metric = (double*)malloc(3 * sizeof(double));
 		sscanf(buffer, "%lf %lf %lf", &rot_metric[0], &rot_metric[1], &rot_metric[2]);
 	}
@@ -109,17 +95,16 @@ KSource* KS_open(char* filename){
 		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		fgets(bwfilename, NAME_MAX_LEN, file);
 		bwfilename[strcspn(bwfilename, "\n")] = 0;
+		for(i=0; i<ord_geom; i++) bws[i] = NULL;
 	}
 	else{
-		bw_E = (double*)malloc(dim_E*sizeof(double));
-		for(i=0; i<dim_E; i++) fscanf(file, "%lf", &bw_E[i]);
-		bw_pos = (double*)malloc(dim_pos*sizeof(double));
-		for(i=0; i<dim_pos; i++) fscanf(file, "%lf", &bw_pos[i]);
-		bw_dir = (double*)malloc(dim_dir*sizeof(double));
-		for(i=0; i<dim_dir; i++) fscanf(file, "%lf", &bw_dir[i]);
+		for(i=0; i<ord_geom; i++){
+			bws[i] = (double*)malloc(dims[i]*sizeof(double));
+			for(j=0; j<dims[i]; j++) fscanf(file, "%lf", &bws[i][j]);
+		}
 	}
 	// Crear PList
-	for(i=0; i<ord; i++){
+	for(i=0; i<ord_plist; i++){
 		if(strcmp(formats[i], "PTRAC\n") == 0) reads[i] = PTRAC_read;
 		else if(strcmp(formats[i], "T4stock\n") == 0) reads[i] = T4stock_read;
 		else if(strcmp(formats[i], "SSV\n") == 0) reads[i] = SSV_read;
@@ -131,41 +116,32 @@ KSource* KS_open(char* filename){
 			return NULL;
 		}
 	}
-	PList* plist = PList_create(pt, ord, tracksfiles, reads, trasl_plist, rot_plist, switch_x2z);
+	PList* plist = PList_create(pt, ord_plist, tracksfiles, reads, trasl_plist, rot_plist, switch_x2z);
 	// Crear Metric
-	if(strcmp(metricEname, "Energy\n") == 0) perturb_E = E_perturb;
-	else if(strcmp(metricEname, "Lethargy\n") == 0) perturb_E = Let_perturb;
-	else{
-		printf("Error: Metrica %s invalida\n", metricEname);
-		return NULL;
+	for(i=0; i<ord_geom; i++){
+		if(strcmp(metricnames[i], "Energy\n") == 0) perturbs[i] = E_perturb;
+		else if(strcmp(metricnames[i], "Lethargy\n") == 0) perturbs[i] = Let_perturb;
+		else if(strcmp(metricnames[i], "SurfXY\n") == 0) perturbs[i] = SurfXY_perturb;
+		else if(strcmp(metricnames[i], "Vol\n") == 0) perturbs[i] = Vol_perturb;
+		else if(strcmp(metricnames[i], "Guide\n") == 0) perturbs[i] = Guide_perturb;
+		else if(strcmp(metricnames[i], "Polar\n") == 0) perturbs[i] = Polar_perturb;
+		else if(strcmp(metricnames[i], "Isotrop\n") == 0) perturbs[i] = Isotrop_perturb;
+		else{
+			printf("Error: Metrica %s invalida\n", metricnames[i]);
+			return NULL;
+		}
 	}
-	if(strcmp(metricposname, "SurfXY\n") == 0) perturb_pos = SurfXY_perturb;
-	else if(strcmp(metricposname, "Vol\n") == 0) perturb_pos = Vol_perturb;
-	else if(strcmp(metricposname, "Guide\n") == 0) perturb_pos = Guide_perturb;
-	else{
-		printf("Error: Metrica %s invalida\n", metricposname);
-		return NULL;
-	}
-	if(strcmp(metricdirname, "Polar\n") == 0) perturb_dir = Polar_perturb;
-	else if(strcmp(metricdirname, "Isotrop\n") == 0) perturb_dir = Isotrop_perturb;
-	else{
-		printf("Error: Metrica %s invalida\n", metricdirname);
-		return NULL;
-	}
-	Metric* metric_E = Metric_create(dim_E, bw_E, perturb_E, ngp_E, gp_E);
-	Metric* metric_pos = Metric_create(dim_pos, bw_pos, perturb_pos, ngp_pos, gp_pos);
-	Metric* metric_dir = Metric_create(dim_dir, bw_dir, perturb_dir, ngp_dir, gp_dir);
-	Metric* metrics[3] = {metric_E, metric_pos, metric_dir};
-	MetricSepVar* metric = MSV_create(3, metrics, bwfilename, variable_bw, trasl_metric, rot_metric);
+	Metric* metrics[ord_geom];
+	for(i=0; i<ord_geom; i++) metrics[i] = Metric_create(dims[i], bws[i], perturbs[i], ngps[i], gps[i]);
+	Geometry* metric = Geom_create(ord_geom, metrics, bwfilename, variable_bw, trasl_metric, rot_metric);
 	// Crear KSource
 	KSource* s = KS_create(J, plist, metric);
 	// Liberar variables alocadas
 	free(trasl_plist); free(rot_plist);
 	free(trasl_metric); free(rot_metric);
-	free(gp_E); free(gp_pos); free(gp_dir);
 	free(bwfilename);
-	free(bw_E); free(bw_pos); free(bw_dir);
-	for(i=0; i<ord; i++) free(tracksfiles[i]);
+	for(i=0; i<ord_geom; i++){ free(gps[i]); free(bws[i]); }
+	for(i=0; i<ord_plist; i++) free(tracksfiles[i]);
 	fclose(file);
 
 	return s;
@@ -176,7 +152,7 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, Weigh
 	if(w_crit <= 0){
 		PList_get(ks->plist, part, w);
 		PList_next(ks->plist);
-		MSV_next(ks->metric);
+		Geom_next(ks->geom);
 	}
 	else{ // Normalizo w a 1
 		double bs;
@@ -188,20 +164,20 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, Weigh
 			if(*w*bs > 1){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
 				if(rand() < w_crit/(*w*bs)*RAND_MAX){
 					PList_next(ks->plist);
-					MSV_next(ks->metric);
+					Geom_next(ks->geom);
 				}
 				break;
 			}
 			else{ // Si w*bs<w_crit, uso w*bs/w_crit como prob de tomar la particula
 				PList_next(ks->plist);
-				MSV_next(ks->metric);
+				Geom_next(ks->geom);
 				if(rand() < (*w*bs)/w_crit*RAND_MAX) break;
 			}
 			if(resamples++ > MAX_RESAMPLES) return 1;
 		}
 		*w = 1/bs;
 	}
-	MSV_perturb(ks->metric, part);
+	Geom_perturb(ks->geom, part);
 	return 0;
 }
 
@@ -219,7 +195,7 @@ double KS_w_mean(KSource* ks, int N){
 
 void KS_destroy(KSource* ks){
 	PList_destroy(ks->plist);
-	MSV_destroy(ks->metric);
+	Geom_destroy(ks->geom);
 	free(ks);
 }
 

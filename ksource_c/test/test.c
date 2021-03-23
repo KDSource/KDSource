@@ -14,7 +14,7 @@ int main(){
     double* bw[] = {bw_E, bw_pos, bw_dir};
     double* gp[] = {NULL, NULL, NULL};
     PerturbFun perturb[] = {Let_perturb, Vol_perturb, Dir_perturb};
-    Metric* metric = MetricSepVar_create(gp, "gaussian", bw, perturb);
+    Metric* metric = Geom_create(gp, "gaussian", bw, perturb);
 
 	KSource* ks = KS_create(1, plist, metric);
 
