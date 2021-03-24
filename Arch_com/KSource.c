@@ -14,6 +14,7 @@
 
 static int initialized = 0;
 static long int N = 0;
+static double I = 0, p2 = 0;
 static double t_sample = 0;
 
 void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, double *dz, double *e, double *we, double *param){
@@ -82,6 +83,8 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	*z += *dz * EPSILON_GEO;
 
 	N++;
+	I += *we;
+	p2 += *we**we;
 
 	// *********************************************** Finalizacion ***************************************************
 
@@ -93,6 +96,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 		initialized = 0;
 		printf("Hecho\n");
 		printf("Tiempo de muestreo: %lf s\n", t_sample);
+		printf("Particulas producidas: I err N %lf %lf %ld\n", I, sqrt(p2), N);
 	}
 
 	clock_t end = clock();

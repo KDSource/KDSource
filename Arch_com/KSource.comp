@@ -60,7 +60,7 @@ DECLARE
 	double I, p2;
     
     PList* plist;
-    MetricSepVar* metric;
+    Geometry* geom;
 	KSource *ksource;
 %}
 
@@ -77,12 +77,13 @@ INITIALIZE
     double bw_E[1] = {bw_u};
     double bw_pos[2] = {bw_x, bw_y};
     double bw_dir[2] = {bw_mu, bw_phi};
+    double surfxy_par[4] = {-INFINITY, INFINITY, -INFINITY, INFINITY};
     Metric* metrics[3] = {Metric_create(1, bw_E, Let_perturb, 0, NULL),
-                          Metric_create(2, bw_pos, SurfXY_perturb, 0, NULL),
+                          Metric_create(2, bw_pos, SurfXY_perturb, 4, surfxy_par),
                           Metric_create(2, bw_dir, Polar_perturb, 0, NULL)};
-    metric = MetricSepVar_create(3, metrics, bwfilename, variable_bw, NULL, NULL);
+    geom = Geom_create(3, metrics, bwfilename, variable_bw, NULL, NULL);
 
-	ksource = KS_create(1, plist, metric);
+	ksource = KS_create(1, plist, geom);
 %}
 
 TRACE
@@ -91,10 +92,7 @@ TRACE
 	Part part;
 	double w, v;
 
-	KS_sample(ksource, &pt, &part, &w, 1);
-	I += w;
-	p2 += w*w;
-	N++;
+	KS_sample(ksource, &pt, &part, &w, 1, NULL);
 
 	x = part.pos[0]/100;
 	y = part.pos[1]/100;
@@ -108,6 +106,10 @@ TRACE
 	sz = 0;
 	t = 0;
 	p = w;
+
+	I += w;
+	p2 += w*w;
+	N++;
 
 	SCATTER;
 

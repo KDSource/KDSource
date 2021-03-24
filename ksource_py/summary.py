@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from .plists import PList
+from .tally import T4Tally
+
+def read_bashoutput(bashoutput, mccode):
+	t_simul = 0
+	I_source = 1
+	if mccode == "McStas":
+		file = open(bashoutput, "r")
+		for line in file:
+			if "KSource" in line:
+				I_source = np.double(line.split()[-3])
+			if "Finally" in line:
+				line = line.split()
+				units = line[-1][1:-1]
+				t_simul = np.double(line[-2])
+				if units == "min": t_simul *= 60
+				elif units == "h": t_simul *= 3600
+		file.close()
+	elif mccode == "Tripoli":
+		file = open(bashoutput, "r")
+		for line in file:
+			if "Particulas producidas" in line:
+				I_source = np.double(line.split()[-3])
+			if "simulation time" in line:
+				t_simul = np.double(line.split()[-1])
+		file.close()
+	else:
+		raise ValueError("mccode invalido (validos: 'McStas', 'Tripoli')")
+	return [t_simul, I_source]
+
+class Summary:
+	def __init__(self, mccode, folder, bashoutput=None, n_detectors=[], p_detectors=[], t4output=None, tallies=[]):
+		if any(mccode == mc for mc in ["McStas", "Tripoli"]):
+			self.mccode = mccode
+		else:
+			raise ValueError("mccode invalido (validos: 'McStas', 'Tripoli')")
+		self.folder = folder
+		self.bashoutput = bashoutput
+		self.t4output = t4output
+		self.n_detectors = n_detectors
+		self.p_detectors = p_detectors
+		self.tallies = tallies
+		self.initialized = False
+	def compute(self):
+		if self.bashoutput is not None:
+			self.t_simul, self.I_source = read_bashoutput(self.folder+"/"+self.bashoutput, self.mccode)
+		else:
+			self.t_simul = 0
+			self.I_source = 1
+		self.n_det_scores = []
+		for detector in self.n_detectors:
+			if self.mccode == "McStas": readformat = "SSV"
+			if self.mccode == "Tripoli": readformat = "T4stock"
+			plist = PList(readformat, self.folder+"/"+detector)
+			self.n_det_scores.append([plist.I, np.sqrt(plist.p2)])
+		self.p_det_scores = []
+		for detector in self.p_detectors:
+			if self.mccode == "McStas": readformat = "SSV"
+			if self.mccode == "Tripoli": readformat = "T4stock"
+			plist = PList(readformat, self.folder+"/"+detector)
+			self.p_det_scores.append([plist.I, np.sqrt(plist.p2)])
+		self.tally_scores = []
+		if self.t4output is not None:
+			for tallyname in self.tallies:
+				tally = T4Tally(self.folder+"/"+self.t4output, tallyname)
+				self.tally_scores.append([self.I_source*np.sum(tally.I), self.I_source*np.sqrt(np.sum(tally.err**2))])
+		self.initialized = True
+	def save(self, filename):
+		if not self.initialized:
+			print("Se debe computar summary antes de guardar")
+			return
+		file = open(self.folder+"/"+filename, "w")
+		file.write("t_simul\t{}\n".format(self.t_simul))
+		file.write("I_source\t{}\n".format(self.I_source))
+		file.write("n_detectors:\n")
+		for det in self.n_detectors: file.write(det.split(sep='.')[0]+"\t\t")
+		file.write("\n")
+		np.savetxt(file, np.reshape(self.n_det_scores, (1,-1)))
+		file.write("p_detectors:\n")
+		for det in self.p_detectors: file.write(det.split(sep='.')[0]+"\t\t")
+		file.write("\n")
+		np.savetxt(file, np.reshape(self.p_det_scores, (1,-1)))
+		file.write("tallies:\n")
+		for tallyname in self.tallies: file.write(tallyname+"\t\t")
+		file.write("\n")
+		np.savetxt(file, np.reshape(self.tally_scores, (1,-1)))
+		file.close()
+		print("Summary guardado exitosamente")

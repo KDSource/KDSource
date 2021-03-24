@@ -4,7 +4,7 @@
 
 INPUT=1_guia_n # 0_Benchmark_n # 
 DIR_OUT=${INPUT} # _bw0
-N=1E7 # 2991283 # 
+N=1E6 # 2991283 # 
 
 ### End Input ###
 
@@ -18,6 +18,6 @@ cd $DIR_OUT
 KSOURCE=~/Documents/Maestria/KSource
 mcstas $INPUT.instr -I $KSOURCE/Arch_com -I $KSOURCE/ksource_c
 gcc $INPUT.c -o $INPUT.out -I $KSOURCE/ksource_c -lm
-./$INPUT.out -n $N #> mcstas.out
+./$INPUT.out -n $N > bash.out
 
 cd ..
