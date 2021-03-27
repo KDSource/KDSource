@@ -18,6 +18,6 @@ cd $DIR_OUT
 KSOURCE=~/Documents/Maestria/KSource
 mcstas $INPUT.instr -I $KSOURCE/Arch_com -I $KSOURCE/ksource_c
 gcc $INPUT.c -o $INPUT.out -I $KSOURCE/ksource_c -lm
-./$INPUT.out -n $N > bash.out
+./$INPUT.out -n $N | tee bash.out
 
 cd ..

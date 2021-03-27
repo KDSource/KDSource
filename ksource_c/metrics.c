@@ -6,7 +6,7 @@
 #include "ksource.h"
 
 
-Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double* geom_par){
+Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, const double* geom_par){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	int i;
 	metric->dim = dim;
@@ -20,7 +20,7 @@ Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double*
 	return metric;
 }
 
-Metric* Metric_copy(Metric* from){
+Metric* Metric_copy(const Metric* from){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	*metric = *from;
 	int i;
@@ -36,7 +36,8 @@ void Metric_destroy(Metric* metric){
 	free(metric);
 }
 
-Geometry* Geom_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot){
+Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int variable_bw,
+		const double* trasl, const double* rot){
 	Geometry* geom = (Geometry*)malloc(sizeof(Geometry));
 	geom->ord = ord;
 	int i;
@@ -72,7 +73,7 @@ Geometry* Geom_create(int ord, Metric** metrics, char* bwfilename, int variable_
 	return geom;
 }
 
-Geometry* Geom_copy(Geometry* from){
+Geometry* Geom_copy(const Geometry* from){
 	Geometry* geom = (Geometry*)malloc(sizeof(Geometry));
 	*geom = *from;
 	int i;
@@ -99,7 +100,7 @@ Geometry* Geom_copy(Geometry* from){
 	return geom;
 }
 
-int Geom_perturb(Geometry* geom, Part* part){
+int Geom_perturb(const Geometry* geom, Part* part){
 	int i, ret=0;
 	if(geom->trasl) traslv(part->pos, geom->trasl, 1);
 	if(geom->rot){ rotv(part->pos, geom->rot, 1); rotv(part->dir, geom->rot, 1); }
@@ -144,18 +145,18 @@ void Geom_destroy(Geometry* geom){
 }
 
 
-int E_perturb(Metric* metric, Part* part){
+int E_perturb(const Metric* metric, Part* part){
 	part->E += metric->bw[0] * rand_norm();
 	if(part->E < E_MIN) part->E = E_MIN;
 	return 0;
 }
-int Let_perturb(Metric* metric, Part* part){
+int Let_perturb(const Metric* metric, Part* part){
 	part->E *= exp(metric->bw[0] * rand_norm());
 	if(part->E < E_MIN) part->E = E_MIN;
 	return 0;
 }
 
-int Vol_perturb(Metric* metric, Part* part){
+int Vol_perturb(const Metric* metric, Part* part){
 	part->pos[0] += metric->bw[0] * rand_norm();
 	part->pos[1] += metric->bw[1] * rand_norm();
 	part->pos[2] += metric->bw[2] * rand_norm();
@@ -167,7 +168,7 @@ int Vol_perturb(Metric* metric, Part* part){
 	else if(part->pos[2] > metric->geom_par[5]) part->pos[2] = metric->geom_par[5];
 	return 0;
 }
-int SurfXY_perturb(Metric* metric, Part* part){
+int SurfXY_perturb(const Metric* metric, Part* part){
 	part->pos[0] += metric->bw[0] * rand_norm();
 	part->pos[1] += metric->bw[1] * rand_norm();
 	if(part->pos[0] < metric->geom_par[0]) part->pos[0] = metric->geom_par[0];
@@ -176,7 +177,7 @@ int SurfXY_perturb(Metric* metric, Part* part){
 	else if(part->pos[1] > metric->geom_par[3]) part->pos[1] = metric->geom_par[3];
 	return 0;
 }
-int Guide_perturb(Metric* metric, Part* part){
+int Guide_perturb(const Metric* metric, Part* part){
 	double x=part->pos[0], y=part->pos[1], z=part->pos[2], dx=part->dir[0], dy=part->dir[1], dz=part->dir[2];
 	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zmax=metric->geom_par[2], rcurv=metric->geom_par[3];
 	double t, theta, phi, theta0, dx2, dz2;
@@ -247,7 +248,7 @@ int Guide_perturb(Metric* metric, Part* part){
 	return 0;
 }
 
-int Isotrop_perturb(Metric* metric, Part* part){
+int Isotrop_perturb(const Metric* metric, Part* part){
 	if(metric->bw[0] == INFINITY){
 		part->dir[2] = -1 + 2.*rand()/RAND_MAX;
 		double dxy = sqrt(1-part->dir[2]*part->dir[2]);
@@ -275,7 +276,7 @@ int Isotrop_perturb(Metric* metric, Part* part){
 	return 0;
 }
 
-int Polar_perturb(Metric* metric, Part* part){
+int Polar_perturb(const Metric* metric, Part* part){
 	double theta, phi, theta0;
 	int cont=0;
 	theta0 = acos(part->dir[2]);

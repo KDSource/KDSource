@@ -25,6 +25,6 @@ export LD_LIBRARY_PATH=$(pwd)
 # /path/tripoli.exe -d data_file -s NJOY -c PATHFILE -o output_file -l english -u -p parallelism_file -t bds
 TRIPOLI4=/opt/TRIPOLI-4/CODE/bin/linux-intel-64/static_tripoli4
 PATHFILE=/opt/TRIPOLI-4/Env/t4path.ceav5
-$TRIPOLI4 -d $INPUT.t4 -s NJOY -c $PATHFILE -o $INPUT.out -l english -u #> bash.out
+$TRIPOLI4 -d $INPUT.t4 -s NJOY -c $PATHFILE -o $INPUT.out -l english -u | tee bash.out
 
 cd ..

@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class Metric:
-	def __init__(self, partdim, varnames, units, volunits):
-		self.partdim = partdim
+	def __init__(self, partvars, varnames, units, volunits):
+		self.partvars = partvars
 		self.varnames = varnames
 		self.varmap = {name:idx for idx,name in enumerate(varnames)}
 		self.units = units
@@ -34,11 +34,11 @@ class Metric:
 
 class Geometry (Metric):
 	def __init__(self, metrics, trasl=None, rot=None):
-		partdim = sum([metric.partdim for metric in metrics])
+		partvars = range(7)
 		varnames = sum([metric.varnames for metric in metrics], [])
 		units = sum([metric.units for metric in metrics], [])
 		volunits = "".join([metric.volunits+" " for metric in metrics])[:-1]
-		super().__init__(partdim, varnames, units, volunits)
+		super().__init__(partvars, varnames, units, volunits)
 		self.ms = metrics
 		if trasl is not None:
 			trasl = np.array(trasl)
@@ -53,11 +53,8 @@ class Geometry (Metric):
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
 		vecss = []
-		end = 0
 		for metric in self.ms:
-			start = end
-			end = start + metric.partdim
-			vecss.append(metric.transform(parts[:,start:end]))
+			vecss.append(metric.transform(parts[:,metric.partvars]))
 		return np.concatenate(vecss, axis=1)
 	def inverse_transform(self, vecs):
 		partss = []
@@ -80,11 +77,8 @@ class Geometry (Metric):
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
 		jacs = []
-		end = 0
 		for metric in self.ms:
-			start = end
-			end = start + metric.partdim
-			jacs.append(metric.jac(parts[:,start:end]))
+			jacs.append(metric.jac(parts[:,metric.partvars]))
 		return np.prod(jacs, axis=1)
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
@@ -117,11 +111,11 @@ class Geometry (Metric):
 
 class Energy (Metric):
 	def __init__(self):
-		super().__init__(1, ["E"], ["MeV"], "MeV")
+		super().__init__([0], ["E"], ["MeV"], "MeV")
 
 class Lethargy (Metric):
 	def __init__(self, E0):
-		super().__init__(1, ["u"], ["[let]"], "MeV")
+		super().__init__([0], ["u"], ["[let]"], "MeV")
 		self.E0 = E0
 	def transform(self, Es):
 		return np.log(self.E0/Es)
@@ -136,7 +130,7 @@ class Lethargy (Metric):
 
 class Vol (Metric):
 	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf, zmax=np.inf):
-		super().__init__(3, ["x","y","z"], ["cm","cm","cm"], "cm^3")
+		super().__init__([1,2,3], ["x","y","z"], ["cm","cm","cm"], "cm^3")
 		self.xmin = xmin
 		self.xmax = xmax
 		self.ymin = ymin
@@ -150,7 +144,7 @@ class Vol (Metric):
 
 class SurfXY (Metric):
 	def __init__(self, z, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf):
-		super().__init__(3, ["x","y"], ["cm","cm"], "cm^2")
+		super().__init__([1,2,3], ["x","y"], ["cm","cm"], "cm^2")
 		self.z = z
 		self.xmin = xmin
 		self.xmax = xmax
@@ -168,7 +162,7 @@ class SurfXY (Metric):
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
-		super().__init__(6, ["z","t","theta","phi"], ["cm","cm","deg","deg"], "cm^2 sr")
+		super().__init__([1,2,3,4,5,6], ["z","t","theta","phi"], ["cm","cm","deg","deg"], "cm^2 sr")
 		self.xwidth = xwidth
 		self.yheight = yheight
 		self.zmax = zmax
@@ -245,7 +239,7 @@ class Guide (Metric):
 
 class Isotrop (Metric):
 	def __init__(self):
-		super().__init__(3, ["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
+		super().__init__([4,5,6], ["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
 	def mean(self, dirs, transform=False):
 		if transform:
 			vecs = self.transform(dirs)
@@ -262,7 +256,7 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__(3, ["mu","phi"], ["deg","deg"], "sr^2")
+		super().__init__([4,5,6], ["mu","phi"], ["deg","deg"], "sr^2")
 	def transform(self, dirs):
 		thetas = np.arccos(dirs[:,2]) * 180/np.pi
 		phis = np.arctan2(dirs[:,1], dirs[:,0]) * 180/np.pi

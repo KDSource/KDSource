@@ -6,7 +6,8 @@
 #include "ksource.h"
 
 
-PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* trasl, double* rot, int switch_x2z){
+PList* PList_create(char pt, int ord, const char** filenames, const ReadFun* reads,
+		const double* trasl, const double* rot, int switch_x2z){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	plist->pt = pt;
 	plist->ord = ord;
@@ -31,7 +32,7 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 			strcpy(plist->filenames[i], filenames[i]);
 		}
 		plist->files[i] = files[i];
-		plist->read[i] = read[i];
+		plist->read[i] = reads[i];
 	}
 	if(trasl){
 		plist->trasl = (double*)malloc(3 * sizeof(double));
@@ -48,7 +49,7 @@ PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* t
 	return plist;
 }
 
-PList* PList_copy(PList* from){
+PList* PList_copy(const PList* from){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	*plist = *from;
 	plist->filenames = (char**)malloc(plist->ord * sizeof(char*));
@@ -75,7 +76,7 @@ PList* PList_copy(PList* from){
 	return plist;
 }
 
-int PList_get(PList* plist, Part* part, double* w){
+int PList_get(const PList* plist, Part* part, double* w){
 	*part = plist->part;
 	*w = plist->w;
 	if(plist->trasl)
@@ -135,26 +136,28 @@ void PList_destroy(PList* plist){
 	free(plist);
 }
 
-PList* PListSimple_create(char pt, char* filename, ReadFun read, double* trasl, double* rot, int switch_x2z){
-	char* pfilename[] = {filename};
+PList* PListSimple_create(char pt, const char* filename, ReadFun read,
+		const double* trasl, const double* rot, int switch_x2z){
+	const char* pfilename[] = {filename};
 	ReadFun pread[] = {read};
 	return PList_create(pt, 1, pfilename, pread, trasl, rot, switch_x2z);
 }
 
 
-PList* PListSepVar_create(char pt, char* filenames[3], ReadFun read[3], double* trasl, double* rot, int switch_x2z){
+PList* PListSepVar_create(char pt, const char* filenames[3], ReadFun read[3],
+		const double* trasl, const double* rot, int switch_x2z){
 	return PList_create(pt, 3, filenames, read, trasl, rot, switch_x2z);
 }
 
 
-int PTRAC_read(char* line, Part* part, double* w){
+int PTRAC_read(const char* line, Part* part, double* w){
 	double aux;
 	int nreaded = sscanf(line, "%le %le %le %le %le %le %le %le %le %le",
 		&part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], &part->E, w, &aux, &aux);
 	return (nreaded == 9);
 }
 
-int T4stock_read(char* line, Part* part, double* w){
+int T4stock_read(const char* line, Part* part, double* w){
 	if(strncmp(line,"NEUTRON",7)==0 || strncmp(line,"PHOTON",6)==0){
 		sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
 			&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w);
@@ -163,26 +166,26 @@ int T4stock_read(char* line, Part* part, double* w){
 	return 0;
 }
 
-int SSV_read(char* line, Part* part, double* w){
+int SSV_read(const char* line, Part* part, double* w){
 	double aux;
 	int nreaded = sscanf(line, "%le %le %le %le %le %le %le %le %le",
 		&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w, &aux);
 	return (nreaded == 8);
 }
 
-int Decay_read(char* line, Part* part, double* w){
+int Decay_read(const char* line, Part* part, double* w){
 	double aux;
 	int nreaded = sscanf(line, "%lf,%lf,%lf", &part->E, &aux, w);
 	part->E /= 1000;
 	return (nreaded == 3);
 }
-int SSVtally_read(char* line, Part* part, double* w){
+int SSVtally_read(const char* line, Part* part, double* w){
 	double aux;
 	int nreaded = sscanf(line, "%le %le %le %le %le",
 		&part->pos[0], &part->pos[1], &part->pos[2], w, &aux);
 	return (nreaded == 4);
 }
-int Isotrop_read(char* line, Part* part, double* w){
+int Isotrop_read(const char* line, Part* part, double* w){
 	part->dir[2] = -1 + 2.*rand()/RAND_MAX;
 	double dxy = sqrt(1-part->dir[2]*part->dir[2]);
 	double phi = 2.*M_PI*rand()/RAND_MAX;

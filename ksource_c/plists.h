@@ -16,7 +16,7 @@ typedef struct Part{
 	double dir[3];
 } Part;
 
-typedef int (*ReadFun)(char* line, Part* part, double* w);
+typedef int (*ReadFun)(const char* line, Part* part, double* w);
 
 typedef struct PList{
 	char pt; // Tipo de particula (n, p, ...)
@@ -35,25 +35,28 @@ typedef struct PList{
 	double w; // Buffer para peso
 } PList;
 
-PList* PList_create(char pt, int ord, char** filenames, ReadFun* read, double* trasl, double* rot, int switch_x2z);
-PList* PList_copy(PList* from);
-int PList_get(PList* plist, Part* part, double* w);
+PList* PList_create(char pt, int ord, const char** filenames, const ReadFun* reads,
+	const double* trasl, const double* rot, int switch_x2z);
+PList* PList_copy(const PList* from);
+int PList_get(const PList* plist, Part* part, double* w);
 int PList_next(PList* plist);
 void PList_destroy(PList* plist);
 
-PList* PListSimple_create(char pt, char* filename, ReadFun read, double* trasl, double* rot, int switch_x2z);
-PList* PListSepVar_create(char pt, char* filenames[3], ReadFun read[3], double* trasl, double* rot, int switch_x2z);
+PList* PListSimple_create(char pt, const char* filename, ReadFun read,
+	const double* trasl, const double* rot, int switch_x2z);
+PList* PListSepVar_create(char pt, const char* filenames[3], ReadFun reads[3],
+	const double* trasl, const double* rot, int switch_x2z);
 
 
-int PTRAC_read(char* line, Part* part, double* w);
+int PTRAC_read(const char* line, Part* part, double* w);
 
-int T4stock_read(char* line, Part* part, double* w);
+int T4stock_read(const char* line, Part* part, double* w);
 
-int SSV_read(char* line, Part* part, double* w);
+int SSV_read(const char* line, Part* part, double* w);
 
-int Decay_read(char* line, Part* part, double* w);
-int SSVtally_read(char* line, Part* part, double* w);
-int Isotrop_read(char* line, Part* part, double* w);
+int Decay_read(const char* line, Part* part, double* w);
+int SSVtally_read(const char* line, Part* part, double* w);
+int Isotrop_read(const char* line, Part* part, double* w);
 
 
 #endif

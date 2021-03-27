@@ -19,7 +19,7 @@ KSource* KS_create(double J, PList* plist, Geometry* geom){
 	return ks;
 }
 
-KSource* KS_open(char* filename){
+KSource* KS_open(const char* filename){
 	int i, j;
 	char buffer[LINE_MAX_LEN], *pbuffer;
 	double J;
@@ -200,7 +200,7 @@ void KS_destroy(KSource* ks){
 }
 
 
-MultiSource* MS_create(int len, KSource** s, double* ws){
+MultiSource* MS_create(int len, KSource** s, const double* ws){
 	MultiSource* ms = (MultiSource*)malloc(sizeof(MultiSource));
 	ms->len = len;
 	ms->s = (KSource**)malloc(len*sizeof(KSource*));
@@ -218,7 +218,7 @@ MultiSource* MS_create(int len, KSource** s, double* ws){
 	return ms;
 }
 
-MultiSource* MS_open(int len, char** filenames, double* ws){
+MultiSource* MS_open(int len, const char** filenames, const double* ws){
 	KSource* s[len];
 	int i;
 	for(i=0; i<len; i++) s[i] = KS_open(filenames[i]);

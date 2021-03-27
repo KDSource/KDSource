@@ -12,7 +12,7 @@
 typedef struct Part Part;
 typedef struct Metric Metric;
 
-typedef int (*PerturbFun)(Metric* metric, Part* part);
+typedef int (*PerturbFun)(const Metric* metric, Part* part);
 
 typedef struct Metric{
 	int dim; // Dimensiones de cada submetrica
@@ -22,8 +22,8 @@ typedef struct Metric{
 	double* geom_par; // Parametros geometricos de cada submetrica
 } Metric;
 
-Metric* Metric_create(int dim, double* bw, PerturbFun perturb, int n_gp, double* geom_par);
-Metric* Metric_copy(Metric* from);
+Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, const double* geom_par);
+Metric* Metric_copy(const Metric* from);
 void Metric_destroy(Metric* metric);
 
 typedef struct Geometry{
@@ -36,21 +36,22 @@ typedef struct Geometry{
 	double* rot; // Rotacion de la metrica
 } Geometry;
 
-Geometry* Geom_create(int ord, Metric** metrics, char* bwfilename, int variable_bw, double* trasl, double* rot);
-Geometry* Geom_copy(Geometry* from);
-int Geom_perturb(Geometry* geom, Part* part);
+Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int variable_bw,
+	const double* trasl, const double* rot);
+Geometry* Geom_copy(const Geometry* from);
+int Geom_perturb(const Geometry* geom, Part* part);
 int Geom_next(Geometry* geom);
 void Geom_destroy(Geometry* geom);
 
-int E_perturb(Metric* metric, Part* part);
-int Let_perturb(Metric* metric, Part* part);
+int E_perturb(const Metric* metric, Part* part);
+int Let_perturb(const Metric* metric, Part* part);
 
-int Vol_perturb(Metric* metric, Part* part);
-int SurfXY_perturb(Metric* metric, Part* part);
-int Guide_perturb(Metric* metric, Part* part);
+int Vol_perturb(const Metric* metric, Part* part);
+int SurfXY_perturb(const Metric* metric, Part* part);
+int Guide_perturb(const Metric* metric, Part* part);
 
-int Isotrop_perturb(Metric* metric, Part* part);
-int Polar_perturb(Metric* metric, Part* part);
+int Isotrop_perturb(const Metric* metric, Part* part);
+int Polar_perturb(const Metric* metric, Part* part);
 
 
 #endif
