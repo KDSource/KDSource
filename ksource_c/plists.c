@@ -158,8 +158,13 @@ int PTRAC_read(const char* line, Part* part, double* w){
 }
 
 int T4stock_read(const char* line, Part* part, double* w){
-	if(strncmp(line,"NEUTRON",7)==0 || strncmp(line,"PHOTON",6)==0){
-		sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",
+	if(strncmp(line,"NEUTRON",7)==0){
+		sscanf(line,"NEUTRON %lf %lf %lf %lf %lf %lf %lf %lf",
+			&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w);
+		return 1;
+	}
+	if(strncmp(line,"PHOTON",6)==0){
+		sscanf(line,"PHOTON %lf %lf %lf %lf %lf %lf %lf %lf",
 			&part->E, &part->pos[0], &part->pos[1], &part->pos[2], &part->dir[0], &part->dir[1], &part->dir[2], w);
 		return 1;
 	}

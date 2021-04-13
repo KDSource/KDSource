@@ -5,23 +5,22 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class Metric:
-	def __init__(self, partvars, varnames, units, volunits):
-		self.partvars = partvars
+	def __init__(self, varnames, units, volunits):
 		self.varnames = varnames
 		self.varmap = {name:idx for idx,name in enumerate(varnames)}
+		if len(units) != len(varnames):
+			raise Exception("Longitud de varnames y units debe coincidir")
 		self.units = units
 		self.volunits = volunits
-		self.dim = dim = len(varnames)
-	def transform(self, parts):
-		return parts
-	def inverse_transform(self, vecs):
-		return vecs
-	def jac(self, parts):
+		self.dim = len(varnames)
+	def transform(self, pb):
+		return np.stack([pb.ekin,pb.x,pb.y,pb.z,pb.ux,pb.uy,pb.uz], axis=1)
+	def jac(self, pb):
 		return np.ones(len(parts))
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
-		return self.inverse_transform(np.mean(vecs, axis=0))
+		return np.mean(vecs, axis=0)
 	def std(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
