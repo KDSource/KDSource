@@ -15,19 +15,21 @@ def C_gaussian(q): # Silverman costant for gaussian kernel and dimension q
 
 # Factores dosimetricos
 
+KSOURCEPY_PATH = "/home/inti/Documents/Maestria/KSource/ksource_py/"
+
 def H10(pt='n', ref='ARN'):
 	if ref == 'ARN':
 		if pt == 'n':
-			E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ARN_neutron", unpack=True)
+			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ARN_neutron", unpack=True)
 		elif pt == 'p':
-			E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ARN_photon", unpack=True)
+			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ARN_photon", unpack=True)
 		else:
 			raise ValueError("Tipo de particula invalido")
 	elif ref == 'ICRP':
 		if pt == 'n':
-			E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ICRP_neutron", unpack=True)
+			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ICRP_neutron", unpack=True)
 		elif pt == 'p':
-			E,H10 = np.loadtxt("/home/inti/Documents/Maestria/KSource/ksource_py/ICRP_photon", unpack=True)
+			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ICRP_photon", unpack=True)
 		else:
 			raise ValueError("Tipo de particula invalido (validos: 'n', 'p')")
 	else:

@@ -26,6 +26,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	#define len 1
 	char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt"};
 	double ws[len] = {1};
+	int bw_null = 0;
 
 	WeightFun bias = NULL; // Funcion de bias
 
@@ -44,7 +45,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(initialized == 0){
 		printf("\nCargando fuentes...  ");
 
-		msource = MS_open(len, filenames, ws);
+		msource = MS_open(len, filenames, ws, bw_null);
 		w_crit = MS_w_mean(msource, 1000);
 
 		N_simul = (param[0]-1)*param[1] + 500 + 1000;

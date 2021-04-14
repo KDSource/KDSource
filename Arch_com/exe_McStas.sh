@@ -16,8 +16,9 @@ cd $DIR_OUT
 
 # Ejecutar McStas
 KSOURCE=~/Documents/Maestria/KSource
+MCSTAS=/usr/share/mcstas/2.7
 mcstas $INPUT.instr -I $KSOURCE/Arch_com -I $KSOURCE/ksource_c
-gcc $INPUT.c -o $INPUT.out -I $KSOURCE/ksource_c -lm
+gcc $INPUT.c -o $INPUT.out -I $KSOURCE/ksource_c -lm -I$MCSTAS/libs/mcpl -L$MCSTAS/libs/mcpl -lmcpl
 ./$INPUT.out -n $N | tee bash.out
 
 cd ..

@@ -4,15 +4,16 @@
 #ifndef METRICS_H
 #define METRICS_H
 
+#include "/opt/mcpl/include/mcpl.h"
+
 #define MAX_RESAMPLES 1000
 #define E_MIN 1e-11
 #define NAME_MAX_LEN 96
 
 
-typedef struct Part Part;
 typedef struct Metric Metric;
 
-typedef int (*PerturbFun)(const Metric* metric, Part* part);
+typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part);
 
 typedef struct Metric{
 	int dim; // Dimensiones de cada submetrica
@@ -39,19 +40,19 @@ typedef struct Geometry{
 Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int variable_bw,
 	const double* trasl, const double* rot);
 Geometry* Geom_copy(const Geometry* from);
-int Geom_perturb(const Geometry* geom, Part* part);
+int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
 int Geom_next(Geometry* geom);
 void Geom_destroy(Geometry* geom);
 
-int E_perturb(const Metric* metric, Part* part);
-int Let_perturb(const Metric* metric, Part* part);
+int E_perturb(const Metric* metric, mcpl_particle_t* part);
+int Let_perturb(const Metric* metric, mcpl_particle_t* part);
 
-int Vol_perturb(const Metric* metric, Part* part);
-int SurfXY_perturb(const Metric* metric, Part* part);
-int Guide_perturb(const Metric* metric, Part* part);
+int Vol_perturb(const Metric* metric, mcpl_particle_t* part);
+int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part);
+int Guide_perturb(const Metric* metric, mcpl_particle_t* part);
 
-int Isotrop_perturb(const Metric* metric, Part* part);
-int Polar_perturb(const Metric* metric, Part* part);
+int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part);
+int Polar_perturb(const Metric* metric, mcpl_particle_t* part);
 
 
 #endif

@@ -6,11 +6,6 @@
 #include "ksource.h"
 
 
-void Part_print(Part* part){
-	printf("(%.3le, (%.3lf, %.3lf, %.3lf), (%.3lf, %.3lf, %.3lf))\n",
-		part->E, part->pos[0], part->pos[1], part->pos[2], part->dir[0], part->dir[1], part->dir[2]);
-}
-
 KSource* KS_create(double J, PList* plist, Geometry* geom){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
 	ks->J = J;
@@ -19,13 +14,13 @@ KSource* KS_create(double J, PList* plist, Geometry* geom){
 	return ks;
 }
 
-KSource* KS_open(const char* filename){
+KSource* KS_open(const char* filename, int bw_null){
 	int i, j;
 	char buffer[LINE_MAX_LEN], *pbuffer;
 	double J;
 
-	char pt;
-	int ord_plist;
+	char pt;	
+	char mcplfile[NAME_MAX_LEN];
 	double *trasl_plist=NULL, *rot_plist=NULL;
 
 	int ord_geom;
@@ -44,15 +39,8 @@ KSource* KS_open(const char* filename){
 	// PList
 	fgets(buffer, LINE_MAX_LEN, file); // # PList
 	fscanf(file, "%c\n", &pt); // Leer pt
-	fscanf(file, "%d\n", &ord_plist); // Leer ord_plist
-	char formats[ord_plist][NAME_MAX_LEN], *tracksfiles[ord_plist];
-	ReadFun reads[ord_plist];
-	for(i=0; i<ord_plist; i++) fgets(formats[i], NAME_MAX_LEN, file); // Leer formatos
-	for(i=0; i<ord_plist; i++){
-		tracksfiles[i] = (char*)malloc(NAME_MAX_LEN*sizeof(char));
-		fgets(tracksfiles[i], NAME_MAX_LEN, file); // Leer nombres de archivos de tracks
-		tracksfiles[i][strcspn(tracksfiles[i], "\n")] = 0;
-	}
+	fgets(mcplfile, NAME_MAX_LEN, file); // Leer nombre de archivo mcpl
+	mcplfile[strcspn(mcplfile, "\n")] = 0;
 	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de PList
 	if(strlen(buffer) > 1){
 		trasl_plist = (double*)malloc(3 * sizeof(double));
@@ -91,6 +79,7 @@ KSource* KS_open(const char* filename){
 		sscanf(buffer, "%lf %lf %lf", &rot_metric[0], &rot_metric[1], &rot_metric[2]);
 	}
 	fscanf(file, "%d\n", &variable_bw); // Leer variable_bw
+	if(bw_null) variable_bw = 0;
 	if(variable_bw){
 		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		fgets(bwfilename, NAME_MAX_LEN, file);
@@ -100,23 +89,11 @@ KSource* KS_open(const char* filename){
 	else{
 		for(i=0; i<ord_geom; i++){
 			bws[i] = (double*)malloc(dims[i]*sizeof(double));
-			for(j=0; j<dims[i]; j++) fscanf(file, "%lf", &bws[i][j]);
+			for(j=0; j<dims[i]; j++) bw_null ? bws[i][j]=0 : fscanf(file, "%lf", &bws[i][j]);
 		}
 	}
 	// Crear PList
-	for(i=0; i<ord_plist; i++){
-		if(strcmp(formats[i], "PTRAC\n") == 0) reads[i] = PTRAC_read;
-		else if(strcmp(formats[i], "T4stock\n") == 0) reads[i] = T4stock_read;
-		else if(strcmp(formats[i], "SSV\n") == 0) reads[i] = SSV_read;
-		else if(strcmp(formats[i], "Decay\n") == 0) reads[i] = Decay_read;
-		else if(strcmp(formats[i], "SSVtally\n") == 0) reads[i] = SSVtally_read;
-		else if(strcmp(formats[i], "Isotrop\n") == 0) reads[i] = Isotrop_read;
-		else{
-			printf("Error: Formato %s invalido\n", formats[i]);
-			return NULL;
-		}
-	}
-	PList* plist = PList_create(pt, ord_plist, tracksfiles, reads, trasl_plist, rot_plist, switch_x2z);
+	PList* plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);
 	// Crear Metric
 	for(i=0; i<ord_geom; i++){
 		if(strcmp(metricnames[i], "Energy\n") == 0) perturbs[i] = E_perturb;
@@ -141,16 +118,14 @@ KSource* KS_open(const char* filename){
 	free(trasl_metric); free(rot_metric);
 	free(bwfilename);
 	for(i=0; i<ord_geom; i++){ free(gps[i]); free(bws[i]); }
-	for(i=0; i<ord_plist; i++) free(tracksfiles[i]);
 	fclose(file);
 
 	return s;
 }
 
-int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, WeightFun bias){
-	*pt = ks->plist->pt;
+int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias){
 	if(w_crit <= 0){
-		PList_get(ks->plist, part, w);
+		PList_get(ks->plist, part);
 		PList_next(ks->plist);
 		Geom_next(ks->geom);
 	}
@@ -158,11 +133,11 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, Weigh
 		double bs;
 		int resamples = 0;
 		while(1){
-			PList_get(ks->plist, part, w);
+			PList_get(ks->plist, part);
 			if(bias) bs = bias(part);
 			else bs = 1;
-			if(*w*bs > 1){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
-				if(rand() < w_crit/(*w*bs)*RAND_MAX){
+			if(part->weight*bs > 1){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
+				if(rand() < w_crit/(part->weight*bs)*RAND_MAX){
 					PList_next(ks->plist);
 					Geom_next(ks->geom);
 				}
@@ -171,24 +146,25 @@ int KS_sample(KSource* ks, char* pt, Part* part, double* w, double w_crit, Weigh
 			else{ // Si w*bs<w_crit, uso w*bs/w_crit como prob de tomar la particula
 				PList_next(ks->plist);
 				Geom_next(ks->geom);
-				if(rand() < (*w*bs)/w_crit*RAND_MAX) break;
+				if(rand() < (part->weight*bs)/w_crit*RAND_MAX) break;
 			}
 			if(resamples++ > MAX_RESAMPLES) return 1;
 		}
-		*w = 1/bs;
+		part->weight = 1/bs;
 	}
 	Geom_perturb(ks->geom, part);
+	part->pdgcode = ks->plist->pt;
 	return 0;
 }
 
 double KS_w_mean(KSource* ks, int N){
 	int i;
 	char pt;
-	Part part;
-	double w, w_mean=0;
+	mcpl_particle_t part;
+	double w_mean=0;
 	for(i=0; i<N; i++){
-		KS_sample(ks, &pt, &part, &w, -1, NULL);
-		w_mean += w;
+		KS_sample(ks, &part, -1, NULL);
+		w_mean += part.weight;
 	}
 	return w_mean / N;
 }
@@ -218,20 +194,20 @@ MultiSource* MS_create(int len, KSource** s, const double* ws){
 	return ms;
 }
 
-MultiSource* MS_open(int len, const char** filenames, const double* ws){
+MultiSource* MS_open(int len, const char** filenames, const double* ws, int bw_null){
 	KSource* s[len];
 	int i;
-	for(i=0; i<len; i++) s[i] = KS_open(filenames[i]);
+	for(i=0; i<len; i++) s[i] = KS_open(filenames[i], bw_null);
 	return MS_create(len, s, ws);
 }
 
-int MS_sample(MultiSource* ms, char* pt, Part* part, double* w, double w_crit, WeightFun bias){
+int MS_sample(MultiSource* ms, mcpl_particle_t* part, double w_crit, WeightFun bias){
 	double y = rand() / ((double)RAND_MAX+1);
 	int i, ret;
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
-	ret = KS_sample(ms->s[i], pt, part, w, w_crit, bias);
-	*w *= ms->s[i]->J / (ms->J/ms->len);
+	ret = KS_sample(ms->s[i], part, w_crit, bias);
+	part->weight *= ms->s[i]->J / (ms->J/ms->len);
 	return ret;
 }
 

@@ -39,15 +39,14 @@
 
 DEFINE COMPONENT KSource
 DEFINITION PARAMETERS ()
-SETTING PARAMETERS (string filename, string format="SSV",
-	bw_u=0.0, bw_x=0.0, bw_y=0.0, bw_mu=0.0, bw_phi=0.0, string bwfilename=NULL, variable_bw=0,
-	trasl_x=0.0, trasl_y=0.0, trasl_z=0.0,
-	rot_x=0.0, rot_y=0.0, rot_z=0.0, switch_x2z=1)
+SETTING PARAMETERS (string sourcefile, bw_null=0)
 OUTPUT PARAMETERS (I, p2, N)
+DEPENDENCY "-I@MCCODE_LIB@/libs/mcpl -L@MCCODE_LIB@/libs/mcpl -lmcpl"
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 
 SHARE
 %{
+	#include <mcpl.h>
 	%include "ksource"
 	%include "metrics"
 	%include "plists"
@@ -59,56 +58,37 @@ DECLARE
 	int N;
 	double I, p2;
     
-    PList* plist;
-    Geometry* geom;
 	KSource *ksource;
 %}
 
 INITIALIZE
 %{  
-    ReadFun readfun = NULL;
-	if(strcmp(format, "PTRAC") == 0) readfun = PTRAC_read;
-	else if(strcmp(format, "SSV") == 0) readfun = SSV_read;
-	else printf("KSource %s: Invalid format", NAME_CURRENT_COMP);
-    double trasl[3] = {trasl_x, trasl_y, trasl_z};
-    double rot[3] = {rot_x, rot_y, rot_z};
-	plist = PListSimple_create('n', filename, readfun, trasl, rot, switch_x2z);
-
-    double bw_E[1] = {bw_u};
-    double bw_pos[2] = {bw_x, bw_y};
-    double bw_dir[2] = {bw_mu, bw_phi};
-    double surfxy_par[4] = {-INFINITY, INFINITY, -INFINITY, INFINITY};
-    Metric* metrics[3] = {Metric_create(1, bw_E, Let_perturb, 0, NULL),
-                          Metric_create(2, bw_pos, SurfXY_perturb, 4, surfxy_par),
-                          Metric_create(2, bw_dir, Polar_perturb, 0, NULL)};
-    geom = Geom_create(3, metrics, bwfilename, variable_bw, NULL, NULL);
-
-	ksource = KS_create(1, plist, geom);
+    ksource = KS_open(sourcefile, bw_null);
 %}
 
 TRACE
 %{
 	char pt;
-	Part part;
+	mcpl_particle_t part;
 	double w, v;
 
-	KS_sample(ksource, &pt, &part, &w, 1, NULL);
+	KS_sample(ksource, &part, 1, NULL);
 
-	x = part.pos[0]/100;
-	y = part.pos[1]/100;
-	z = part.pos[2]/100;
-	v = SE2V*sqrt(part.E*1E9);
-	vx = v*part.dir[0];
-	vy = v*part.dir[1];
-	vz = v*part.dir[2];
+	x = part.position[0]/100;
+	y = part.position[1]/100;
+	z = part.position[2]/100;
+	v = SE2V*sqrt(part.ekin*1E9);
+	vx = v*part.direction[0];
+	vy = v*part.direction[1];
+	vz = v*part.direction[2];
 	sx = 0;
 	sy = 0;
 	sz = 0;
 	t = 0;
-	p = w;
+	p = part.weight;
 
-	I += w;
-	p2 += w*w;
+	I += part.weight;
+	p2 += part.weight*part.weight;
 	N++;
 
 	SCATTER;

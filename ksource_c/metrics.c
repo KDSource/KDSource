@@ -100,15 +100,15 @@ Geometry* Geom_copy(const Geometry* from){
 	return geom;
 }
 
-int Geom_perturb(const Geometry* geom, Part* part){
+int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 	int i, ret=0;
-	if(geom->trasl) traslv(part->pos, geom->trasl, 1);
-	if(geom->rot){ rotv(part->pos, geom->rot, 1); rotv(part->dir, geom->rot, 1); }
+	if(geom->trasl) traslv(part->position, geom->trasl, 1);
+	if(geom->rot){ rotv(part->position, geom->rot, 1); rotv(part->direction, geom->rot, 1); }
 	for(i=0; i<geom->ord; i++){
 		ret += geom->ms[i]->perturb(geom->ms[i], part);
 	}
-	if(geom->rot){ rotv(part->pos, geom->rot, 0); rotv(part->dir, geom->rot, 0); }
-	if(geom->trasl) traslv(part->pos, geom->trasl, 0);
+	if(geom->rot){ rotv(part->position, geom->rot, 0); rotv(part->direction, geom->rot, 0); }
+	if(geom->trasl) traslv(part->position, geom->trasl, 0);
 	return ret;
 }
 
@@ -145,40 +145,40 @@ void Geom_destroy(Geometry* geom){
 }
 
 
-int E_perturb(const Metric* metric, Part* part){
-	part->E += metric->bw[0] * rand_norm();
-	if(part->E < E_MIN) part->E = E_MIN;
+int E_perturb(const Metric* metric, mcpl_particle_t* part){
+	part->ekin += metric->bw[0] * rand_norm();
+	if(part->ekin < E_MIN) part->ekin = E_MIN;
 	return 0;
 }
-int Let_perturb(const Metric* metric, Part* part){
-	part->E *= exp(metric->bw[0] * rand_norm());
-	if(part->E < E_MIN) part->E = E_MIN;
+int Let_perturb(const Metric* metric, mcpl_particle_t* part){
+	part->ekin *= exp(metric->bw[0] * rand_norm());
+	if(part->ekin < E_MIN) part->ekin = E_MIN;
 	return 0;
 }
 
-int Vol_perturb(const Metric* metric, Part* part){
-	part->pos[0] += metric->bw[0] * rand_norm();
-	part->pos[1] += metric->bw[1] * rand_norm();
-	part->pos[2] += metric->bw[2] * rand_norm();
-	if(part->pos[0] < metric->geom_par[0]) part->pos[0] = metric->geom_par[0];
-	else if(part->pos[0] > metric->geom_par[1]) part->pos[0] = metric->geom_par[1];
-	if(part->pos[1] < metric->geom_par[2]) part->pos[1] = metric->geom_par[2];
-	else if(part->pos[1] > metric->geom_par[3]) part->pos[1] = metric->geom_par[3];
-	if(part->pos[2] < metric->geom_par[4]) part->pos[2] = metric->geom_par[4];
-	else if(part->pos[2] > metric->geom_par[5]) part->pos[2] = metric->geom_par[5];
+int Vol_perturb(const Metric* metric, mcpl_particle_t* part){
+	part->position[0] += metric->bw[0] * rand_norm();
+	part->position[1] += metric->bw[1] * rand_norm();
+	part->position[2] += metric->bw[2] * rand_norm();
+	if(part->position[0] < metric->geom_par[0]) part->position[0] = metric->geom_par[0];
+	else if(part->position[0] > metric->geom_par[1]) part->position[0] = metric->geom_par[1];
+	if(part->position[1] < metric->geom_par[2]) part->position[1] = metric->geom_par[2];
+	else if(part->position[1] > metric->geom_par[3]) part->position[1] = metric->geom_par[3];
+	if(part->position[2] < metric->geom_par[4]) part->position[2] = metric->geom_par[4];
+	else if(part->position[2] > metric->geom_par[5]) part->position[2] = metric->geom_par[5];
 	return 0;
 }
-int SurfXY_perturb(const Metric* metric, Part* part){
-	part->pos[0] += metric->bw[0] * rand_norm();
-	part->pos[1] += metric->bw[1] * rand_norm();
-	if(part->pos[0] < metric->geom_par[0]) part->pos[0] = metric->geom_par[0];
-	else if(part->pos[0] > metric->geom_par[1]) part->pos[0] = metric->geom_par[1];
-	if(part->pos[1] < metric->geom_par[2]) part->pos[1] = metric->geom_par[2];
-	else if(part->pos[1] > metric->geom_par[3]) part->pos[1] = metric->geom_par[3];
+int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part){
+	part->position[0] += metric->bw[0] * rand_norm();
+	part->position[1] += metric->bw[1] * rand_norm();
+	if(part->position[0] < metric->geom_par[0]) part->position[0] = metric->geom_par[0];
+	else if(part->position[0] > metric->geom_par[1]) part->position[0] = metric->geom_par[1];
+	if(part->position[1] < metric->geom_par[2]) part->position[1] = metric->geom_par[2];
+	else if(part->position[1] > metric->geom_par[3]) part->position[1] = metric->geom_par[3];
 	return 0;
 }
-int Guide_perturb(const Metric* metric, Part* part){
-	double x=part->pos[0], y=part->pos[1], z=part->pos[2], dx=part->dir[0], dy=part->dir[1], dz=part->dir[2];
+int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
+	double x=part->position[0], y=part->position[1], z=part->position[2], dx=part->direction[0], dy=part->direction[1], dz=part->direction[2];
 	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zmax=metric->geom_par[2], rcurv=metric->geom_par[3];
 	double t, theta, phi, theta0, dx2, dz2;
 	int cont=0;
@@ -243,18 +243,18 @@ int Guide_perturb(const Metric* metric, Part* part){
 		x = copysign(1, rcurv) * r * cos(ang) - rcurv; z = r * sin(fabs(ang));
 		dx2 = dx; dz2 = dz; dx = dx2*cos(ang) - dz2*sin(ang); dz = dx2*sin(ang) + dz2*cos(ang);
 	}
-	part->pos[0] = x; part->pos[1] = y; part->pos[2] = z;
-	part->dir[0] = dx; part->dir[1] = dy; part->dir[2] = dz;
+	part->position[0] = x; part->position[1] = y; part->position[2] = z;
+	part->direction[0] = dx; part->direction[1] = dy; part->direction[2] = dz;
 	return 0;
 }
 
-int Isotrop_perturb(const Metric* metric, Part* part){
+int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part){
 	if(metric->bw[0] == INFINITY){
-		part->dir[2] = -1 + 2.*rand()/RAND_MAX;
-		double dxy = sqrt(1-part->dir[2]*part->dir[2]);
+		part->direction[2] = -1 + 2.*rand()/RAND_MAX;
+		double dxy = sqrt(1-part->direction[2]*part->direction[2]);
 		double phi = 2.*M_PI*rand()/RAND_MAX;
-		part->dir[0] = dxy*cos(phi);
-		part->dir[1] = dxy*sin(phi);
+		part->direction[0] = dxy*cos(phi);
+		part->direction[1] = dxy*sin(phi);
 	}
 	else if(metric->bw[0] > 0){
 		double xi = (double)rand()/RAND_MAX;
@@ -262,25 +262,25 @@ int Isotrop_perturb(const Metric* metric, Part* part){
 		w += metric->bw[0]*metric->bw[0] * log(xi+(1-xi)*exp(-2/(metric->bw[0]*metric->bw[0])));
 		double phi = 2.*M_PI*rand()/RAND_MAX;
 		double uv = sqrt(1-w*w), u = uv*cos(phi), v = uv*sin(phi);
-		double x=part->dir[0], y=part->dir[1], z=part->dir[2];
-		if(part->dir[2] > 0){
-			part->dir[0] = u*z + w*x - (v*x-u*y)*y/(1+z);
-			part->dir[1] = v*z + w*y + (v*x-u*y)*x/(1+z);
+		double x=part->direction[0], y=part->direction[1], z=part->direction[2];
+		if(part->direction[2] > 0){
+			part->direction[0] = u*z + w*x - (v*x-u*y)*y/(1+z);
+			part->direction[1] = v*z + w*y + (v*x-u*y)*x/(1+z);
 		}
 		else{
-			part->dir[0] = u*z + w*x + (v*x-u*y)*y/(1-z);
-			part->dir[1] = v*z + w*y - (v*x-u*y)*x/(1-z);
+			part->direction[0] = u*z + w*x + (v*x-u*y)*y/(1-z);
+			part->direction[1] = v*z + w*y - (v*x-u*y)*x/(1-z);
 		}
-		part->dir[2] = w*z - u*x - v*y;
+		part->direction[2] = w*z - u*x - v*y;
 	}
 	return 0;
 }
 
-int Polar_perturb(const Metric* metric, Part* part){
+int Polar_perturb(const Metric* metric, mcpl_particle_t* part){
 	double theta, phi, theta0;
 	int cont=0;
-	theta0 = acos(part->dir[2]);
-	phi   = atan2(part->dir[1], part->dir[0]);
+	theta0 = acos(part->direction[2]);
+	phi   = atan2(part->direction[1], part->direction[0]);
 	theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
 	while((theta0-M_PI/2)*(theta-M_PI/2) < 0){ // Evitar que perturbacion cambie sentido de propagacion
 		theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
@@ -290,8 +290,8 @@ int Polar_perturb(const Metric* metric, Part* part){
 		}
 	}
 	phi   += metric->bw[1]*M_PI/180 * rand_norm();
-	part->dir[0] = sin(theta) * cos(phi);
-	part->dir[1] = sin(theta) * sin(phi);
-	part->dir[2] = cos(theta);
+	part->direction[0] = sin(theta) * cos(phi);
+	part->direction[1] = sin(theta) * sin(phi);
+	part->direction[2] = cos(theta);
 	return 0;
 }
