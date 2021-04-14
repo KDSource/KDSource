@@ -38,8 +38,7 @@ def H10(pt='n', ref='ARN'):
 	log_interp = lambda EE: np.exp(lin_interp(np.log(EE)))
 	return log_interp
 
-
-# Funciones para aplicar pesos y/o mascaras a listas de tracks
+# Mascaras
 
 class Box:
 	def __init__(self, vec1, vec2):
@@ -60,11 +59,3 @@ class Box:
 			if self.vec2[i] is not None:
 				mask = np.logical_and(mask, vecs[:,i] < self.vec2[i])
 		return mask
-
-def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
-	if weightfun is not None:
-		ws = ws*weightfun(vecs)
-	mask = (ws > 0)
-	if maskfun is not None:
-		mask = np.logical_and(mask, maskfun(vecs))
-	return [vecs[mask,:], ws[mask]]

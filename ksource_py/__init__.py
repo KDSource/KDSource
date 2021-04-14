@@ -7,5 +7,5 @@ from .plists import *
 from .ksource import *
 
 from .tally import *
-from .tracks import *
+from .stats import *
 from .summary import *

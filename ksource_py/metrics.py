@@ -5,22 +5,25 @@ import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
 
 class Metric:
-	def __init__(self, varnames, units, volunits):
+	def __init__(self, partvars, varnames, units, volunits):
+		self.partvars = partvars
+		if len(varnames) != len(units):
+			raise ValueError("Longitudes de varnames y units deben ser iguales")
+		self.dim = len(varnames)
 		self.varnames = varnames
 		self.varmap = {name:idx for idx,name in enumerate(varnames)}
-		if len(units) != len(varnames):
-			raise Exception("Longitud de varnames y units debe coincidir")
 		self.units = units
 		self.volunits = volunits
-		self.dim = len(varnames)
-	def transform(self, pb):
-		return np.stack([pb.ekin,pb.x,pb.y,pb.z,pb.ux,pb.uy,pb.uz], axis=1)
-	def jac(self, pb):
+	def transform(self, parts):
+		return parts
+	def inverse_transform(self, vecs):
+		return vecs
+	def jac(self, parts):
 		return np.ones(len(parts))
 	def mean(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
-		return np.mean(vecs, axis=0)
+		return self.inverse_transform(np.mean(vecs, axis=0))
 	def std(self, parts=None, vecs=None):
 		if vecs is None:
 			vecs = self.transform(parts)
@@ -47,7 +50,7 @@ class Geometry (Metric):
 		self.rot = rot
 	def transform(self, parts):
 		if self.trasl is not None:
-			parts[:,1:4] -= self.trasl
+			parts[:,1:4] -= self.trasl # Posicion
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
@@ -56,22 +59,21 @@ class Geometry (Metric):
 			vecss.append(metric.transform(parts[:,metric.partvars]))
 		return np.concatenate(vecss, axis=1)
 	def inverse_transform(self, vecs):
-		partss = []
+		parts = np.zeros((len(vecs), 7))
 		end = 0
 		for metric in self.ms:
 			start = end
 			end = start + metric.dim
-			partss.append(metric.inverse_transform(vecs[:,start:end]))
-		parts = np.concatenate(partss, axis=1)
+			parts[:,metric.partvars] = metric.inverse_transform(vecs[:,start:end])
 		if self.trasl is not None:
-			parts[:,1:4] += self.trasl
+			parts[:,1:4] += self.trasl # Posicion
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4]) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7]) # Direccion
 		return parts
 	def jac(self, parts):
 		if self.trasl is not None:
-			parts[:,1:4] -= self.trasl
+			parts[:,1:4] -= self.trasl # Posicion
 		if self.rot is not None:
 			parts[:,1:4] = self.rot.apply(parts[:,1:4], inverse=True) # Posicion
 			parts[:,4:7] = self.rot.apply(parts[:,4:7], inverse=True) # Direccion
@@ -255,7 +257,7 @@ class Isotrop (Metric):
 
 class Polar (Metric):
 	def __init__(self):
-		super().__init__([4,5,6], ["mu","phi"], ["deg","deg"], "sr^2")
+		super().__init__([4,5,6], ["theta","phi"], ["deg","deg"], "sr^2")
 	def transform(self, dirs):
 		thetas = np.arccos(dirs[:,2]) * 180/np.pi
 		phis = np.arctan2(dirs[:,1], dirs[:,0]) * 180/np.pi

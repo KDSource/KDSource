@@ -61,8 +61,13 @@ class KSource:
 		errs *= self.J * jacs
 		return np.array([scores, errs])
 
-	def save(self, filename, bwfilename=None):
-		file = open(filename, "w")
+	def save(self, sourcefilename=None, bwfilename=None):
+		if sourcefilename is None:
+			sourcefilename = self.plist.filename.split('.')[0]+"_source.txt"
+		if bwfilename is None:
+			bwfilename = self.plist.filename.split('.')[0]+"_bws.ssv"
+		print("Archivo de definicion de fuente: {}".format(sourcefilename))
+		file = open(sourcefilename, "w")
 		file.write("# J [1/s]:\n")
 		file.write("%le\n" % (self.J))
 		file.write("# PList:\n")
@@ -71,16 +76,13 @@ class KSource:
 		self.geom.save(file)
 		if self.bw.ndim == 2: # Ancho de banda variable
 			file.write("1\n")
+			np.savetxt(bwfilename, self.bw)
 			file.write(os.path.abspath(bwfilename)+"\n")
+			print("Archivo de anchos de banda: {}".format(bwfilename))
 		else:
 			file.write("0\n")
 			np.savetxt(file, self.bw[np.newaxis,:])
 		file.close()
-
-	def save_bw(self, bwfilename, append=False):
-		if append:
-			bwfilename = open(bwfilename, "a")
-		np.savetxt(bwfilename, self.bw.reshape(-1,self.geom.dim))
 
 	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
 		vecs = self.vecs.copy()
@@ -115,30 +117,40 @@ class KSource:
 			if "cv" in kwargs: cv = kwargs["cv"] # CV folds
 			else:  cv = 10
 			grid = GridSearchCV(KernelDensity(kernel='gaussian'),
-			                                  {'bandwidth': bw_grid},
-			                                  cv=cv,
-			                                  verbose=10,
-			                                  n_jobs=8)
+											  {'bandwidth': bw_grid},
+											  cv=cv,
+											  verbose=10,
+											  n_jobs=8)
 			grid.fit(vecs/bw_silv)
 			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))
 			plt.xlabel("ancho de banda normalizado")
 			plt.ylabel("mean CV score")
 			plt.show()
+			print("Verificar que el grafico presenta un maximo")
 			bw_mlcv = bw_silv * grid.best_params_['bandwidth']
 			bw_mlcv *= (N_tot/N)**(-1/(4+self.geom.dim))
 			#
 			self.bw = bw_mlcv
 		#
 		elif self.bw_method == 'knn': # Metodo K Nearest Neighbours
-			if "K" in kwargs: K = kwargs["K"] # Cantidad de vecinos
-			else:  K = 10
 			if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
-			else:  batch_size = 10000
+			else: batch_size = 10000
+			if "K" in kwargs: K = kwargs["K"] # Cantidad de vecinos
+			elif "seed" in kwargs:
+				vs = vecs[:batch_size] / kwargs["seed"]
+				ks = []
+				for v in vs:
+					dists2 = np.sum((vs - v)**2, axis=1)
+					ks.append(np.sum(dists2 < 1))
+				K = round((np.mean(ks)-1)*N_tot/batch_size)
+			else: K = 10
+			print("Usando K = %d"%K)
 			k = round(K * batch_size/N_tot)
 			if k == 0:
-				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(N_tot/batch_size))
+				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(int(N_tot/batch_size)))	
 				k = 1
 			batches = int(N / batch_size)
+			print("nbatches = %d"%batches)
 			vecs /= std
 			bw_knn = np.zeros((0,self.geom.dim))
 			for batch in range(batches):
