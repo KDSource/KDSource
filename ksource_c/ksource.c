@@ -153,7 +153,7 @@ int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias)
 		part->weight = 1/bs;
 	}
 	Geom_perturb(ks->geom, part);
-	part->pdgcode = ks->plist->pt;
+	part->pdgcode = pt2pdg(ks->plist->pt);
 	return 0;
 }
 

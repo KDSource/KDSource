@@ -11,6 +11,9 @@ from .aux import R_gaussian,C_gaussian
 
 np.set_printoptions(precision=3)
 
+BW_DEFAULT = 1
+STD_DEFAULT = 1
+
 
 varnames = ["E", "x","y","z", "dx","dy","dz"]
 varmap = {name:idx for idx,name in enumerate(varnames)}
@@ -46,6 +49,7 @@ class KSource:
 			print("Calculando bw ... ")
 			self.optimize_bw(**kwargs)
 			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
+		self.bw[self.bw == 0] = BW_DEFAULT
 		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
 		self.fitted = True
 
@@ -121,6 +125,7 @@ class KSource:
 											  cv=cv,
 											  verbose=10,
 											  n_jobs=8)
+			bw_silv[bw_silv == 0] = BW_DEFAULT
 			grid.fit(vecs/bw_silv)
 			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))
 			plt.xlabel("ancho de banda normalizado")
@@ -149,8 +154,9 @@ class KSource:
 			if k == 0:
 				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(int(N_tot/batch_size)))	
 				k = 1
-			batches = int(N / batch_size)
-			print("nbatches = %d"%batches)
+			batches = np.ceil(N / batch_size).astype(int)
+			batch_size = np.round(N / batches).astype(int)
+			std[std == 0] = STD_DEFAULT
 			vecs /= std
 			bw_knn = np.zeros((0,self.geom.dim))
 			for batch in range(batches):

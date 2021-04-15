@@ -11,5 +11,8 @@ double *traslv(double *vect, double *trasl, int inverse);
 
 double *rotv(double *vect, double *rotvec, int inverse);
 
+long pt2pdg(char pt);
+char pdg2pt(long pdgcode);
+
 
 #endif

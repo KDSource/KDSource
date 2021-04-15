@@ -33,3 +33,16 @@ double *rotv(double *vect, double *rotvec, int inverse){
 	for(i=0; i<3; i++) vect[i] = vrot[i];
 	return vect;
 }
+
+long pt2pdg(char pt){
+	if(pt == 'n') return 2112;
+	if(pt == 'p') return 22;
+	if(pt == 'e') return 11;
+	return 0;
+}
+char pdg2pt(long pdgcode){
+	if(pdgcode == 2112) return 'n';
+	if(pdgcode == 22) return 'p';
+	if(pdgcode == 11) return 'e';
+	return '0';
+}

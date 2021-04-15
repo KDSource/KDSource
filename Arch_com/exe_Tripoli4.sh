@@ -2,9 +2,9 @@
 
 ##### Input #####
 
-INPUT=2_bunker_n # 4_hall_n # 5_E_n # 
-DIR_OUT=$INPUT # 3_bunker_act #  4_hall_act # 5_E_act # 
-EXT_SOURCE=KSource.c # Distrib2Tripoli_hall.c # Tally2Tripoli_activ.c # 
+INPUT=2_bunker_n # 
+DIR_OUT=2_bunker_act # $INPUT #  
+EXT_SOURCE=KSource.c
 
 ### End Input ###
 
@@ -18,7 +18,8 @@ cd $DIR_OUT
 # gcc lib.c source.c -shared -o source.so -I ~lib_folder -lm -fPIC
 KSOURCE=~/Documents/Maestria/KSource/ksource_c
 COM=~/Documents/Maestria/KSource/Arch_com
-gcc $KSOURCE/ksource.c $KSOURCE/metrics.c $KSOURCE/plists.c $KSOURCE/aux.c $COM/$EXT_SOURCE -o source.so -I $KSOURCE -shared -lm -fPIC
+MCSTAS=/usr/share/mcstas/2.7
+gcc $KSOURCE/ksource.c $KSOURCE/metrics.c $KSOURCE/plists.c $KSOURCE/aux.c $COM/$EXT_SOURCE $MCSTAS/libs/mcpl/mcpl.c -o source.so -I $KSOURCE -I$MCSTAS/libs/mcpl -L$MCSTAS/libs/mcpl -shared -lm -fPIC
 export LD_LIBRARY_PATH=$(pwd)
 
 # Ejecutar tripoli4

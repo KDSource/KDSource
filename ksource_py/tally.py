@@ -3,16 +3,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
+import os
+from PIL import Image as Im
 
+from .plists import convert2mcpl,savessv,appendssv
+
+
+def read_spectrum(spectrum=None):
+	Es = []
+	ws = []
+	if spectrum is not None:
+		file = open(spectrum, "r")
+		for line in file:
+		    try:
+		        line = line.split(sep=',')
+		        Es.append(np.double(line[0])/1000.)
+		        ws.append(np.double(line[2]))
+		    except:
+		        pass
+		file.close()
+	else:
+		Es.append(1)
+		ws.append(1)
+	Es = np.array(Es)
+	ws = np.array(ws)
+	if len(Es) != len(ws):
+		raise Exception("Formato de espectro de decaimiento invalido")
+	if len(Es) == 0:
+		raise Exception("Espectro de decaimiento vacio")
+	return [Es, ws]
 
 class T4Tally:
 	varnames = ["x","y","z"]
 	varmap = {name:idx for idx,name in enumerate(varnames)}
 	units = ["cm","cm","cm"]
 
-	def __init__(self, filename, tallyname, J=1):
+	def __init__(self, outputfile, tallyname, spectrum=None, geomplot=None, J=1):
 		self.J = J
-		file = open(filename, "r")
+		self.folder = os.path.dirname(outputfile)
+		self.outputfile = outputfile
+		self.tallyname = tallyname
+		# Leer espectro
+		self.Es,self.ws = read_spectrum(spectrum)
+		# Leer grafico de geometria
+		if geomplot is not None:
+			geomplot = np.array(Im.open(geomplot).convert('L').crop((25,26,514,514)))
+		self.geomplot = geomplot
+		# Leer tallies
+		file = open(outputfile, "r")
 		# Buscar bloque de SCOREs
 		for line in file:
 			if "SCORE" in line:
@@ -62,12 +100,16 @@ class T4Tally:
 		idx = line.split().index("CARTESIAN")
 		buf.extend(line.split()[idx+1:]) # Acumular datos luego de CARTESIAN
 		for line in file:
-			if "NAME" in line:
-				idx = line.split().index("NAME")
-				break
-			if "END_SCORE" in line:
-				idx = line.split().index("END_SCORE")
-				break
+			found = False
+			for search in ["NAME", "END_SCORE", "//", "/*"]:
+				if search in line:
+					if not found:
+						idx = line.split().index(search)
+						found = True
+					else:
+						idx2 = line.split().index(search)
+						if idx2 < idx: idx = idx2
+			if found: break
 			buf.extend(line.split())
 		buf.extend(line.split()[:idx]) # Acumular datos antes de NAME o END_SCORE
 		if len(buf) != 12:
@@ -102,16 +144,29 @@ class T4Tally:
 		self.I = np.reshape(I, Ns)
 		self.err = np.reshape(err, Ns)
 
-	def save_tracks(self, filename):
+	def save_tracks(self, tracksfile=None):
+		# Preparar lista de posiciones
+		if tracksfile is None:
+			tracksfile = self.folder + "/" + self.tallyname + ".ssv"
 		grids = [(grid[:-1]+grid[1:])/2 for grid in self.grids]
 		poss = np.reshape(np.meshgrid(*grids, indexing='ij'),(3,-1)).T
 		ws = self.I.reshape(-1)
 		poss = poss[ws>0]
 		ws = ws[ws>0]
 		ws /= ws.mean()
-		poss_ws = np.concatenate((poss, ws[:,np.newaxis]), axis=1)
-		np.savetxt(filename, poss_ws)
-		print("Lista de tracks guardada exitosamente")
+		# Preparar lista de particulas
+		parts = np.zeros((len(poss), 7))
+		parts[:,1:4] = poss
+		parts[:,6] = 1
+		# Guardar un bloque por cada energia
+		pt = "p"
+		savessv(pt, [], [], tracksfile)
+		for E,w in zip(self.Es, self.ws):
+			parts[:,0] = E
+			appendssv(pt, parts, w*ws, tracksfile)
+		tracksfile = convert2mcpl(tracksfile, "ssv")
+		print("Lista de tracks guardada exitosamente en {}".format(tracksfile))
+		return tracksfile
 
 	def plot(self, idx, cells=None, **kwargs):
 		if isinstance(idx, str):
@@ -148,10 +203,9 @@ class T4Tally:
 		plt.ylabel("Tally")
 		plt.grid()
 		plt.legend()
-		#
 		return [plt.gcf(), [scores,errs]]
 
-	def plot2D(self, idxs, cell=None, **kwargs):
+	def plot2D(self, idxs, cell=None, geomplot=False, levelcurves=None, **kwargs):
 		if isinstance(idxs[0], str):
 			idxs = [self.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "log"
@@ -192,5 +246,12 @@ class T4Tally:
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.varnames[idxs[0]], self.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.varnames[idxs[1]], self.units[idxs[1]]))
+		#
+		if levelcurves is not None:
+			plt.contour(scores, levelcurves, extent=extent, linewidths=0.5)
+		#
+		if self.geomplot is not None and geomplot:
+			for val in np.unique(self.geomplot):
+				plt.contour(self.geomplot==val, [0.5], colors='black', extent=extent, linewidths=0.25)
 		#
 		return [plt.gcf(), [scores,errs]]

@@ -34,7 +34,7 @@ def read_bashoutput(bashoutput, mccode):
 	return [t_simul, I_source]
 
 class Summary:
-	def __init__(self, mccode, folder, bashoutput=None, n_detectors=[], p_detectors=[], t4output=None, tallies=[]):
+	def __init__(self, mccode, folder, bashoutput="bash.out", n_detectors=[], p_detectors=[], t4output=None, tallies=[]):
 		if any(mccode == mc for mc in ["McStas", "Tripoli"]):
 			self.mccode = mccode
 		else:
@@ -54,14 +54,14 @@ class Summary:
 			self.I_source = 1
 		self.n_det_scores = []
 		for detector in self.n_detectors:
-			if self.mccode == "McStas": readformat = "SSV"
-			if self.mccode == "Tripoli": readformat = "T4stock"
+			if self.mccode == "McStas": readformat = "mcpl"
+			if self.mccode == "Tripoli": readformat = "stock"
 			plist = PList(readformat, self.folder+"/"+detector)
 			self.n_det_scores.append([plist.I, np.sqrt(plist.p2)])
 		self.p_det_scores = []
 		for detector in self.p_detectors:
-			if self.mccode == "McStas": readformat = "SSV"
-			if self.mccode == "Tripoli": readformat = "T4stock"
+			if self.mccode == "McStas": readformat = "mcpl"
+			if self.mccode == "Tripoli": readformat = "stock"
 			plist = PList(readformat, self.folder+"/"+detector)
 			self.p_det_scores.append([plist.I, np.sqrt(plist.p2)])
 		self.tally_scores = []

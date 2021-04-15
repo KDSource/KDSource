@@ -12,6 +12,18 @@ R_gaussian = 1 / (2*np.sqrt(np.pi)) # Roughness of gaussian kernel
 def C_gaussian(q): # Silverman costant for gaussian kernel and dimension q
 	return (4/(2+q))**(1/(4+q))
 
+# Conversion entre tipo de part (char) y pdgcode
+def pt2pdg(pt):
+	if pt == 'n': return 2112
+	if pt == 'p': return 22
+	if pt == 'e': return 11
+	return 0
+def pdg2pt(pdgcode):
+	if pdgcode == 2112: return 'n'
+	if pdgcode == 22: return 'p'
+	if pdgcode == 11: return 'e'
+	return '0'
+
 
 # Factores dosimetricos
 
@@ -44,13 +56,16 @@ def H10(pt='n', ref='ARN'):
 
 class Box:
 	def __init__(self, vec1, vec2):
-		if vec1 is None:
-			vec1 = len(vec2)*[None]
-		if vec2 is None:
-			vec2 = len(vec1)*[None]
-		if len(vec1) != len(vec2):
-			raise ValueError("vec1 y vec2 deben tener la misma longitud")
-		self.dim = len(vec1)
+		if vec1 is None and vec2 is None:
+			self.dim = 0
+		else:
+			if vec1 is None:
+				vec1 = len(vec2)*[None]
+			if vec2 is None:
+				vec2 = len(vec1)*[None]
+			if len(vec1) != len(vec2):
+				raise ValueError("vec1 y vec2 deben tener la misma longitud")
+			self.dim = len(vec1)
 		self.vec1 = vec1
 		self.vec2 = vec2
 	def __call__(self, vecs):

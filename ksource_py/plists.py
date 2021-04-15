@@ -6,6 +6,8 @@ import scipy.spatial.transform as st
 import os, subprocess
 import mcpl
 
+from .aux import pt2pdg,pdg2pt
+
 MCPLPATH = "/opt/mcpl/bin/"
 
 
@@ -18,11 +20,13 @@ def convert2mcpl(filename, readformat):
 	if os.path.isfile(filename.split('.')[0]+".mcpl.gz"):
 		already_converted = True
 		filename = filename.split('.')[0]+".mcpl.gz"
+	if readformat == "mcpl":
+		already_converted = True
 	if already_converted:
 		print("Using existing file {}".format(filename))
 		return filename
 	# Se debe convertir
-	if not readformat in ["ssw", "ptrac", "stock"]:
+	if not readformat in ["ssw", "ptrac", "stock", "ssv"]:
 		raise Exception("Formato {} invalido".format(readformat))
 	print("Converting {} file to MCPL...".format(readformat))
 	filename_mcpl = filename.split(".")[0]+".mcpl"
@@ -38,9 +42,9 @@ def convert2mcpl(filename, readformat):
 ptmap = {'n':2112, 'p':22, 'e':11, 'e+':-11}
 
 def savessv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2ascii (in mcpl.py)
-	fout = outfile if hasattr(outfile,'write') else open(outfile,'w')
+	fout = open(outfile,'w')
 	fout.write("#MCPL-ASCII\n#ASCII-FORMAT: v1\n#NPARTICLES: %i\n"%len(parts))
-	if header is not None:
+	if comments is not None:
 		fout.write("#NCOMMENTS %d\n"%len(comments))
 		for comment in comments:
 			fout.write(comment)
@@ -55,7 +59,7 @@ def savessv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2asci
 		fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
 
 def appendssv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2ascii (in mcpl.py)
-	fout = outfile if hasattr(outfile,'write') else open(outfile,'w')
+	fout = open(outfile,'a')
 	pdgcode = ptmap[pt]
 	fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
 	for idx,p in enumerate(parts):
@@ -63,8 +67,7 @@ def appendssv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2as
 
 class PList:
 	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
-		if readformat != "mcpl": # Convertir formato a MCPL
-			filename = convert2mcpl(filename, readformat)
+		filename = convert2mcpl(filename, readformat) # Convertir formato a MCPL
 		self.filename = filename
 		if trasl is not None:
 			trasl = np.array(trasl)
@@ -103,6 +106,9 @@ class PList:
 			return np.zeros(0),np.zeros((0,7))
 		parts = np.stack((pb.ekin,pb.x,pb.y,pb.z,pb.ux,pb.uy,pb.uz), axis=1)
 		ws = pb.weight
+		mask = np.logical_and(ws>0, pb.pdgcode==pt2pdg(self.pt))
+		parts = parts[mask]
+		ws = ws[mask]
 		if self.trasl is not None: # Aplico traslacion
 			parts[:,1:4] += self.trasl
 		if self.rot is not None: # Aplico rotacion

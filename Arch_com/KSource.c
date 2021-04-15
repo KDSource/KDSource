@@ -4,6 +4,8 @@
 #include<string.h>
 #include<time.h>
 
+#include "mcpl.h"
+
 #include "ksource.h"
 #include "metrics.h"
 #include "plists.h"
@@ -23,8 +25,23 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 /************************************************* Input *****************************************************/
 	
+	/*
+	// Plantilla
 	#define len 1
-	char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt"};
+	const char* filenames[len] = {"tracksfile.mcpl"};
+	double ws[len] = {1};
+	int bw_null = 0;
+
+	// Guias
+	#define len 1
+	const char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/BC_tracks_source.txt"};
+	double ws[len] = {1};
+	int bw_null = 0;
+	*/
+
+	// Activacion en bunker
+	#define len 1
+	const char* filenames[len] = {"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/mapa_activ_fe_source.txt"};
 	double ws[len] = {1};
 	int bw_null = 0;
 
@@ -58,26 +75,28 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 	// ********************************************** Sorteo ***********************************************************
 
-	Part part;
+	mcpl_particle_t part;
 	double w;
 	char pt;
 
-	MS_sample(msource, &pt, &part, &w, w_crit, bias);
+	MS_sample(msource, &part, w_crit, bias);
 
-	if(pt == 'n') *ipt = 1;
-	else if(pt == 'p') *ipt = 2;
+	if(part.pdgcode == 2112) *ipt = 1;
+	else if(part.pdgcode == 22) *ipt = 2;
+	else if(part.pdgcode == 11) *ipt = 3;
+	else if(part.pdgcode == -11) *ipt = 4;
 	else{
 		printf("Error: Particula no reconocida. Se tomara como neutron.\n");
 		*ipt = 1;
 	}
-	*x = part.pos[0];
-	*y = part.pos[1];
-	*z = part.pos[2];
-	*dx = part.dir[0];
-	*dy = part.dir[1];
-	*dz = part.dir[2];
-	*e = part.E;
-	*we = w;
+	*x = part.position[0];
+	*y = part.position[1];
+	*z = part.position[2];
+	*dx = part.direction[0];
+	*dy = part.direction[1];
+	*dz = part.direction[2];
+	*e = part.ekin;
+	*we = part.weight;
 
 	*x += *dx * EPSILON_GEO;
 	*y += *dy * EPSILON_GEO;

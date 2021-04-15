@@ -39,27 +39,32 @@
 
 DEFINE COMPONENT Monitor_tracks
 DEFINITION PARAMETERS ()
-SETTING PARAMETERS (string filename="", xwidth=0.0, yheight=0.0)
-OUTPUT PARAMETERS (file, I, p2, N)
+SETTING PARAMETERS (pt='n', string filename="", xwidth=0.0, yheight=0.0)
+OUTPUT PARAMETERS (outfile, I, p2, N)
+DEPENDENCY "-I@MCCODE_LIB@/libs/mcpl -L@MCCODE_LIB@/libs/mcpl -lmcpl"
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 
 SHARE
 %{
+	#include <mcpl.h>
 %}
 
 DECLARE
 %{
-	FILE* file;
+	mcpl_outfile_t outfile;
 	double I, p2;
 	int N;
+	mcpl_particle_t* part;
 %}
 
 INITIALIZE
 %{  
-	if(strlen(filename) == 0) strcat(strcpy(filename, NAME_CURRENT_COMP), "_tracks.ssv");
-	file = fopen(filename, "w");
-	fprintf(file, "#Format: E x y z dx dy dz w\n");
-	fprintf(file, "#Units: MeV, cm\n");
+	if(strlen(filename) == 0) strcat(strcpy(filename, NAME_CURRENT_COMP), "_tracks");
+	outfile = mcpl_create_outfile(filename);
+	mcpl_hdr_set_srcname(outfile,"McStas Guide_tracks");
+	mcpl_enable_universal_pdgcode(outfile, pt2pdg(pt));
+
+	part = mcpl_get_empty_particle(outfile);
 
 	I = p2 = N = 0;
 %}
@@ -70,8 +75,11 @@ TRACE
 		double v2 = (vx*vx + vy*vy + vz*vz);
 		double E = 1e-9 * VS2E * v2;
 		double v = sqrt(v2);
-	
-		fprintf(file, "%e %e %e %e %e %e %e %e\n", E, x*100.0, y*100.0, z*100.0, vx/v, vy/v, vz/v, p);
+		part->ekin = E;
+		part->position[0] = x*100.0; part->position[1] = y*100.0; part->position[2] = z*100.0;
+		part->direction[0] = vx/v; part->direction[1] = vy/v; part->direction[2] = vz/v;
+		part->weight = p;
+		mcpl_add_particle(outfile, part);
 	
 		I += p;
 		p2 += p*p;
@@ -88,6 +96,7 @@ SAVE
 
 FINALLY
 %{
+	mcpl_closeandgzip_outfile(outfile);
 %}
 
 MCDISPLAY
