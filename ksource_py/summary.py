@@ -56,13 +56,13 @@ class Summary:
 		for detector in self.n_detectors:
 			if self.mccode == "McStas": readformat = "mcpl"
 			if self.mccode == "Tripoli": readformat = "stock"
-			plist = PList(readformat, self.folder+"/"+detector)
+			plist = PList(self.folder+"/"+detector, readformat)
 			self.n_det_scores.append([plist.I, np.sqrt(plist.p2)])
 		self.p_det_scores = []
 		for detector in self.p_detectors:
 			if self.mccode == "McStas": readformat = "mcpl"
 			if self.mccode == "Tripoli": readformat = "stock"
-			plist = PList(readformat, self.folder+"/"+detector)
+			plist = PList(self.folder+"/"+detector, readformat)
 			self.p_det_scores.append([plist.I, np.sqrt(plist.p2)])
 		self.tally_scores = []
 		if self.t4output is not None:

@@ -4,7 +4,7 @@
 #ifndef METRICS_H
 #define METRICS_H
 
-#include "/opt/mcpl/include/mcpl.h"
+#include "mcpl.h"
 
 #define MAX_RESAMPLES 1000
 #define E_MIN 1e-11

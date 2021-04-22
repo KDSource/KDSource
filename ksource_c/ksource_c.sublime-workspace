@@ -4,180 +4,156 @@
 		"selected_items":
 		[
 			[
-				"bw",
-				"bw_silv\tstatement"
+				"Geom",
+				"Geom_next"
 			],
 			[
-				"ve",
-				"vec2\tparam"
+				"pd",
+				"pdgcode\tlong pdgcode"
 			],
 			[
-				"va",
-				"varname\tparam"
-			],
-			[
-				"file",
-				"filename\tparam"
-			],
-			[
-				"re",
-				"read_block\tfunction"
-			],
-			[
-				"s",
-				"skip_forward\tfunction"
-			],
-			[
-				"bl",
-				"particle_blocks\tfunction"
-			],
-			[
-				"st",
-				"stdout\tparam"
-			],
-			[
-				"std",
-				"stdout\tstatement"
-			],
-			[
-				"MC",
-				"MCPLFile\tclass"
-			],
-			[
-				"tall",
-				"tally_scores\tstatement"
-			],
-			[
-				"n_",
-				"n_det_scores\tstatement"
+				"mcpl",
+				"mcpl_particle_t\tmcpl_particle_t"
 			],
 			[
 				"thet",
-				"theta_ts\tstatement"
+				"theta0\tdouble theta0"
 			],
 			[
-				"inter",
-				"interpolate\tmodule"
+				"or",
+				"ord_geom\tint ord_geom"
 			],
 			[
-				"unp",
-				"unpack=\tparam"
+				"ord",
+				"ord_geom"
 			],
 			[
-				"new",
-				"newaxis\tstatement"
+				"pe",
+				"perturbs\tPerturbFun [ord_geom] perturbs"
 			],
 			[
-				"wei",
-				"weights\tparam"
+				"the",
+				"theta_t\tdouble theta_t"
 			],
 			[
-				"mask",
-				"maskfun\tparam"
+				"M",
+				"M_PI"
 			],
 			[
-				"poss",
-				"poss_ws\tstatement"
+				"vai",
+				"variable_bw\tint variable_bw"
 			],
 			[
-				"max",
-				"max_fact\tstatement"
+				"metri",
+				"metric\tMetricSepVar * metric"
 			],
 			[
-				"wri",
-				"write\tfunction"
-			],
-			[
-				"read",
-				"readformat\tstatement"
-			],
-			[
-				"id",
-				"idxs\tparam"
-			],
-			[
-				"x",
-				"xscale"
-			],
-			[
-				"rea",
-				"readfunmap\tstatement"
-			],
-			[
-				"entre",
-				"entrenamiento"
-			],
-			[
-				"bat",
-				"batch_size\tstatement"
-			],
-			[
-				"save",
-				"savetxt\tfunction"
+				"Part",
+				"Part_print\tvoid Part_print(Part *part)"
 			],
 			[
 				"w",
-				"write\tfunction"
+				"w_crit\tdouble w_crit"
 			],
 			[
-				"bandw",
-				"bandwidths"
+				"KS",
+				"KSource\tKSource"
 			],
 			[
-				"ba",
-				"batches\tstatement"
+				"tra",
+				"tracksfiles\tchar [ord][96] tracksfiles"
 			],
 			[
-				"batc",
-				"batch_size\tstatement"
+				"file",
+				"filename\tchar * filename"
 			],
 			[
-				"zeros",
-				"zeros_like\tfunction"
+				"NA",
+				"NAME_MAX_LEN\tNAME_MAX_LEN"
 			],
 			[
-				"varam",
-				"varnames\tstatement"
+				"bw",
+				"bwfile\tFILE * bwfile"
 			],
 			[
-				"pcolo",
-				"pcolormesh\tfunction"
+				"metric",
+				"metric_"
 			],
 			[
-				"par",
-				"parts\tstatement"
+				"vari",
+				"variable_bw\tint variable_bw"
 			],
 			[
-				"integr",
-				"integr_pos\tstatement"
+				"Par",
+				"Part_print\tvoid Part_print(Part part)"
 			],
 			[
-				"inte",
-				"integr_pos\tstatement"
+				"pert",
+				"perturb_E\tPerturbFun perturb_E"
 			],
 			[
-				"score",
-				"score_samples\tfunction"
+				"rot",
+				"rot_metric"
 			],
 			[
-				"idx",
-				"idx_grids\tstatement"
+				"tras",
+				"trasl_plist"
 			],
 			[
-				"KE",
-				"KernelDensity\tclass"
+				"tral",
+				"trasl_plist"
 			],
 			[
-				"iss",
-				"isinstance\tfunction"
+				"fge",
+				"fgets\tchar * fgets(char *restrict __s, int __n, FILE *restrict __stream)"
 			],
 			[
-				"hs",
-				"hstack\tfunction"
+				"me",
+				"metrics\tMetric * metrics"
 			],
 			[
-				"arcta",
-				"arctan2\tinstance"
+				"t",
+				"theta"
+			],
+			[
+				"PL",
+				"PList\tPList"
+			],
+			[
+				"rand",
+				"rand_norm\tdouble rand_norm()"
+			],
+			[
+				"PLi",
+				"PList_destroy\tvoid PList_destroy(PList *plist)"
+			],
+			[
+				"PTR",
+				"PTRAC_read\tint PTRAC_read(char *line, Part *part, double *w)"
+			],
+			[
+				"part",
+				"part_updated\tint part_updated"
+			],
+			[
+				"lin",
+				"line_updated\tint line_updated"
+			],
+			[
+				"pl",
+				"plist_"
+			],
+			[
+				"Per",
+				"PerturbFun\tPerturbFun"
+			],
+			[
+				"plis",
+				"plist_E\tWrapperE plist_E"
+			],
+			[
+				"bu",
+				"buffer_w"
 			],
 			[
 				"get",
@@ -192,10 +168,6 @@
 				"test_Part\tvoid test_Part()"
 			],
 			[
-				"Part",
-				"PartTypeError"
-			],
-			[
 				"test_PL",
 				"test_PListVirtual\tvoid test_PListVirtual()"
 			],
@@ -206,10 +178,6 @@
 			[
 				"map",
 				"map_E\tMapping<double> * map_E"
-			],
-			[
-				"Par",
-				"PartNotInMapping\tPartNotInMapping"
 			],
 			[
 				"k_",
@@ -228,16 +196,8 @@
 				"string\tstring"
 			],
 			[
-				"PL",
-				"PListFile\tPListFile"
-			],
-			[
 				"get_",
 				"get_I_from\tPList<T> * get_I_from"
-			],
-			[
-				"PLi",
-				"PList\tPList"
 			],
 			[
 				"begi",
@@ -266,10 +226,6 @@
 			[
 				"Sep",
 				"SepVarPList\tSepVarPList::"
-			],
-			[
-				"pl",
-				"plist_dir\tPList<Dir> * plist_dir"
 			],
 			[
 				"PLis",
@@ -310,6 +266,10 @@
 			[
 				"os",
 				"ostream\tostream"
+			],
+			[
+				"ve",
+				"vect_size"
 			],
 			[
 				"max_el",
@@ -374,10 +334,6 @@
 			[
 				"t_",
 				"t_deque\tstatement"
-			],
-			[
-				"t",
-				"t_list\tstatement"
 			],
 			[
 				"N_",
@@ -452,14 +408,6 @@
 				"newaxis\tstatement"
 			],
 			[
-				"me",
-				"metrics\tmodule"
-			],
-			[
-				"tra",
-				"transpose\tfunction"
-			],
-			[
 				"pri",
 				"print\tvoid print()"
 			],
@@ -488,6 +436,10 @@
 				"optimizers\tmodule"
 			],
 			[
+				"n_",
+				"n_epochs\tparam"
+			],
+			[
 				"regu",
 				"regularizations\tmodule"
 			],
@@ -514,87 +466,136 @@
 			[
 				"grad",
 				"grad_W"
+			],
+			[
+				"Clase",
+				"ClaseTrucha"
+			],
+			[
+				"Cla",
+				"ClaseTrucha"
+			],
+			[
+				"ls",
+				"ls_len"
+			],
+			[
+				"Miem",
+				"Miembro1"
+			],
+			[
+				"sec",
+				"\\section{title}                                   \tlatex-document"
+			],
+			[
+				"selc",
+				"selected"
+			],
+			[
+				"rig",
+				"\\right)                                           \tlatex-document"
+			],
+			[
+				"str",
+				"string.h\t/usr/include"
+			],
+			[
+				"inc",
+				"include"
+			],
+			[
+				"std",
+				"stdio.h\t/usr/include"
+			],
+			[
+				"Ej",
+				"Ej10_ini"
+			],
+			[
+				"se",
+				"setDate\tvoid setDate(unsigned int d, Month m, unsigned int y)"
 			]
 		]
 	},
 	"buffers":
 	[
 		{
-			"file": "__init__.py",
+			"file": "/opt/mcpl/include/mcpl.h",
 			"settings":
 			{
-				"buffer_size": 178,
+				"buffer_size": 12090,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "ksource.h",
+			"settings":
+			{
+				"buffer_size": 1188,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "ksource.py",
+			"file": "ksource.c",
 			"settings":
 			{
-				"buffer_size": 13209,
+				"buffer_size": 6961,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "/home/inti/Documents/Maestria/KSource/resample/samples_bws.ssv",
+			"file": "metrics.h",
 			"settings":
 			{
-				"buffer_size": 12500000,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "metrics.py",
-			"settings":
-			{
-				"buffer_size": 11950,
+				"buffer_size": 1779,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "plists.py",
+			"file": "metrics.c",
 			"settings":
 			{
-				"buffer_size": 5069,
+				"buffer_size": 10773,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "tally.py",
+			"file": "plists.h",
 			"settings":
 			{
-				"buffer_size": 8780,
+				"buffer_size": 890,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "stats.py",
+			"file": "plists.c",
 			"settings":
 			{
-				"buffer_size": 2714,
+				"buffer_size": 2453,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "summary.py",
+			"file": "aux.h",
 			"settings":
 			{
-				"buffer_size": 3277,
+				"buffer_size": 460,
 				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "aux.py",
+			"file": "aux.c",
 			"settings":
 			{
-				"buffer_size": 2172,
+				"buffer_size": 6021,
+				"encoding": "UTF-8",
 				"line_ending": "Unix"
 			}
 		}
@@ -802,96 +803,65 @@
 	},
 	"file_history":
 	[
-		"/home/inti/Documents/Maestria/KSource/resample/samples_bws.ssv",
-		"/home/inti/Documents/Maestria/KSource/ksource_py/aux.py",
-		"/home/inti/Documents/Maestria/KSource/ksource_py/fact_dos/dose_facts.txt",
-		"/home/inti/Documents/Maestria/KSource/resample/resample.c",
-		"/home/inti/Universidad/Maestria/Tesis/KSource/ksource_py/ksource.py",
+		"/home/inti/Documents/Maestria/KSource/resample/samples_source.txt",
+		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_act/2_bunker_n.out",
+		"/home/inti/Universidad/Maestria/Tesis/KSource/ksource_c/metrics.c",
+		"/home/inti/Universidad/Maestria/Tesis/KSource/ksource_c/plists.c",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/aux.c",
 		"/home/inti/Universidad/Maestria/Tesis/KSource/ksource_c/ksource.c",
-		"/home/inti/Documents/Maestria/Simulaciones/postproc.ipynb",
-		"/home/inti/Documents/Maestria/Simulaciones/dosemap.ipynb",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/mapa_activ_fe_bws.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/mapa_dosis_ne.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/Decay/Fe59.csv",
-		"/home/inti/Documents/Maestria/Simulaciones/Decay/Al28.csv",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/summary.txt",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/summary.txt",
-		"/home/inti/Documents/Maestria/Simulaciones/Ftes_tracks/GF12p_n_source.txt",
-		"/home/inti/Documents/Maestria/KSource/ksource_py/tracks.py",
-		"/home/inti/Documents/Maestria/mcpl/src/python/mcpl.py",
-		"/home/inti/Documents/Maestria/mcpl/src/tripolistock/stockread.c",
-		"/home/inti/Documents/Maestria/mcpl/src/tripolistock/stockmcpl.h",
-		"/home/inti/Documents/Maestria/Simulaciones/Ftes_tracks/Script.py",
-		"/home/inti/Documents/Maestria/Simulaciones/Ftes_tracks/GF12p_inicio",
-		"/home/inti/Documents/Maestria/KSource/Script.py",
-		"/home/inti/Documents/Maestria/mcpl/CMakeLists.txt",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/bash.out",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/mcstas.out",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/test.txt",
-		"/home/inti/Documents/McStas/McStas-2.6.1/bin/mcrun.pl",
-		"/home/inti/Documents/McStas/McStas-2.6.1/bin/mcrun",
-		"/home/inti/Documents/McStas/McStas-2.6.1/share/mccode-r.c",
-		"/home/inti/Downloads/benderfinal (copy).stl",
-		"/home/inti/Downloads/benderfinal.stl",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt",
+		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/mapa_activ_fe_source.txt",
+		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.c",
+		"/home/inti/Documents/Maestria/mcpl/INSTALL",
+		"/home/inti/Documents/Maestria/mcpl/README",
 		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/BC_tracks_source.txt",
-		"/home/inti/Documents/Maestria/KSource/ksource_py/ARN_neutron",
-		"/home/inti/Documents/Maestria/KSource/Zzz/ksource.c",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n_bw0/activ_fe.ssv",
-		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej7.py",
-		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/activ_fe.ssv",
-		"/home/inti/Documents/PI/Codigos/dsource_py/dsource.py",
-		"/home/inti/Documents/Maestria/Hacer.txt",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/test/test.c",
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_source.txt",
 		"/home/inti/Documents/Maestria/Simulaciones/2_bunker_n/2_bunker_n.out",
-		"/home/inti/Documents/Maestria/Simulaciones/Ftes_tracks/GF12p_n_bw_knn_full.txt",
-		"/home/inti/Documents/Maestria/Simulaciones/test.txt",
-		"/media/inti/AA6E6E316E6DF68B/Users/Osiris Inti Abbate/Documents/Familia/Familia en Italia.txt",
-		"/home/inti/Documents/PI/Codigos/dsource_py/activ.py",
-		"/home/inti/Documents/Maestria/Simulaciones/KSource.c",
-		"/home/inti/Documents/Maestria/Simulaciones/3_bunker_n.t4",
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks_bw_knn.txt",
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_knn/D_tracks.ssv",
+		"/home/inti/Documents/Maestria/KSource/test/resample.c",
+		"/home/inti/Documents/Maestria/KSource/Zzz/ksource.c",
+		"/home/inti/Documents/Maestria/KSource/test/resample.sh",
+		"/home/inti/Documents/Maestria/Bibliografia/Resumen_metodos/Resumen_métodos.tex",
+		"/home/inti/Documents/PI/Codigos/dsource_c/window.c",
+		"/home/inti/Desktop/Source.c",
+		"/home/inti/Documents/Maestria/Hacer.txt",
 		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_mlcv/D_tracks.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_mlcv/E_tracks.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n_mlcv/salida_tracks.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/salida_tracks.ssv",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/mccode.sim",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n/1_guia_n.out",
-		"/home/inti/Documents/Maestria/Simulaciones/Ftes_tracks/GF12p_n_bw_mlcv",
-		"/home/inti/Universidad/Maestria/Maestria - Lista de materias.txt",
-		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Trabajo Final/kde.py",
-		"/home/inti/Documents/Maestria/Simulaciones/bandwidths.txt",
-		"/home/inti/Documents/Maestria/KSource/ksource_py/kde.py",
-		"/home/inti/Documents/Maestria/Simulaciones/GF12p_n_bw_mlcv.txt",
-		"/home/inti/Documents/Maestria/KSource/McStas/Ptrac_source_difra.comp",
-		"/home/inti/Documents/Maestria/Simulaciones/exe_McStas.sh",
-		"/home/inti/Documents/Maestria/Simulaciones/execute.sh",
-		"/home/inti/Documents/PI/Codigos/dsource_c/guide.c",
-		"/home/inti/Documents/PI/Codigos/dsource_py/guide.py",
-		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n.instr",
-		"/home/inti/Documents/Maestria/Simulaciones/GF12p_inicio",
-		"/home/inti/Documents/Maestria/Simulaciones/GF12p_n",
-		"/home/inti/Documents/Maestria/Simulaciones/comps/KSource.comp",
-		"/home/inti/Documents/Maestria/Simulaciones/comps/Guide_tracks.comp",
-		"/home/inti/Documents/Maestria/KSource/ksource_c/plists.h",
-		"/home/inti/Documents/Maestria/Simulaciones/0_Benchmark_n.instr",
-		"/home/inti/Documents/Maestria/Simulaciones/0_Benchmark/salida.dat",
-		"/home/inti/Documents/Maestria/LethargyGaussian.tex",
+		"/home/inti/Documents/Maestria/Flujo de trabajo/FlujoTrabajo.tex",
 		"/home/inti/Documents/Maestria/Ideas.txt",
-		"/home/inti/Universidad/Maestria/1er Semestre/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract0/p0_lib/__init__.py",
-		"/home/inti/Documents/Maestria/KSource/ksource_c/metrics.c",
+		"/home/inti/Documents/Maestria/Simulaciones/comps/KSource.comp",
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n.instr",
+		"/home/inti/Documents/Maestria/Simulaciones/comps/Guide_tracks.comp",
+		"/home/inti/Documents/Maestria/Simulaciones/1_guia_n.c",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/GF12p_inicio",
 		"/home/inti/Documents/Maestria/KSource/ksource_py/metrics.py",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.h",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.cpp",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/test.c",
+		"/home/inti/Documents/PI/Simulaciones/TanqueRefl_MCNP/Fuentes_tracks/GF12p_inicio",
+		"/home/inti/Documents/PI/Codigos/dsource_c/activ.c",
+		"/home/inti/Documents/PI/Codigos/Arch_com/Distrib2Tripoli.c",
+		"/home/inti/Documents/PI/Codigos/dsource_py/__init__.py",
+		"/home/inti/Documents/Maestria/KSource/ksource_c/ksource.c",
+		"/home/inti/Universidad/Maestria/Maestria - Lista de materias.txt",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/TPFinal_Osiris_Abbate/KSource.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/TPFinal_Osiris_Abbate/README.txt",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/neutrons.txt",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/Dudas.txt",
+		"/home/inti/.cache/.fr-Z14JNy/Article/main.tex",
+		"/home/inti/Templates/LaTeX/Article.tex",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/test.csv",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/test.cpp",
+		"/home/inti/Documents/Maestria/LethargyGaussian.tex",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/espectros.txt",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.h",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/mappings.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.cpp",
-		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/kernels.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/kernels.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/plists.o",
 		"/home/inti/Documents/PI/Codigos/Arch_com/Distrib2Tripoli_guide.c",
-		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.c",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/geom.cpp",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/geom.h",
 		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract7/Informe/main.tex",
@@ -913,9 +883,9 @@
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final (copy)/KSource.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final (copy)/kernels.h",
 		"/home/inti/Documents/McStas/McStas-2.6.1/libs/mcpl/mcpl.c",
-		"/home/inti/Documents/PI/Codigos/dsource_c/activ.c",
 		"/home/inti/Documents/PI/Simulaciones/Guia_final/GF12p_p",
 		"/home/inti/Documents/PI/Codigos/dsource_c/dsource.h",
+		"/home/inti/Documents/PI/Codigos/dsource_c/guide.c",
 		"/home/inti/Documents/PI/Codigos/dsource_c/activ.h",
 		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/KSource (copy).h",
 		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Informe/main.tex",
@@ -929,7 +899,38 @@
 		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pract4.py",
 		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/table.sublime-snippet",
 		"/home/inti/Downloads/Ej10.py",
-		"/home/inti/Downloads/Ej08.py"
+		"/home/inti/Downloads/Ej08.py",
+		"/home/inti/Downloads/Ej07.py",
+		"/home/inti/Downloads/Ej06.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej05.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej04.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pima-indians-diabete-names.txt",
+		"/home/inti/Desktop/granada@cnea.gov.ar.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/pima-indians-diabetes.csv",
+		"/home/inti/Downloads/Ej01.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/submit.sh",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/test.py",
+		"/home/inti/.config/sublime-text-3/Packages/LaTeXTools/subfigure.sublime-snippet",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej4.py",
+		"/home/inti/Desktop/granada@cab.cnea.gov.ar.txt",
+		"/home/inti/Documents/PI/Simulaciones/Guia_final/3_bunker_n.data",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej2.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej3.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej1.py",
+		"/home/inti/Downloads/pract4.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej4.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej6.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej3.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract2/Ej3 (copy).py",
+		"/home/inti/Universidad/Maestria/Programacion Orientada a Objetos en C++/Trabajo Final/DSource.h",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Cluster/Scripts/testkeras.py",
+		"/run/user/1000/gvfs/sftp:host=10.73.25.223/home/osiris.abbate/APRNA/Pract4/Ej10-Alexnet.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Ej10-Alexnet.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/Script.py",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/dicts.npy",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/my_dict.npy",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Practicas/Pract4/dicts.txt",
+		"/home/inti/Universidad/Maestria/Aprendizaje Profundo y Redes Neuronales Artificiales/Cluster/Scripts/submit_testgpu_compute-xx.local.sh"
 	],
 	"find":
 	{
@@ -947,134 +948,134 @@
 		"case_sensitive": true,
 		"find_history":
 		[
-			"KSOURCE_PATH",
-			"ksource_py",
-			"KSOURCEPY_PATH",
-			"st",
-			"shift",
-			"self.ws",
-			"object",
-			"len(parts)",
-			"N",
-			"geom",
-			"Es",
-			"/ std",
-			"BW_MIN",
-			"dim",
-			"pt2pdg",
-			"tracksfile",
-			"tracksname",
-			"outfile",
-			"\"p\"",
-			"tallyname",
-			"filename",
-			"outfile",
-			"ws",
-			"parts",
-			"ws",
-			"spectrum",
-			"filename",
-			"long",
+			"Tes",
+			"j",
+			"frea",
+			"Metric_destroy",
+			"file",
+			"mcpl_get_empty_particle",
+			"const int ",
+			",",
+			"ppart",
+			"//",
+			"float",
+			"de",
+			"11",
+			"pt",
 			"char",
 			"long",
-			"parts",
-			"line.split().index(search)",
-			"convert2mcpl",
-			"ssv",
-			"T4stock",
-			"SSV",
-			"/home/inti/Documents/Maestria/KSource/ksource_py/",
-			"/home/inti/Documents/Maestria/KSource/ksource_py",
-			"txt",
-			"sourcefilename",
-			"filename",
-			"Ks",
-			"len",
-			"len(dists2 < 1)",
-			"len",
-			"var",
-			"std",
-			"mean",
-			"err",
-			"mean",
-			"param",
-			"plot",
-			"steps",
-			"fracmin",
-			"=",
-			"param",
-			"Is",
-			"fs",
-			"fun",
-			"Nmin = ",
-			"Nmin",
-			", weightfun=None, maskfun=None",
-			"mns",
-			"mean",
-			"fracmin=0.5",
-			"fracmin",
-			"Mnin",
-			"Ns = np.rint",
-			"Ns = ",
-			"Nmin",
-			"Nmin=0",
-			"Nmin",
-			"steps",
-			"if Nmax < steps",
-			"if steps>1",
-			"Ntot",
-			"self.N = len(ws)",
-			"Ntot",
-			"Promedio",
-			"'-o-'",
-			"Media",
-			"vecs[:N]",
-			"var",
-			"Is",
-			"vacia",
-			"len(ws)",
-			"apply_weight_mask",
-			"parts[4:7]",
-			"parts[1:4]",
-			"trasl",
-			"mcpl",
-			"tracks",
-			"mcpl",
-			"path",
-			"convert2mcpl",
-			"isi",
-			"headers",
-			"weights",
-			"dirs",
-			"poss",
-			"readformat",
-			"p",
-			"pdgc",
-			"filename",
-			"outfile",
-			"ascii",
-			"set",
-			"MCPLPar",
-			"inverse_tr",
-			"invers",
-			"mean",
-			"inverse_transform",
-			"p",
-			"readformat",
+			"22",
+			"2112",
+			"gps",
+			"free",
+			"part->E",
+			"part->dir",
+			"part->pos",
+			"Part",
+			"*w",
+			"Part",
+			"print",
+			"file",
+			"tracksfiles",
+			"part",
+			"dir",
+			"pos",
+			"filenames",
+			"mcplfile",
+			"filenames",
+			"tracksfile",
+			"tracksfiles",
+			"/0",
+			"/n",
+			"NEUTRON",
+			"char",
+			"double",
+			"read",
+			"char",
+			"double",
+			"Metric",
+			"MSSampleFun",
+			"KSSampleFun",
+			"pos[2]",
+			"z/rcurv",
+			"dx",
+			"z/rcurv",
+			"phi",
+			"theta",
+			"cos",
+			"dz",
+			"**",
+			"_E",
+			"perturb_dir",
+			"metricdirname",
+			"perturb_E",
+			"_E",
+			"i",
+			"_E",
+			"metricEname",
+			"tracksfiles",
+			"formats",
 			"format",
-			"z",
-			"y",
-			"x",
-			"poss",
-			"pb",
-			"poss",
+			"ord",
 			"pos",
-			"p",
+			"theta_t",
+			"tan",
+			"theta_n0",
+			"theta_t",
+			"theta_n",
+			"theta_n0",
+			"atan2",
+			"theta_t",
+			"theta_n0",
+			"theta_t",
+			"theta_n",
+			"dz",
+			"zlength",
+			"ang",
+			"dz",
+			"atan2",
+			"theta_t",
+			"theta_n0",
+			"atan2",
+			"dy",
+			"theta_n0",
+			"}",
+			"theta_t",
+			"theta_n",
+			"theta_n0",
+			"theta2",
+			"theta",
+			"theta2",
+			"BW_MIN",
+			"bw[2]",
+			"2",
+			"phi",
+			"VZ",
+			"VX",
+			"vx",
+			"VX",
+			"plist_",
+			"metric_",
+			"metric",
+			"metric_",
+			"metric",
+			"ks->metric",
+			"metric",
 			"pos",
-			"str",
-			"PIPE",
-			"encoding",
-			"filename_mcpl"
+			"MetricSepVar_create",
+			"MetricSepVar",
+			"MSV_",
+			"MetricSepVar",
+			"MSV_",
+			"MetricSepVar",
+			"MSV_",
+			"MetricSepVar",
+			"bwfilename",
+			"NAME_MAX_LEN",
+			"filenames",
+			"if(strlen(buffer))",
+			"bwfilename",
+			"if"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1082,6 +1083,8 @@
 		"regex": false,
 		"replace_history":
 		[
+			"Geom_",
+			"Geometry"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -1092,33 +1095,35 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 5,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "__init__.py",
+					"file": "/opt/mcpl/include/mcpl.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 178,
+						"buffer_size": 12090,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								178,
-								178
+								4967,
+								4967
 							]
 						],
 						"settings":
 						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax"
+							"show_definitions": true,
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1221.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 8,
@@ -1126,144 +1131,25 @@
 				},
 				{
 					"buffer": 1,
-					"file": "ksource.py",
+					"file": "ksource.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 13209,
+						"buffer_size": 1188,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2652,
-								2652
-							]
-						],
-						"settings":
-						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 1040.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "/home/inti/Documents/Maestria/KSource/resample/samples_bws.ssv",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 12500000,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
+								151,
+								151
 							]
 						],
 						"settings":
 						{
 							"show_definitions": true,
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "metrics.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 11950,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1636,
-								1636
-							]
-						],
-						"settings":
-						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "plists.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5069,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								2795,
-								2795
-							]
-						],
-						"settings":
-						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "tally.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 8780,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								4919,
-								4919
-							]
-						],
-						"settings":
-						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
+							"syntax": "Packages/C++/C++.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
@@ -1274,94 +1160,216 @@
 					"type": "text"
 				},
 				{
-					"buffer": 6,
-					"file": "stats.py",
+					"buffer": 2,
+					"file": "ksource.c",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2714,
+						"buffer_size": 6961,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1094,
-								1094
+								3889,
+								3889
 							]
 						],
 						"settings":
 						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
+							"show_definitions": true,
+							"syntax": "Packages/C++/C.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "summary.py",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3277,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1698,
-								1698
-							]
-						],
-						"settings":
-						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
-							"translate_tabs_to_spaces": false,
-							"word_wrap": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1657.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 3,
 					"type": "text"
 				},
 				{
-					"buffer": 8,
-					"file": "aux.py",
+					"buffer": 3,
+					"file": "metrics.h",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2172,
+						"buffer_size": 1779,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								85,
+								85
 							]
 						],
 						"settings":
 						{
-							"show_definitions": false,
-							"syntax": "Packages/Python/Python.sublime-syntax",
+							"show_definitions": true,
+							"syntax": "Packages/C++/C++.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 467.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "metrics.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10773,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6178,
+								6178
+							]
+						],
+						"settings":
+						{
+							"show_definitions": true,
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 2767.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "plists.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 890,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								65,
+								65
+							]
+						],
+						"settings":
+						{
+							"show_definitions": true,
+							"syntax": "Packages/C++/C++.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "plists.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2453,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								286,
+								286
+							],
+							[
+								2394,
+								2394
+							]
+						],
+						"settings":
+						{
+							"show_definitions": true,
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "aux.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 460,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								316,
+								316
+							]
+						],
+						"settings":
+						{
+							"show_definitions": true,
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "aux.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6021,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1777,
+								1777
+							]
+						],
+						"settings":
+						{
+							"show_definitions": true,
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 985.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
 					"type": "text"
 				}
 			]
@@ -1457,7 +1465,7 @@
 	{
 	},
 	"show_minimap": true,
-	"show_open_files": false,
+	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": false,
 	"side_bar_width": 237.0,

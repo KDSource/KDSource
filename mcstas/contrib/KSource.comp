@@ -1,0 +1,114 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright 1997-2002, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+*
+* Component: Distrib2McStas_window
+*
+* %I
+* Written by: 
+* Date: 
+* Origin: 
+*
+* Neutron guide.
+*
+* %D
+* Description
+*
+* Example: Distrib2McStas_window(...)
+*
+* %VALIDATION
+*
+* %BUGS
+*
+* %P
+* INPUT PARAMETERS:
+*
+* file_d1: [str]    File with current distribution in E
+* file_d2: [str]    File with current distribution in E, x, y
+* file_d3: [str]    File with current distribution in E, x, y, mu
+* file_d4: [str]    File with current distribution in E, x, y, mu, phi
+*
+* %D
+* Example values:
+*
+* %E
+*******************************************************************************/
+
+DEFINE COMPONENT KSource
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (string sourcefile, bw_null=0)
+OUTPUT PARAMETERS (I, p2, N)
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
+
+SHARE
+%{
+	#include "mcpl.h"
+	#include "ksource.h"
+%}
+
+DECLARE
+%{
+	int N;
+	double I, p2;
+    
+	KSource *ksource;
+%}
+
+INITIALIZE
+%{  
+    ksource = KS_open(sourcefile, bw_null);
+%}
+
+TRACE
+%{
+	char pt;
+	mcpl_particle_t part;
+	double w, v;
+
+	KS_sample(ksource, &part, 1, NULL);
+
+	x = part.position[0]/100;
+	y = part.position[1]/100;
+	z = part.position[2]/100;
+	v = SE2V*sqrt(part.ekin*1E9);
+	vx = v*part.direction[0];
+	vy = v*part.direction[1];
+	vz = v*part.direction[2];
+	sx = 0;
+	sy = 0;
+	sz = 0;
+	t = 0;
+	p = part.weight;
+
+	I += part.weight;
+	p2 += part.weight*part.weight;
+	N++;
+
+	SCATTER;
+
+%}
+
+SAVE
+%{
+	printf("KSource %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
+%}
+
+FINALLY
+%{
+	KS_destroy(ksource);
+%}
+
+MCDISPLAY
+%{
+	multiline(5,
+    	-1.0, -1.0, 0.0,
+    	 1.0, -1.0, 0.0,
+    	 1.0,  1.0, 0.0,
+    	-1.0,  1.0, 0.0,
+    	-1.0, -1.0, 0.0);
+%}
+
+END

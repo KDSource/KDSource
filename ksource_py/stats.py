@@ -63,7 +63,7 @@ class Stats:
 		Ns,params,errs = convergence(self.vecs, self.ws, mean_var, fracmin=fracmin, steps=steps, plot=plot)
 		if(plot):
 			if varname is None:
-				varname = "variable %d"%var
+				varname = "v%d"%var
 			plt.ylabel("Valor medio de variable {}".format(varname))
 		return [Ns, params, errs]
 	def std(self, var, varname=None, fracmin=0.1, steps=10, plot=True):
@@ -71,6 +71,6 @@ class Stats:
 		Ns,params,errs = convergence(self.vecs, self.ws, std_var, fracmin=fracmin, steps=steps, plot=plot)
 		if(plot):
 			if varname is None:
-				varname = "variable %d"%var
+				varname = "v%d"%var
 			plt.ylabel("Desv. estandar de variable {}".format(varname))
 		return [Ns, params, errs]

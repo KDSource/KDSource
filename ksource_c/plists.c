@@ -24,6 +24,7 @@ PList* PList_create(char pt, const char* filename, const double* trasl, const do
 	}
 	else plist->rot = NULL;
 	plist->x2z = switch_x2z;
+	plist->part = NULL;
 	PList_next(plist);
 	return plist;
 }
@@ -42,11 +43,13 @@ PList* PList_copy(const PList* from){
 		plist->rot = (double*)malloc(3 * sizeof(double));
 		for(int i=0; i<3; i++) plist->rot[i] = from->rot[i];
 	}
+	plist->part = NULL;
+	PList_next(plist);
 	return plist;
 }
 
 int PList_get(const PList* plist, mcpl_particle_t* part){
-	*part = plist->part;
+	*part = *plist->part;
 	if(plist->trasl)
 		traslv(part->position, plist->trasl, 0);
 	if(plist->rot){
@@ -63,9 +66,20 @@ int PList_get(const PList* plist, mcpl_particle_t* part){
 }
 
 int PList_next(PList* plist){
-	const mcpl_particle_t* ppart = mcpl_read(plist->file);
-	if(!ppart) return 1;
-	plist->part = *ppart;
+	int count=0, resamples=0;
+	while(1){
+		while(1){ // Intento leer 2 veces
+			plist->part = mcpl_read(plist->file);
+			if(plist->part != NULL) break;
+			if(++count == 2){ // Luego del 2do intento fallido tiro error
+				printf("Error en PList_next: No se pudo leer particula\n");
+				return 1;
+			}
+			mcpl_rewind(plist->file); // Luego del 1er intento fallido rebobino
+		}
+		if(plist->part->weight > 0) break;
+		if(resamples++ > MAX_RESAMPLES) return 1;
+	}
 	return 0;
 }
 

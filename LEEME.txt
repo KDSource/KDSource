@@ -1,0 +1,56 @@
+Esta es la versión de fuente del paquete KSource para cálculo de blindajes.
+
+KSource brinda herramientas de asistencia al cálculo de blindajes por el método
+Monte Carlo. Permite modelar grandes sistemas (por ej.: hall de guias de
+reactor de investigación) mediante el acople, espacial o temporal, de diferentes
+simulaciones provenientes de diferentes códigos de transporte, implementando
+además reducción de varianza.
+
+Procesa listas de particulas registradas como output de una simulación (por
+ej.: al atravesar una ventana), a ser utilizadas como input en otra.
+Estima la distribución de densidad en energía, posición y dirección por la
+tecnica de Kernel Density Estimation (ref?), permitiendo tanto visualizarla
+como utilizarla para producir nuevas partículas (artificiales, pero con la
+misma densidad estimada). Esto permite aumentar de este modo la cantidad de partículas de
+fuente en la segunda simulación, mejorando su estadística (reducción de varianza).
+
+KSource utiliza el formato de listas de particulas MCPL (ref?). Se incluye
+una versión modificada de MCPL version 1.3.2, la cual, junto con otras
+herramientas del paquete, permite trabajar con los siguientes programas:
+	* MCNP
+	* TRIPOLI-4
+	* McStas
+	* PHITS
+En TRIPOLI y McStas es posible el muestreo "on-the-fly" durante la corrida,
+mientras que para los demás formatos es necesario grabar la lista de particulas
+de fuente antes de la simulación.
+
+
+Instalacion:
+	
+1.	Ir a carpeta de fuente:
+
+	cd /path/to/ksourcesource
+
+	Donde /path/to/ksourcesource es la carpeta donde se extrajo la version de
+	codigo fuente de KSource.
+
+2.	Ejecutar el script de instalacion:
+
+	./install-ksource.sh /path/to/ksourceinstall
+
+	Donde /path/to/ksource es la carpeta donde se desea instalar los archivos
+	internos de KSource.
+
+3.	KSource esta listo para utilizar en /path/to/ksourceinstall. Por ejemplo,
+	podes ver las opciones del comando ksource con:
+
+	/path/to/ksourceinstall/bin/ksource --help
+
+	Si queres tener disponibles las herramientas de KSource en tu path,
+	ejecuta:
+
+	export PATH=/path/to/ksourceinstall/bin:$PATH
+	export PYTHONPATH=/path/to/ksourceinstall/python:$PYTHONPATH
+
+	O agrega estos comandos a ~/.profile (y actualiza con source ~/.profile).

@@ -69,7 +69,7 @@ class KSource:
 		if sourcefilename is None:
 			sourcefilename = self.plist.filename.split('.')[0]+"_source.txt"
 		if bwfilename is None:
-			bwfilename = self.plist.filename.split('.')[0]+"_bws.ssv"
+			bwfilename = self.plist.filename.split('.')[0]+"_bws"
 		print("Archivo de definicion de fuente: {}".format(sourcefilename))
 		file = open(sourcefilename, "w")
 		file.write("# J [1/s]:\n")
@@ -80,13 +80,14 @@ class KSource:
 		self.geom.save(file)
 		if self.bw.ndim == 2: # Ancho de banda variable
 			file.write("1\n")
-			np.savetxt(bwfilename, self.bw)
+			self.bw.astype("float64").tofile(bwfilename, format="float64")
 			file.write(os.path.abspath(bwfilename)+"\n")
 			print("Archivo de anchos de banda: {}".format(bwfilename))
 		else:
 			file.write("0\n")
 			np.savetxt(file, self.bw[np.newaxis,:])
 		file.close()
+		return sourcefilename
 
 	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
 		vecs = self.vecs.copy()
@@ -109,7 +110,7 @@ class KSource:
 		#
 		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
 			bw_silv = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
-			if "shift" in kwargs: bw_silv *= kwargs["shift"]
+			if "shift_fact" in kwargs: bw_silv *= kwargs["shift_fact"]
 			#
 			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
 			else:  nsteps = 20
@@ -124,7 +125,7 @@ class KSource:
 											  {'bandwidth': bw_grid},
 											  cv=cv,
 											  verbose=10,
-											  n_jobs=8)
+											  n_jobs=-1)
 			bw_silv[bw_silv == 0] = BW_DEFAULT
 			grid.fit(vecs/bw_silv)
 			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))

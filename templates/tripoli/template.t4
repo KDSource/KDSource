@@ -1,0 +1,208 @@
+// Data file para TRIPOLI-4
+
+// *: Elegir una o mas opciones
+// #: Elegir entre opciones excluyentes
+// <KWORD>: Remplazar con keyword
+
+// Definir geometria del problema
+GEOMETRY
+	TITLE title
+*	TYPE num(type) // Elemento geometrico a ser usado en definicion combinatoria de volumen
+		Definition for type num(type)
+	...
+*	SURF num(surf ) // Superficie a ser usada para construir volumen
+		Definition for surface num(surf )
+	...
+	VOLU num(volu) // Volumenes del problema
+		Definition for volume num(volu)
+	ENDV
+	...
+	POSITION x y z // Devuelve volumen al que pertenece (x,y,z)
+	COLOR
+		Colormap
+	GRAPH
+		Data on 2D-cut
+ENDGEOM
+
+// Asignar valores de area o volumen
+VOLSURF
+*	SURFACE nb(surfaces)
+		numvol 1 (1) numvol 2 (1) surface(1)
+		...
+		numvol 1 (n) numvol 2 (n) surface(n)
+*	VOLUME nb(volumes)
+		numvol(1) volume(1)
+		...
+		numvol(n) volume(n)
+END_VOLSURF
+
+// Condiciones de contorno. Default: escape
+BOUNDARY_CONDITION nb(conditions)
+	num(vol1)	<TYPE_CONDITION>
+	num(face1)
+	...
+	num(voln)	<TYPE_CONDITION>
+	num(facen)
+END BOUNDARY_CONDITION
+
+// Composiciones (materiales) presentes en el problema
+COMPOSITION nb(compositions)
+*	FILE
+		<ELECTRONIC_PROPERTIES>
+		temperature name(compo)
+		filename
+*	POINT_WISE
+		<ELECTRONIC_PROPERTIES>
+		temperature name(compo)
+		Composition data
+		...
+*	DENSITY
+		<ELECTRONIC_PROPERTIES>
+		temperature name(compo)
+		Composition data
+		...
+*	MULTIGROUP_HOMOGENEOUS
+		temperature name(compo)
+		Composition data
+		...
+*	MULTIGROUP
+		temperature name(compo)
+		Composition data
+		...
+*	MULTIGROUP_DENSITY
+		temperature name(compo)
+		Composition data
+		...
+END_COMPOSITION
+
+// Asignacion de composicion a cada volumen
+GEOMCOMP
+	name-compo(1) nb-volu(1)
+		volu(1). . . volu[nb-volu(1)]
+	...
+	name-compo(n) nb-volu(n)
+		volu(1). . . volu[nb-volu(n)]
+END_GEOMCOMP
+
+// Fuentes (puntual, factoriz o ext) del problema
+SOURCES_LIST nb(sources)
+	NORM norm(list)
+	SOURCE
+		Description of first source
+	END SOURCES
+	...
+	SOURCE
+		Description of last source
+	END SOURCES
+END_SOURCES_LIST
+
+// Variables fisicas a registrar
+RESPONSES nb(responses)
+	NAME <name1>
+		<type1> <particle1>
+		<additional data>
+	...
+	NAME <nameN>
+		<typeN> <particleN>
+		<additional data>
+END_RESPONSES
+
+// Grillas en energia, angulo y tiempo para registrar RESPONSES
+GRID_LIST nb(grids)
+	name(grid 1 )
+		nb(bounds)
+		bound(1). . . bound(n)
+	...
+	name(grid n )
+		nb(bounds)
+		bound(1). . . bound(n)
+END_GRID_LIST
+
+// Definicion de zonas y grillas para registrar RESPONSES 
+SCORE nb(scores)
+	Descriptions of scores
+END_SCORE
+
+// Metodo para reduccion de varianza
+VARIANCE_REDUCTION
+	NAME <biasing name>
+	<PARTICLE_TYPE>
+	GRID
+		Grid data
+*1	DETECTOR
+		Discrete detector data
+*1	DETECT_RHO
+		Detection surface data (cylindrical)
+*2	MESH
+		Uniform mesh data
+	END_MESH
+*2	MESH_VARIABLE
+		Nonuniform mesh data
+	END_MESH_VARIABLE
+	INTERPOLATION flag
+	INIPOND
+		Biasing type data
+	END_INIPOND
+	ALFA
+		Energy biasing data
+	TIME
+		Time biasing data
+#	STORE_IN_FILE <format>
+#	USE_FILE <format> filename
+	GRAPH
+		Display data
+END_VARIANCE_REDUCTION
+
+// Parametros de la simulacion
+SIMULATION
+	BATCH nb(batches)
+	SIZE nb(particles per batch)
+	CONVERGENCE precision factor
+	
+	PARTICLE nb(types of particles) <TYPE_OF_PARTICLES>
+	ENERGY_INF <TYPE_OF_PARTICLES 1> E_inf(1)
+	ENERGY_SUP <TYPE_OF_PARTICLES 1> E_sup(1)
+	TIME_INF <TYPE_OF_PARTICLES 1> T_inf(1)
+	TIME_SUP <TYPE_OF_PARTICLES 1> T_sup(1)
+	...
+	ENERGY_INF <TYPE_OF_PARTICLES n> E_inf(n)
+	ENERGY_SUP <TYPE_OF_PARTICLES n> E_sup(n)
+	TIME_INF <TYPE_OF_PARTICLES n> T_inf(n)
+	TIME_SUP <TYPE_OF_PARTICLES n> T_sup(n)
+	
+	EDITION frequency
+	VOLUMIC_SCORES
+	PACKET_LENGTH nb(batches per packet)
+	KEEP_RESULT
+	XML_EXPORT
+		XML_NOCOMPLETE
+	RANDOM Additional data
+	
+#	SHIELDING
+#	CRITICALITY
+		DISCARD nb(batches to be eliminated)
+		KIJ_MATRIX
+#	FIXED_SOURCES_CRITICALITY
+#	MULTIPLE
+	
+	MONITORING 0
+	TRANSPORT_BIASING
+*		CROSS_SPLIT
+*		QUOTA_SAMPLING
+	COLLISION 1 E_inf(coll)
+	
+	BETA_EFFECTIVE
+	PROMPT_FISSION_ONLY
+	
+	PHOTO_NUCLEAR
+	
+	PHOTON_NEUTRON_RATIO Additional data
+	ELECTRON_INELASTIC_CUTOFF Ec
+	ELECTRON_BREMS_CUTOFF Ec
+	NO_ELECTRON_MULTIPLE_SCATTERING
+	ELECTRON_TOTAL_STOPPING_POWER
+	ELECTRON_PHOTON_BALANCE
+	NO_ANOMALOUS_SCATTERING_FACTOR
+	
+	ALL_COLLIDED_FLUX_PT_POINTS
+END_SIMULATION

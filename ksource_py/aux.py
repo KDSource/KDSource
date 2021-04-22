@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
+import os
 
 
 # Parametros para KDE
@@ -27,27 +28,29 @@ def pdg2pt(pdgcode):
 
 # Factores dosimetricos
 
-KSOURCEPY_PATH = "/home/inti/Documents/Maestria/KSource/ksource_py/"
+fact_dos = os.path.dirname(__file__)+"/fact_dos"
 
 def H10(pt='n', ref='ARN'):
+	""" units: MeV, pSv*cm^2 """
 	if ref == 'ARN':
 		if pt == 'n':
-			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ARN_neutron", unpack=True)
+			E,H10 = np.loadtxt(fact_dos+"/ARN_neutron", unpack=True)
 		elif pt == 'p':
-			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ARN_photon", unpack=True)
+			E,H10 = np.loadtxt(fact_dos+"/ARN_photon", unpack=True)
 		else:
 			raise ValueError("Tipo de particula invalido")
 	elif ref == 'ICRP':
 		if pt == 'n':
-			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ICRP_neutron", unpack=True)
+			E,H10 = np.loadtxt(fact_dos+"/ICRP_neutron", unpack=True)
 		elif pt == 'p':
-			E,H10 = np.loadtxt(KSOURCEPY_PATH+"ICRP_photon", unpack=True)
+			E,H10 = np.loadtxt(fact_dos+"/ICRP_photon", unpack=True)
 		else:
 			raise ValueError("Tipo de particula invalido (validos: 'n', 'p')")
 	else:
 		raise ValueError("Referencia invalida (validas: 'ARN', 'ICRP')")
-	log_E = np.log(1E-6*E)
-	log_H10 = np.log(1E-12*H10)
+	with np.errstate(divide = 'ignore'): # Avoid warning
+		log_E = np.log(1E-6*E)
+		log_H10 = np.log(H10)
 	lin_interp = interpolate.interp1d(log_E, log_H10)
 	log_interp = lambda EE: np.exp(lin_interp(np.log(EE)))
 	return log_interp

@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include<math.h>
 
-#include "mcpl.h" // "/opt/mcpl/include/mcpl.h"
+#include "mcpl.h"
 
 #ifndef PLISTS_H
 #define PLISTS_H
@@ -22,7 +22,7 @@ typedef struct PList{
 	double* rot; // Rotacion a aplicar
 	int x2z; // Si es true, se aplica permutacion x,y,z -> y,z,x
 
-	mcpl_particle_t part; // Buffer para particula
+	const mcpl_particle_t* part; // Puntero a la particula seleccionada
 } PList;
 
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z);

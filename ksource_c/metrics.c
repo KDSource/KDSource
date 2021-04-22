@@ -51,6 +51,14 @@ Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int var
 			printf("Error en Geom_create: No se pudo abrir archivo %s\n", bwfilename);
 			return NULL;
 		}
+		int dim=0;
+		for(i=0; i<ord; i++) dim += geom->ms[i]->dim;
+		double bws_test[dim];
+		if(dim != fread(bws_test, sizeof(double), dim, bwfile)){
+			printf("Error en Geom_create: No se pudo leer archivo %s\n", bwfilename);
+			return NULL;
+		}
+		rewind(bwfile);
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		strcpy(geom->bwfilename, bwfilename);
 		geom->bwfile = bwfile;
@@ -114,21 +122,16 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 
 int Geom_next(Geometry* geom){
 	if(geom->bwfile){
-		int i, j, dim=0, readed=0;
+		int i, dim=0, readed=0, count=0;
 		for(i=0; i<geom->ord; i++) dim += geom->ms[i]->dim;
-		for(i=0; i<geom->ord; i++)
-			for(j=0; j<geom->ms[i]->dim; j++)
-				readed += fscanf(geom->bwfile, "%lf", &geom->ms[i]->bw[j]);
-		if(readed < dim){ // Si llego al final del archivo, vuelvo al inicio y releo
-			if(readed != -dim) printf("Warning: Archivo de anchos de banda no tiene el formato esperado\n");
-			rewind(geom->bwfile);
+		while(readed!=dim && count++<2){ // Intento leer 2 veces
+			if(count == 2) rewind(geom->bwfile); // Antes del 2do intento rebobino
 			readed = 0;
 			for(i=0; i<geom->ord; i++)
-				for(j=0; j<geom->ms[i]->dim; j++)
-					readed += fscanf(geom->bwfile, "%lf", &geom->ms[i]->bw[j]);
+				readed += fread(geom->ms[i]->bw, sizeof(double), geom->ms[i]->dim, geom->bwfile);
 		}
-		if(readed < dim){
-			printf("Error: No se pudo leer ancho de banda\n");
+		if(count == 3){
+			printf("Error en Geom_next: No se pudo leer ancho de banda\n");
 			return 1;
 		}
 	}

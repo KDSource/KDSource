@@ -35,6 +35,10 @@ KSource* KS_open(const char* filename, int bw_null){
 		return NULL;
 	}
 	fgets(buffer, LINE_MAX_LEN, file); // # J
+	if(strcmp(buffer, "# J [1/s]:\n") != 0){
+		printf("Error en KS_open: Formato de archivo de fuente %s invalido\n", filename);
+		return NULL;
+	}
 	fscanf(file, "%le\n", &J); // Leer J
 	// PList
 	fgets(buffer, LINE_MAX_LEN, file); // # PList
@@ -136,7 +140,7 @@ int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias)
 			PList_get(ks->plist, part);
 			if(bias) bs = bias(part);
 			else bs = 1;
-			if(part->weight*bs > 1){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
+			if(part->weight*bs > w_crit){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
 				if(rand() < w_crit/(part->weight*bs)*RAND_MAX){
 					PList_next(ks->plist);
 					Geom_next(ks->geom);
@@ -153,18 +157,18 @@ int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias)
 		part->weight = 1/bs;
 	}
 	Geom_perturb(ks->geom, part);
-	part->pdgcode = pt2pdg(ks->plist->pt);
 	return 0;
 }
 
-double KS_w_mean(KSource* ks, int N){
+double KS_w_mean(KSource* ks, int N, WeightFun bias){
 	int i;
 	char pt;
 	mcpl_particle_t part;
 	double w_mean=0;
 	for(i=0; i<N; i++){
 		KS_sample(ks, &part, -1, NULL);
-		w_mean += part.weight;
+		if(bias) w_mean += part.weight * bias(&part);
+		else w_mean += part.weight;
 	}
 	return w_mean / N;
 }
@@ -207,14 +211,15 @@ int MS_sample(MultiSource* ms, mcpl_particle_t* part, double w_crit, WeightFun b
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
 	ret = KS_sample(ms->s[i], part, w_crit, bias);
-	part->weight *= ms->s[i]->J / (ms->J/ms->len);
+	if(ms->cdf[ms->len-1] > 0) part->weight *= (ms->s[i]->J/ms->J) / (ms->ws[i]/ms->cdf[ms->len-1]);
+	else part->weight *= (ms->s[i]->J/ms->J) * ms->len;
 	return ret;
 }
 
-double MS_w_mean(MultiSource* ms, int N){
+double MS_w_mean(MultiSource* ms, int N, WeightFun bias){
 	double w_mean=0;
 	int i;
-	for(i=0; i<ms->len; i++) w_mean += KS_w_mean(ms->s[i], N);
+	for(i=0; i<ms->len; i++) w_mean += KS_w_mean(ms->s[i], N, bias);
 	return w_mean / ms->len;
 }
 

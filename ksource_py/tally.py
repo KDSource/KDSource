@@ -44,7 +44,7 @@ class T4Tally:
 		self.outputfile = outputfile
 		self.tallyname = tallyname
 		# Leer espectro
-		self.Es,self.ws = read_spectrum(spectrum)
+		self.Es,self.Ews = read_spectrum(spectrum)
 		# Leer grafico de geometria
 		if geomplot is not None:
 			geomplot = np.array(Im.open(geomplot).convert('L').crop((25,26,514,514)))
@@ -145,6 +145,7 @@ class T4Tally:
 		self.err = np.reshape(err, Ns)
 
 	def save_tracks(self, tracksfile=None):
+		pt = "p"
 		# Preparar lista de posiciones
 		if tracksfile is None:
 			tracksfile = self.folder + "/" + self.tallyname + ".ssv"
@@ -158,12 +159,22 @@ class T4Tally:
 		parts = np.zeros((len(poss), 7))
 		parts[:,1:4] = poss
 		parts[:,6] = 1
-		# Guardar un bloque por cada energia
-		pt = "p"
+		np.random.shuffle(parts)
+		# Generar lista de energias (ciclica)
+		N = len(parts)
+		nloops = int(np.ceil(N/len(self.Es)) + 1)
+		Es = np.tile(self.Es,nloops)
+		Ews = np.tile(self.Ews,nloops)
+		# Guardar en archivo
 		savessv(pt, [], [], tracksfile)
-		for E,w in zip(self.Es, self.ws):
-			parts[:,0] = E
-			appendssv(pt, parts, w*ws, tracksfile)
+		for i in range(len(self.Es)):
+			parts[:,0] = Es[i:i+N] # Energias
+			mus = -1 + 2*np.random.rand(N)
+			dxys = np.sqrt(1-mus**2)
+			phis = -np.pi + 2*np.pi*np.random.rand(N)
+			dirs = np.array([dxys*np.cos(phis), dxys*np.sin(phis), mus]).T
+			parts[:,4:7] = dirs # Direcciones
+			appendssv(pt, parts, ws*Ews[i:i+N], tracksfile)
 		tracksfile = convert2mcpl(tracksfile, "ssv")
 		print("Lista de tracks guardada exitosamente en {}".format(tracksfile))
 		return tracksfile
@@ -251,7 +262,8 @@ class T4Tally:
 			plt.contour(scores, levelcurves, extent=extent, linewidths=0.5)
 		#
 		if self.geomplot is not None and geomplot:
+			ext = (extent[0], extent[1], extent[3], extent[2])
 			for val in np.unique(self.geomplot):
-				plt.contour(self.geomplot==val, [0.5], colors='black', extent=extent, linewidths=0.25)
+				plt.contour(self.geomplot==val, [0.5], colors='black', extent=ext, linewidths=0.25)
 		#
 		return [plt.gcf(), [scores,errs]]

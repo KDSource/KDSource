@@ -66,13 +66,24 @@ def appendssv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2as
 		fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
 
 class PList:
-	def __init__(self, readformat, filename, pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
+	def __init__(self, filename, readformat="mcpl", pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
 		filename = convert2mcpl(filename, readformat) # Convertir formato a MCPL
 		self.filename = filename
 		if trasl is not None:
-			trasl = np.array(trasl)
+			trasl = np.array(trasl).reshape(-1)
+			if trasl.shape != (3,):
+				raise ValueError("trasl invalido")
 		if rot is not None:
-			rot = st.Rotation.from_rotvec(rot)
+			if not isinstance(rot, st.Rotation):
+				rot = np.array(rot)
+				if rot.shape == (4,):
+					rot = st.Rotation.from_quat(rot)
+				elif rot.shape == (3,3):
+					rot = st.Rotation.from_matrix(rot)
+				elif rot.shape == (3,):
+					rot = st.Rotation.from_rotvec(rot)
+				else:
+					raise ValueError("rot invalido")
 		self.pt = pt
 		self.trasl = trasl
 		self.rot = rot

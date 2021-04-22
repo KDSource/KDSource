@@ -43,9 +43,20 @@ class Geometry (Metric):
 		super().__init__(partvars, varnames, units, volunits)
 		self.ms = metrics
 		if trasl is not None:
-			trasl = np.array(trasl)
+			trasl = np.array(trasl).reshape(-1)
+			if trasl.shape != (3,):
+				raise ValueError("trasl invalido")
 		if rot is not None:
-			rot = st.Rotation.from_rotvec(rot)
+			if not isinstance(rot, st.Rotation):
+				rot = np.array(rot)
+				if rot.shape == (4,):
+					rot = st.Rotation.from_quat(rot)
+				elif rot.shape == (3,3):
+					rot = st.Rotation.from_matrix(rot)
+				elif rot.shape == (3,):
+					rot = st.Rotation.from_rotvec(rot)
+				else:
+					raise ValueError("rot invalido")
 		self.trasl = trasl
 		self.rot = rot
 	def transform(self, parts):
@@ -110,12 +121,14 @@ class Geometry (Metric):
 		if self.rot is not None: np.savetxt(file, self.rot[np.newaxis,:])
 		else: file.write('\n')
 
+# Clases heredadas
+
 class Energy (Metric):
 	def __init__(self):
 		super().__init__([0], ["E"], ["MeV"], "MeV")
 
 class Lethargy (Metric):
-	def __init__(self, E0):
+	def __init__(self, E0=10):
 		super().__init__([0], ["u"], ["[let]"], "MeV")
 		self.E0 = E0
 	def transform(self, Es):
@@ -144,7 +157,7 @@ class Vol (Metric):
 		file.write("6 {} {} {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax))
 
 class SurfXY (Metric):
-	def __init__(self, z, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf):
+	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0):
 		super().__init__([1,2,3], ["x","y"], ["cm","cm"], "cm^2")
 		self.z = z
 		self.xmin = xmin
@@ -159,7 +172,7 @@ class SurfXY (Metric):
 	def save(self, file):
 		file.write(self.__class__.__name__+'\n')
 		file.write("{}\n".format(self.dim))
-		file.write("4 {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax))
+		file.write("5 {} {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax, self.z))
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
@@ -271,3 +284,14 @@ class Polar (Metric):
 	def jac(self, dirs):
 		thetas = np.arccos(dirs[:,2])
 		return (180/np.pi)**2 / np.sin(thetas)
+
+# Alias para geometrias mas usuales
+
+def GeomFlat(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0, E0=10, trasl=None, rot=None):
+	return Geometry([Lethargy(E0), SurfXY(xmin,xmax,ymin,ymax,z), Polar()], trasl=trasl, rot=rot)
+
+def GeomGuide(xwidth, yheight, zmax=np.inf, rcurv=None, E0=10, trasl=None, rot=None):
+	return Geometry([Lethargy(E0), Guide(xwidth,yheight,zmax,rcurv)], trasl=trasl, rot=rot)
+
+def GeomActiv(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf, zmax=np.inf, E0=10, trasl=None, rot=None):
+	return Geometry([Lethargy(E0), Vol(xmin,xmax,ymin,ymax,zmin,zmax), Polar()], trasl=trasl, rot=rot)
