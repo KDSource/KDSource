@@ -1,0 +1,3 @@
+[submodule "mcpl"]
+	path = mcpl
+	url = https://github.com/inti-abbate/mcpl.git
