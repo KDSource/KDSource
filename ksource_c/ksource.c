@@ -14,7 +14,7 @@ KSource* KS_create(double J, PList* plist, Geometry* geom){
 	return ks;
 }
 
-KSource* KS_open(const char* filename, int bw_null){
+KSource* KS_open(const char* filename){
 	int i, j;
 	char buffer[LINE_MAX_LEN], *pbuffer;
 	double J;
@@ -83,7 +83,6 @@ KSource* KS_open(const char* filename, int bw_null){
 		sscanf(buffer, "%lf %lf %lf", &rot_metric[0], &rot_metric[1], &rot_metric[2]);
 	}
 	fscanf(file, "%d\n", &variable_bw); // Leer variable_bw
-	if(bw_null) variable_bw = 0;
 	if(variable_bw){
 		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		fgets(bwfilename, NAME_MAX_LEN, file);
@@ -93,7 +92,7 @@ KSource* KS_open(const char* filename, int bw_null){
 	else{
 		for(i=0; i<ord_geom; i++){
 			bws[i] = (double*)malloc(dims[i]*sizeof(double));
-			for(j=0; j<dims[i]; j++) bw_null ? bws[i][j]=0 : fscanf(file, "%lf", &bws[i][j]);
+			for(j=0; j<dims[i]; j++) fscanf(file, "%lf", &bws[i][j]);
 		}
 	}
 	// Crear PList
@@ -127,7 +126,7 @@ KSource* KS_open(const char* filename, int bw_null){
 	return s;
 }
 
-int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias){
+int KS_sample(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias){
 	if(w_crit <= 0){
 		PList_get(ks->plist, part);
 		PList_next(ks->plist);
@@ -156,7 +155,7 @@ int KS_sample(KSource* ks, mcpl_particle_t* part, double w_crit, WeightFun bias)
 		}
 		part->weight = 1/bs;
 	}
-	Geom_perturb(ks->geom, part);
+	if(perturb) Geom_perturb(ks->geom, part);
 	return 0;
 }
 
@@ -164,9 +163,9 @@ double KS_w_mean(KSource* ks, int N, WeightFun bias){
 	int i;
 	char pt;
 	mcpl_particle_t part;
-	double w_mean=0;
+	double w_mean=0;;
 	for(i=0; i<N; i++){
-		KS_sample(ks, &part, -1, NULL);
+		KS_sample(ks, &part, 0, -1, NULL);
 		if(bias) w_mean += part.weight * bias(&part);
 		else w_mean += part.weight;
 	}
@@ -198,19 +197,19 @@ MultiSource* MS_create(int len, KSource** s, const double* ws){
 	return ms;
 }
 
-MultiSource* MS_open(int len, const char** filenames, const double* ws, int bw_null){
+MultiSource* MS_open(int len, const char** filenames, const double* ws){
 	KSource* s[len];
 	int i;
-	for(i=0; i<len; i++) s[i] = KS_open(filenames[i], bw_null);
+	for(i=0; i<len; i++) s[i] = KS_open(filenames[i]);
 	return MS_create(len, s, ws);
 }
 
-int MS_sample(MultiSource* ms, mcpl_particle_t* part, double w_crit, WeightFun bias){
+int MS_sample(MultiSource* ms, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias){
 	double y = rand() / ((double)RAND_MAX+1);
 	int i, ret;
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
-	ret = KS_sample(ms->s[i], part, w_crit, bias);
+	ret = KS_sample(ms->s[i], part, perturb, w_crit, bias);
 	if(ms->cdf[ms->len-1] > 0) part->weight *= (ms->s[i]->J/ms->J) / (ms->ws[i]/ms->cdf[ms->len-1]);
 	else part->weight *= (ms->s[i]->J/ms->J) * ms->len;
 	return ret;

@@ -3,7 +3,7 @@
 ##### Input #####
 
 INPUT=1_guia_n # 0_Benchmark_n # 
-DIR_OUT=$INPUT # _bw0
+DIR_OUT=${INPUT} # _bw0
 N=1E6 # 2991283 # 
 
 ### End Input ###

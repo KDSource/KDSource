@@ -5,7 +5,7 @@
 TRIPOLI4=/opt/TRIPOLI-4
 
 INPUT=2_bunker_n # 
-DIR_OUT=$INPUT # 2_bunker_act # 
+DIR_OUT=${INPUT} # 2_bunker_act # 
 EXT_SOURCE=KSource.c
 
 ### End Input ###

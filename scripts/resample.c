@@ -65,16 +65,18 @@ int main(int argc, char *argv[]){
 
 	if(resample_parse_args(argc, argv, &filename, &outfilename, &N)) return 1;
 
-    KSource* ks = KS_open(filename, 0);
+    KSource* ks = KS_open(filename);
 	mcpl_particle_t part;
 
 	mcpl_outfile_t file = mcpl_create_outfile(outfilename);
 	mcpl_hdr_set_srcname(file, "KSource resample");
 
+	double w_crit = KS_w_mean(ks, 1000, NULL);
+
 	printf("Resampleando...\n");
 	int i;
 	for(i=0; i<N; i++){
-		KS_sample(ks, &part, 1, NULL);
+		KS_sample(ks, &part, 1, w_crit, NULL);
 		mcpl_add_particle(file, &part);
 	}
 	mcpl_closeandgzip_outfile(file);
