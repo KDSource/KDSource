@@ -92,16 +92,14 @@ class KSource:
 	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
 		vecs = self.vecs.copy()
 		ws = self.ws.copy()
-		if weightfun is not None: ws *= weightfun(vecs)
+		if weightfun is not None: ws *= weightfun(vecs) # Aplico weightfun
 		mask = (ws > 0)
-		if maskfun is not None: mask = np.logical_and(mask, maskfun(vecs))
+		if maskfun is not None: mask = np.logical_and(mask, maskfun(vecs)) # Aplico maskfun
 		vecs = vecs[mask]
 		ws = ws[mask]
 		N = len(vecs)
-		if "N_tot" in kwargs:
-			N_tot = kwargs["N_tot"]
-		else:
-			N_tot = N
+		N_tot = self.plist.N
+		if "N_tot" in kwargs: N_tot = kwargs["N_tot"]
 		std = self.geom.std(vecs=vecs)
 		#
 		if self.bw_method == 'silv': # Metodo de Silverman
@@ -109,56 +107,64 @@ class KSource:
 			self.bw = bw_silv
 		#
 		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
-			bw_silv = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
-			if "shift_fact" in kwargs: bw_silv *= kwargs["shift_fact"]
-			#
-			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
-			else:  nsteps = 20
-			if "max_fact" in kwargs: max_fact = kwargs["max_fact"] # Rango de bw entre bw_silv/max_fact y bw_silv*max_fact
-			else: max_fact = 1.5
-			max_log = np.log10(max_fact)
-			bw_grid = np.logspace(-max_log,max_log,nsteps) # Grilla de bandwidths
+			if "bw_grid" in kwargs: bw_grid = kwargs["bw_grid"]
+			else: # Crear grilla log-equiespaciada entre bw_seed/max_fact y bw_seed*max_fact
+				if "seed" in kwargs: bw_seed = kwargs["seed"]
+				else:
+					bw_seed = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
+				if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
+				else:  nsteps = 20
+				if "max_fact" in kwargs: max_fact = kwargs["max_fact"]
+				else: max_fact = 2
+				max_log = np.log10(max_fact)
+				bw_grid = np.logspace(-max_log,max_log,nsteps) # Grilla de bandwidths
 			#
 			if "cv" in kwargs: cv = kwargs["cv"] # CV folds
-			else:  cv = 10
+			else: cv = 10
 			grid = GridSearchCV(KernelDensity(kernel='gaussian'),
 											  {'bandwidth': bw_grid},
 											  cv=cv,
 											  verbose=10,
 											  n_jobs=-1)
-			bw_silv[bw_silv == 0] = BW_DEFAULT
-			grid.fit(vecs/bw_silv)
+			bw_seed[bw_seed == 0] = BW_DEFAULT
+			grid.fit(vecs/bw_seed)
 			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))
 			plt.xlabel("ancho de banda normalizado")
-			plt.ylabel("mean CV score")
+			plt.ylabel("CV score medio")
 			plt.show()
-			print("Verificar que el grafico presenta un maximo")
-			bw_mlcv = bw_silv * grid.best_params_['bandwidth']
-			bw_mlcv *= (N_tot/N)**(-1/(4+self.geom.dim))
+			if grid.best_index_ in (0, len(grid.param_grid["bandwidth"])-1):
+				raise Exception("No se encotro maximo en el rango de bw seleccionado. Mueva la grilla e intente nuevamente.")
+			bw_mlcv = bw_seed * grid.best_params_['bandwidth']
+			bw_mlcv *= (N_tot/N)**(-1/(4+self.geom.dim)) # Reajusto N con factor de Silverman
 			#
 			self.bw = bw_mlcv
 		#
 		elif self.bw_method == 'knn': # Metodo K Nearest Neighbours
 			if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
 			else: batch_size = 10000
+			batches = np.ceil(N / batch_size).astype(int)
+			batch_size = np.round(N / batches).astype(int) # Batch size
+			if "seed" in kwargs: bw_seed = kwargs["seed"]
+			else:
+				bw_seed = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
+			bw_seed[bw_seed == 0] = BW_DEFAULT
 			if "K" in kwargs: K = kwargs["K"] # Cantidad de vecinos
 			elif "seed" in kwargs:
-				vs = vecs[:batch_size] / kwargs["seed"]
+				vs = vecs[:batch_size] / bw_seed
 				ks = []
 				for v in vs:
 					dists2 = np.sum((vs - v)**2, axis=1)
 					ks.append(np.sum(dists2 < 1))
-				K = round((np.mean(ks)-1)*N_tot/batch_size)
-			else: K = 10
+				k_mean = np.mean(ks)-1 # Resto 1 para descontar la dist2=0 cuando vs[i]=v
+				K = round(k_mean * N_tot/batch_size)
+			else: K = 10 # Valor default
+			if K == 0:
+				raise ValueError("En KNN, K no puede valer 0.")
 			print("Usando K = %d"%K)
-			k = round(K * batch_size/N_tot)
-			if k == 0:
-				print("Warning: k = K*batch_size/N_tot = 0. Se cambiara a k=1 <=> K={}".format(int(N_tot/batch_size)))	
-				k = 1
-			batches = np.ceil(N / batch_size).astype(int)
-			batch_size = np.round(N / batches).astype(int)
-			std[std == 0] = STD_DEFAULT
-			vecs /= std
+			k_float = K * batch_size/N_tot
+			k = round(k_float) if round(k_float)>0 else 1
+			f_k = k_float / k # Factor de correccion para k
+			vecs /= bw_seed
 			bw_knn = np.zeros((0,self.geom.dim))
 			for batch in range(batches):
 				print("batch =", batch+1, "/", batches)
@@ -166,16 +172,16 @@ class KSource:
 					vs = vecs[batch*batch_size:(batch+1)*batch_size]
 				else:
 					vs = vecs[batch*batch_size:]
-				bws = []
+				dks = [] # Distancias k-esimas
 				for v in vs:
 					dists2 = np.sum((vs - v)**2, axis=1)
-					bws.append(np.sqrt(np.partition(dists2, k)[k]))
-				bws = std * np.array(bws)[:,np.newaxis] / (N_tot/len(vs))**(1/len(std))
+					dks.append(np.sqrt(np.partition(dists2, k)[k]))
+				bws = bw_seed * np.array(dks).reshape(-1,1) * (f_k)**(1/self.geom.dim)
 				bw_knn = np.concatenate((bw_knn, bws), axis=0)
 			self.bw = bw_knn
 		#
 		else:
-			raise Exceprion("Invalid method")
+			raise Exception("Invalid method")
 
 	def plot_point(self, grid, idx, part0, **kwargs):
 		if self.fitted == False:
