@@ -15,13 +15,13 @@ typedef struct Metric Metric;
 
 typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part);
 
-typedef struct Metric{
+struct Metric{
 	int dim; // Dimensiones de cada submetrica
-	double* bw; // Anchos de banda
+	float* bw; // Anchos de banda
 	PerturbFun perturb; // Funcion de perturbacion
 	int n_gp; // Cantidad de parametros geometricos
 	double* geom_par; // Parametros geometricos de cada submetrica
-} Metric;
+};
 
 Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, const double* geom_par);
 Metric* Metric_copy(const Metric* from);

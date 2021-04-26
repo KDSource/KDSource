@@ -27,6 +27,7 @@ cd mcpl
 cmake . -DCMAKE_INSTALL_PREFIX=$KS/mcpl -DBUILD_WITHG4=OFF
 make install
 cd ..
+echo -e "\nInstalacion de MCPL completa"
 
 # Python
 mkdir $KS/python

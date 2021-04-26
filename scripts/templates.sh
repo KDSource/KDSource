@@ -59,11 +59,11 @@ fi
 
 cp $KS/templates/*.ipynb "$DEST"
 echo "Plantillas para preproc/postproc en Python (Jupyter Notebook) copiadas."
-if [[ opt_mcstas ]]; then
+if [[ opt_mcstas -eq 1 ]]; then
 	cp $KS/templates/mcstas/* "$DEST"
 	echo "Plantillas para McStas copiadas."
 fi 
-if [[ opt_tripoli ]]; then
+if [[ opt_tripoli -eq 1 ]]; then
  	cp $KS/templates/tripoli/* "$DEST"
 	echo "Plantillas para TRIPOLI-4 copiadas."
 fi

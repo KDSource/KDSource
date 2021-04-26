@@ -13,14 +13,15 @@ PList* PList_create(char pt, const char* filename, const double* trasl, const do
 	plist->filename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 	strcpy(plist->filename, filename);
 	plist->file = file;
+	int i;
 	if(trasl){
 		plist->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->trasl[i] = trasl[i];
+		for(i=0; i<3; i++) plist->trasl[i] = trasl[i];
 	}
 	else plist->trasl = NULL;
 	if(rot){
 		plist->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->rot[i] = rot[i];
+		for(i=0; i<3; i++) plist->rot[i] = rot[i];
 	}
 	else plist->rot = NULL;
 	plist->x2z = switch_x2z;
@@ -35,13 +36,14 @@ PList* PList_copy(const PList* from){
 	plist->filename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 	strcpy(plist->filename, from->filename);
 	plist->file = mcpl_open_file(plist->filename);
+	int i;
 	if(from->trasl){
 		plist->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->trasl[i] = from->trasl[i];
+		for(i=0; i<3; i++) plist->trasl[i] = from->trasl[i];
 	}
 	if(from->rot){
 		plist->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) plist->rot[i] = from->rot[i];
+		for(i=0; i<3; i++) plist->rot[i] = from->rot[i];
 	}
 	plist->part = NULL;
 	PList_next(plist);

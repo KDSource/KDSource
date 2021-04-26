@@ -10,8 +10,8 @@ Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, c
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	int i;
 	metric->dim = dim;
-	metric->bw = (double*)malloc(dim*sizeof(double));
-	if(bw) for(i=0; i<dim; i++) metric->bw[i] = bw[i];
+	metric->bw = (float*)malloc(dim*sizeof(double));
+	if(bw) for(i=0; i<dim; i++) metric->bw[i] = (float)bw[i];
 	else for(i=0; i<dim; i++) metric->bw[i] = 0;
 	metric->perturb = perturb;
 	metric->n_gp = n_gp;
@@ -24,7 +24,7 @@ Metric* Metric_copy(const Metric* from){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	*metric = *from;
 	int i;
-	metric->bw = (double*)malloc(metric->dim*sizeof(double));
+	metric->bw = (float*)malloc(metric->dim*sizeof(double));
 	for(i=0; i<metric->dim; i++) metric->bw[i] = from->bw[i];
 	metric->geom_par = (double*)malloc(metric->n_gp * sizeof(double));
 	for(i=0; i<metric->n_gp; i++) metric->geom_par[i] = from->geom_par[i];
@@ -70,12 +70,12 @@ Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int var
 	}
 	if(trasl){
 		geom->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) geom->trasl[i] = trasl[i];
+		for(i=0; i<3; i++) geom->trasl[i] = trasl[i];
 	}
 	else geom->trasl = NULL;
 	if(rot){
 		geom->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) geom->rot[i] = rot[i];
+		for(i=0; i<3; i++) geom->rot[i] = rot[i];
 	}
 	else geom->rot = NULL;
 	return geom;
@@ -97,12 +97,12 @@ Geometry* Geom_copy(const Geometry* from){
 	}
 	if(from->trasl){
 		geom->trasl = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) geom->trasl[i] = from->trasl[i];
+		for(i=0; i<3; i++) geom->trasl[i] = from->trasl[i];
 	}
 	else geom->trasl = NULL;
 	if(from->rot){
 		geom->rot = (double*)malloc(3 * sizeof(double));
-		for(int i=0; i<3; i++) geom->rot[i] = from->rot[i];
+		for(i=0; i<3; i++) geom->rot[i] = from->rot[i];
 	}
 	else geom->rot = NULL;
 	return geom;
@@ -128,7 +128,7 @@ int Geom_next(Geometry* geom){
 			if(count == 2) rewind(geom->bwfile); // Antes del 2do intento rebobino
 			readed = 0;
 			for(i=0; i<geom->ord; i++)
-				readed += fread(geom->ms[i]->bw, sizeof(double), geom->ms[i]->dim, geom->bwfile);
+				readed += fread(geom->ms[i]->bw, sizeof(float), geom->ms[i]->dim, geom->bwfile);
 		}
 		if(count == 3){
 			printf("Error en Geom_next: No se pudo leer ancho de banda\n");

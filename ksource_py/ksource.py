@@ -80,7 +80,7 @@ class KSource:
 		self.geom.save(file)
 		if self.bw.ndim == 2: # Ancho de banda variable
 			file.write("1\n")
-			self.bw.astype("float64").tofile(bwfilename, format="float64")
+			self.bw.astype("float32").tofile(bwfilename, format="float32")
 			file.write(os.path.abspath(bwfilename)+"\n")
 			print("Archivo de anchos de banda: {}".format(bwfilename))
 		else:
