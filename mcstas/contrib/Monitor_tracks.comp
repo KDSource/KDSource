@@ -78,6 +78,13 @@ TRACE
 		part->position[0] = x*100.0; part->position[1] = y*100.0; part->position[2] = z*100.0;
 		part->direction[0] = vx/v; part->direction[1] = vy/v; part->direction[2] = vz/v;
 		part->weight = p;
+		double dir2 = part->direction[0]*part->direction[0]+part->direction[1]*part->direction[1]+part->direction[2]*part->direction[2];
+		if(dir2 != 1){
+			double dir = sqrt(dir2);
+			part->direction[0] /= dir;
+			part->direction[1] /= dir;
+			part->direction[2] /= dir;
+		}
 		mcpl_add_particle(outfile, part);
 	
 		I += p;

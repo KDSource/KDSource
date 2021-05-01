@@ -10,7 +10,7 @@ Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, c
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	int i;
 	metric->dim = dim;
-	metric->bw = (float*)malloc(dim*sizeof(double));
+	metric->bw = (float*)malloc(dim*sizeof(float));
 	if(bw) for(i=0; i<dim; i++) metric->bw[i] = (float)bw[i];
 	else for(i=0; i<dim; i++) metric->bw[i] = 0;
 	metric->perturb = perturb;
@@ -54,7 +54,7 @@ Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int var
 		int dim=0;
 		for(i=0; i<ord; i++) dim += geom->ms[i]->dim;
 		double bws_test[dim];
-		if(dim != fread(bws_test, sizeof(double), dim, bwfile)){
+		if(dim != fread(bws_test, sizeof(float), dim, bwfile)){
 			printf("Error en Geom_create: No se pudo leer archivo %s\n", bwfilename);
 			return NULL;
 		}
@@ -112,9 +112,8 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 	int i, ret=0;
 	if(geom->trasl) traslv(part->position, geom->trasl, 1);
 	if(geom->rot){ rotv(part->position, geom->rot, 1); rotv(part->direction, geom->rot, 1); }
-	for(i=0; i<geom->ord; i++){
+	for(i=0; i<geom->ord; i++)
 		ret += geom->ms[i]->perturb(geom->ms[i], part);
-	}
 	if(geom->rot){ rotv(part->position, geom->rot, 0); rotv(part->direction, geom->rot, 0); }
 	if(geom->trasl) traslv(part->position, geom->trasl, 0);
 	return ret;
@@ -151,11 +150,13 @@ void Geom_destroy(Geometry* geom){
 int E_perturb(const Metric* metric, mcpl_particle_t* part){
 	part->ekin += metric->bw[0] * rand_norm();
 	if(part->ekin < E_MIN) part->ekin = E_MIN;
+	if(part->ekin > E_MAX) part->ekin = E_MAX;
 	return 0;
 }
 int Let_perturb(const Metric* metric, mcpl_particle_t* part){
 	part->ekin *= exp(metric->bw[0] * rand_norm());
 	if(part->ekin < E_MIN) part->ekin = E_MIN;
+	if(part->ekin > E_MAX) part->ekin = E_MAX;
 	return 0;
 }
 

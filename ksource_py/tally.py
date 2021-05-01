@@ -257,6 +257,7 @@ class T4Tally:
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.varnames[idxs[0]], self.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.varnames[idxs[1]], self.units[idxs[1]]))
+		plt.tight_layout()
 		#
 		if levelcurves is not None:
 			plt.contour(scores, levelcurves, extent=extent, linewidths=0.5)

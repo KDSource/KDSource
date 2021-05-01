@@ -81,7 +81,7 @@ class KSource:
 		if self.bw.ndim == 2: # Ancho de banda variable
 			file.write("1\n")
 			self.bw.astype("float32").tofile(bwfilename, format="float32")
-			file.write(os.path.abspath(bwfilename)+"\n")
+			file.write(bwfilename+"\n")
 			print("Archivo de anchos de banda: {}".format(bwfilename))
 		else:
 			file.write("0\n")
@@ -162,7 +162,7 @@ class KSource:
 				raise ValueError("En KNN, K no puede valer 0.")
 			print("Usando K = %d"%K)
 			k_float = K * batch_size/N_tot
-			k = round(k_float) if round(k_float)>0 else 1
+			k = int(round(k_float) if round(k_float)>0 else 1)
 			f_k = k_float / k # Factor de correccion para k
 			vecs /= bw_seed
 			bw_knn = np.zeros((0,self.geom.dim))
@@ -320,6 +320,7 @@ class KSource:
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(varnames[idxs[1]], units[idxs[1]]))
+		plt.tight_layout()
 		#
 		return [plt.gcf(), [scores,errs]]
 
@@ -369,5 +370,6 @@ class KSource:
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[idxs[0]], self.geom.units[idxs[0]]))
 		plt.ylabel(r"${}\ [{}]$".format(self.geom.varnames[idxs[1]], self.geom.units[idxs[1]]))
+		plt.tight_layout()
 		#
 		return [plt.gcf(), [scores,errs]]

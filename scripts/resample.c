@@ -19,7 +19,7 @@ void display_usage(){
 
 }
 
-int resample_parse_args(int argc, char **argv, const char** filename, const char** outfilename, int* N){
+int resample_parse_args(int argc, char **argv, const char** filename, const char** outfilename, long int* N){
 	*filename = 0;
 	*outfilename = 0;
 	*N = 1E5;
@@ -36,7 +36,7 @@ int resample_parse_args(int argc, char **argv, const char** filename, const char
 			continue;
 		}
 		if(strcmp(argv[i],"-n") == 0){
-			*N = atoi(argv[++i]);
+			*N = atof(argv[++i]);
 			continue;
 		}
     	if(argv[i][0] == '-'){
@@ -61,7 +61,7 @@ int resample_parse_args(int argc, char **argv, const char** filename, const char
 int main(int argc, char *argv[]){
 	const char *filename;
 	const char *outfilename;
-	int N;
+	long int N;
 
 	if(resample_parse_args(argc, argv, &filename, &outfilename, &N)) return 1;
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 	double w_crit = KS_w_mean(ks, 1000, NULL);
 
 	printf("Resampleando...\n");
-	int i;
+	long int i;
 	for(i=0; i<N; i++){
 		KS_sample(ks, &part, 1, w_crit, NULL);
 		mcpl_add_particle(file, &part);

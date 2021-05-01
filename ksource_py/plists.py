@@ -14,14 +14,16 @@ MCPLPATH = "/opt/mcpl/bin/"
 def convert2mcpl(filename, readformat):
 	# Buscar archivo MCPL con mismo nombre
 	already_converted = False
-	if os.path.isfile(filename.split('.')[0]+".mcpl"):
-		already_converted = True
-		filename = filename.split('.')[0]+".mcpl"
-	if os.path.isfile(filename.split('.')[0]+".mcpl.gz"):
-		already_converted = True
-		filename = filename.split('.')[0]+".mcpl.gz"
 	if readformat == "mcpl":
 		already_converted = True
+	else:
+		filename_base = filename.split('.')[0]
+		if os.path.isfile(filename_base+".mcpl.gz"):
+			already_converted = True
+			filename = filename_base+".mcpl.gz"
+		elif os.path.isfile(filename_base+".mcpl"):
+			already_converted = True
+			filename = filename_base+".mcpl"
 	if already_converted:
 		print("Using existing file {}".format(filename))
 		return filename
@@ -30,7 +32,7 @@ def convert2mcpl(filename, readformat):
 		raise Exception("Formato {} invalido".format(readformat))
 	print("Converting {} file to MCPL...".format(readformat))
 	filename_mcpl = filename.split(".")[0]+".mcpl"
-	result = subprocess.run([MCPLPATH+readformat+"2mcpl", filename, filename_mcpl],
+	result = subprocess.run(["ksource", MCPLPATH+readformat+"2mcpl", filename, filename_mcpl],
 							stdout=subprocess.PIPE,
 							stderr=subprocess.PIPE,
 							check=True) # if result.returncode != 0: raise exception
@@ -38,6 +40,25 @@ def convert2mcpl(filename, readformat):
 	filename = stdout[stdout.index(b'Created')+1].decode("utf-8")
 	print("Done. Created {}".format(filename))
 	return filename
+
+def join2mcpl(filenames, readformat):
+	if np.isscalar(filenames):
+		filenames = [filenames]
+	mcplnames = []
+	for name in filenames:
+		mcplnames.append(convert2mcpl(name, readformat))
+	if len(mcplnames) == 1:
+		return mcplnames[0]
+	joinedname = []
+	for chars in zip(*mcplnames):
+	    if len(set(chars))==1:
+	        joinedname.append(set(chars).pop())
+	joinedname = ''.join(joinedname)
+	if len(joinedname) == 0:
+		joinedname = "joined.mcpl.gz"
+	subprocess.run(["ksource", "mcpltool", joinedname, *mcplnames],
+				   check=True) # if result.returncode != 0: raise exception
+	return joinedname
 
 ptmap = {'n':2112, 'p':22, 'e':11, 'e+':-11}
 
@@ -67,8 +88,10 @@ def appendssv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2as
 
 class PList:
 	def __init__(self, filename, readformat="mcpl", pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
-		filename = convert2mcpl(filename, readformat) # Convertir formato a MCPL
-		self.filename = filename
+		if np.isscalar(filename):
+			self.filename = convert2mcpl(filename, readformat) # Convertir formato a MCPL
+		else:
+			self.filename = join2mcpl(filename, readformat) # Convertir formato a MCPL y unir archivos
 		if trasl is not None:
 			trasl = np.array(trasl).reshape(-1)
 			if trasl.shape != (3,):
@@ -132,7 +155,7 @@ class PList:
 
 	def save(self, file):
 		file.write(self.pt+'\n')
-		file.write(os.path.abspath(self.filename)+'\n')
+		file.write(self.filename+'\n')
 		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
 		else: file.write('\n')
 		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])

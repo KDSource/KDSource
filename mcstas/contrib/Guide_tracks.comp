@@ -199,6 +199,13 @@ TRACE
 
 		// Registrar peso estadistico no reflejado y guardar
 		part->weight = p*(1-weight);
+		double dir2 = part->direction[0]*part->direction[0]+part->direction[1]*part->direction[1]+part->direction[2]*part->direction[2];
+		if(dir2 != 1){
+			double dir = sqrt(dir2);
+			part->direction[0] /= dir;
+			part->direction[1] /= dir;
+			part->direction[2] /= dir;
+		}
 		mcpl_add_particle(outfile, part);
 		I += part->weight;
 		p2 += part->weight*part->weight;
