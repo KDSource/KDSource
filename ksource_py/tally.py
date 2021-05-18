@@ -13,15 +13,14 @@ def read_spectrum(spectrum=None):
 	Es = []
 	ws = []
 	if spectrum is not None:
-		file = open(spectrum, "r")
-		for line in file:
-		    try:
-		        line = line.split(sep=',')
-		        Es.append(np.double(line[0])/1000.)
-		        ws.append(np.double(line[2]))
-		    except:
-		        pass
-		file.close()
+		with open(spectrum, "r") as file:
+			for line in file:
+			    try:
+			        line = line.split(sep=',')
+			        Es.append(np.double(line[0])/1000.)
+			        ws.append(np.double(line[2]))
+			    except:
+			        pass
 	else:
 		Es.append(1)
 		ws.append(1)
@@ -50,93 +49,86 @@ class T4Tally:
 			geomplot = np.array(Im.open(geomplot).convert('L').crop((25,26,514,514)))
 		self.geomplot = geomplot
 		# Leer tallies
-		file = open(outputfile, "r")
-		# Buscar bloque de SCOREs
-		for line in file:
-			if "SCORE" in line:
-				break
-		else:
-			file.close()
-			raise Exception("Archivo no tiene SCORE")
-		# Buscar tally deseado
-		for line in file:
-			if tallyname in line:
-				break
-			if "END_SCORE" in line:
-				file.close()
-				raise Exception("No se encontro score {}".format(tallyname))
-		# Buscar grilla
-		for line in file:
-			if "EXTENDED_MESH" in line:
-				break
-			if "NAME" in line or "END_SCORE" in line:
-				file.close()
-				raise Exception("No se encontro grilla EXTENDED_MESH")
-		# Leer grillas
-		buf = []
-		idx = line.split().index("EXTENDED_MESH")
-		buf.extend(line.split()[idx+1:]) # Acumular datos luego de EXTENDED_MESH
-		for line in file:
-			if "FRAME" in line:
-				break
-			buf.extend(line.split())
-		idx = line.split().index("FRAME")
-		buf.extend(line.split()[:idx]) # Acumular datos antes de FRAME
-		if len(buf) != 10:
-			file.close()
-			raise Exception("No se pudo leer EXTENDED_MESH")
-		mins = np.double(buf[1:4])
-		maxs = np.double(buf[4:7])
-		Ns = list(map(int, buf[7:10]))
-		grid1 = np.linspace(mins[0], maxs[0], Ns[0]+1)
-		grid2 = np.linspace(mins[1], maxs[1], Ns[1]+1)
-		grid3 = np.linspace(mins[2], maxs[2], Ns[2]+1)
-		self.grids = [grid1, grid2, grid3]
-		# Leer coordenadas
-		if not "FRAME CARTESIAN" in line:
-			file.close()
-			raise Exception("Se debe tener FRAME CARTESIAN")
-		buf = []
-		idx = line.split().index("CARTESIAN")
-		buf.extend(line.split()[idx+1:]) # Acumular datos luego de CARTESIAN
-		for line in file:
-			found = False
-			for search in ["NAME", "END_SCORE", "//", "/*"]:
-				if search in line:
-					if not found:
-						idx = line.split().index(search)
-						found = True
-					else:
-						idx2 = line.split().index(search)
-						if idx2 < idx: idx = idx2
-			if found: break
-			buf.extend(line.split())
-		buf.extend(line.split()[:idx]) # Acumular datos antes de NAME o END_SCORE
-		if len(buf) != 12:
-			file.close()
-			raise Exception("No se pudo leer FRAME CARTESIAN")
-		self.origin = np.double(buf[:3])
-		self.dx1 = np.double(buf[3:6])
-		self.dx2 = np.double(buf[6:9])
-		self.dx3 = np.double(buf[9:12])
-		# Buscar tally
-		I = []
-		err = []
-		for line in file:
-			if "SCORE NAME : "+tallyname in line:
-				break
-		else:
-			file.close()
-			raise Exception("No se encontro tally {}".format(tallyname))
-		for line in file:
-			if "Energy range" in line:
-				break
-		for line in file:
-			line = line.split()
-			if len(line) == 0:
-				break
-			I.append(np.double(line[1]))
-			err.append(np.double(line[2]))
+		with open(outputfile, "r") as file:
+			# Buscar bloque de SCOREs
+			for line in file:
+				if "SCORE" in line:
+					break
+			else:
+				raise Exception("Archivo no tiene SCORE")
+			# Buscar tally deseado
+			for line in file:
+				if tallyname in line:
+					break
+				if "END_SCORE" in line:
+					raise Exception("No se encontro score {}".format(tallyname))
+			# Buscar grilla
+			for line in file:
+				if "EXTENDED_MESH" in line:
+					break
+				if "NAME" in line or "END_SCORE" in line:
+					raise Exception("No se encontro grilla EXTENDED_MESH")
+			# Leer grillas
+			buf = []
+			idx = line.split().index("EXTENDED_MESH")
+			buf.extend(line.split()[idx+1:]) # Acumular datos luego de EXTENDED_MESH
+			for line in file:
+				if "FRAME" in line:
+					break
+				buf.extend(line.split())
+			idx = line.split().index("FRAME")
+			buf.extend(line.split()[:idx]) # Acumular datos antes de FRAME
+			if len(buf) != 10:
+				raise Exception("No se pudo leer EXTENDED_MESH")
+			mins = np.double(buf[1:4])
+			maxs = np.double(buf[4:7])
+			Ns = list(map(int, buf[7:10]))
+			grid1 = np.linspace(mins[0], maxs[0], Ns[0]+1)
+			grid2 = np.linspace(mins[1], maxs[1], Ns[1]+1)
+			grid3 = np.linspace(mins[2], maxs[2], Ns[2]+1)
+			self.grids = [grid1, grid2, grid3]
+			# Leer coordenadas
+			if not "FRAME CARTESIAN" in line:
+				raise Exception("Se debe tener FRAME CARTESIAN")
+			buf = []
+			idx = line.split().index("CARTESIAN")
+			buf.extend(line.split()[idx+1:]) # Acumular datos luego de CARTESIAN
+			for line in file:
+				found = False
+				for search in ["NAME", "END_SCORE", "//", "/*"]:
+					if search in line:
+						if not found:
+							idx = line.split().index(search)
+							found = True
+						else:
+							idx2 = line.split().index(search)
+							if idx2 < idx: idx = idx2
+				if found: break
+				buf.extend(line.split())
+			buf.extend(line.split()[:idx]) # Acumular datos antes de NAME o END_SCORE
+			if len(buf) != 12:
+				raise Exception("No se pudo leer FRAME CARTESIAN")
+			self.origin = np.double(buf[:3])
+			self.dx1 = np.double(buf[3:6])
+			self.dx2 = np.double(buf[6:9])
+			self.dx3 = np.double(buf[9:12])
+			# Buscar tally
+			I = []
+			err = []
+			for line in file:
+				if "SCORE NAME : "+tallyname in line:
+					break
+			else:
+				raise Exception("No se encontro tally {}".format(tallyname))
+			for line in file:
+				if "Energy range" in line:
+					break
+			for line in file:
+				line = line.split()
+				if len(line) == 0:
+					break
+				I.append(np.double(line[1]))
+				err.append(np.double(line[2]))
 		if len(I) == np.prod(Ns):
 			print("Tally {} leido exitosamente".format(tallyname))
 		else:

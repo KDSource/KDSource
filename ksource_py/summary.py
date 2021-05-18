@@ -10,25 +10,23 @@ def read_bashoutput(bashoutput, mccode):
 	t_simul = 0
 	I_source = 1
 	if mccode == "McStas":
-		file = open(bashoutput, "r")
-		for line in file:
-			if "KSource" in line:
-				I_source = np.double(line.split()[-3])
-			if "Finally" in line:
-				line = line.split()
-				units = line[-1][1:-1]
-				t_simul = np.double(line[-2])
-				if units == "min": t_simul *= 60
-				elif units == "h": t_simul *= 3600
-		file.close()
+		with open(bashoutput, "r") as file:
+			for line in file:
+				if "KSource" in line:
+					I_source = np.double(line.split()[-3])
+				if "Finally" in line:
+					line = line.split()
+					units = line[-1][1:-1]
+					t_simul = np.double(line[-2])
+					if units == "min": t_simul *= 60
+					elif units == "h": t_simul *= 3600
 	elif mccode == "Tripoli":
-		file = open(bashoutput, "r")
-		for line in file:
-			if "Particulas producidas" in line:
-				I_source = np.double(line.split()[-3])
-			if "simulation time" in line:
-				t_simul = np.double(line.split()[-1])
-		file.close()
+		with open(bashoutput, "r") as file:
+			for line in file:
+				if "Particulas producidas" in line:
+					I_source = np.double(line.split()[-3])
+				if "simulation time" in line:
+					t_simul = np.double(line.split()[-1])
 	else:
 		raise ValueError("mccode invalido (validos: 'McStas', 'Tripoli')")
 	return [t_simul, I_source]
@@ -74,20 +72,19 @@ class Summary:
 		if not self.initialized:
 			print("Se debe computar summary antes de guardar")
 			return
-		file = open(self.folder+"/"+filename, "w")
-		file.write("t_simul\t{}\n".format(self.t_simul))
-		file.write("I_source\t{}\n".format(self.I_source))
-		file.write("n_detectors:\n")
-		for det in self.n_detectors: file.write(det.split(sep='.')[0]+"\t\t")
-		file.write("\n")
-		np.savetxt(file, np.reshape(self.n_det_scores, (1,-1)))
-		file.write("p_detectors:\n")
-		for det in self.p_detectors: file.write(det.split(sep='.')[0]+"\t\t")
-		file.write("\n")
-		np.savetxt(file, np.reshape(self.p_det_scores, (1,-1)))
-		file.write("tallies:\n")
-		for tallyname in self.tallies: file.write(tallyname+"\t\t")
-		file.write("\n")
-		np.savetxt(file, np.reshape(self.tally_scores, (1,-1)))
-		file.close()
+		with open(self.folder+"/"+filename, "w") as file:
+			file.write("t_simul\t{}\n".format(self.t_simul))
+			file.write("I_source\t{}\n".format(self.I_source))
+			file.write("n_detectors:\n")
+			for det in self.n_detectors: file.write(det.split(sep='.')[0]+"\t\t")
+			file.write("\n")
+			np.savetxt(file, np.reshape(self.n_det_scores, (1,-1)))
+			file.write("p_detectors:\n")
+			for det in self.p_detectors: file.write(det.split(sep='.')[0]+"\t\t")
+			file.write("\n")
+			np.savetxt(file, np.reshape(self.p_det_scores, (1,-1)))
+			file.write("tallies:\n")
+			for tallyname in self.tallies: file.write(tallyname+"\t\t")
+			file.write("\n")
+			np.savetxt(file, np.reshape(self.tally_scores, (1,-1)))
 		print("Summary guardado exitosamente")

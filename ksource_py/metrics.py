@@ -118,7 +118,7 @@ class Geometry (Metric):
 			metric.save(file)
 		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
 		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot[np.newaxis,:])
+		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])
 		else: file.write('\n')
 
 # Clases heredadas

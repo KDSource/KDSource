@@ -4,184 +4,193 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
 import os
-from sklearn.neighbors import KernelDensity
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
-
-from .aux import R_gaussian,C_gaussian
 
 np.set_printoptions(precision=3)
 
-BW_DEFAULT = 1
-STD_DEFAULT = 1
+from sklearn.model_selection import GridSearchCV
+from sklearn.base import BaseEstimator
+from sklearn.neighbors import NearestNeighbors
+from KDEpy import TreeKDE, FFTKDE
+
+# Clase necesaria para compatibilidad entre KDEpy y Scikit-Learn
+class CompatKDE (TreeKDE, BaseEstimator):
+    def __init__(self, kernel='gaussian', bw=1, norm=2.0):
+        TreeKDE.__init__(self, kernel, bw, norm)
+    def score(self, X, y=None):
+        return np.sum(np.log(self.evaluate(X)))
 
 
+# Nombres y unidades de las variables de particula
 varnames = ["E", "x","y","z", "dx","dy","dz"]
 varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm","cm","cm", "","",""]
+
+STD_DEFAULT = 1
+
+R_gaussian = 1 / (2*np.sqrt(np.pi)) # Roughness of gaussian kernel
+
+def optimize_bw(bw_method, vecs=None, ws=None, **kwargs):
+	if bw_method != "silv":
+		vecs = np.array(vecs).copy()
+		ws = np.array(ws).copy()
+		if "weightfun" in kwargs: ws *= kwargs["weightfun"](vecs) # Aplico weightfun
+		mask = (ws > 0)
+		if "maskfun" in kwargs: mask = np.logical_and(mask, kwargs["maskfun"](vecs)) # Aplico maskfun
+		vecs = vecs[mask]
+		ws = ws[mask]
+		N = len(vecs)
+	if ws is not None: N_eff_data = np.sum(ws)**2 / np.sum(ws**2)
+	if 'N_eff' in kwargs: N_eff = kwargs['N_eff']
+	else: N_eff = N_eff_data
+	if 'dim' in kwargs: dim = kwargs['dim']
+	else: dim = vecs.shape[1]
+	#
+	if bw_method == 'silv': # Metodo de Silverman
+		bw_silv = (4/(2+dim))**(1/(4+dim)) * N_eff**(-1/(4+dim))
+		return bw_silv
+	#
+	elif bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
+		if "bw_grid" in kwargs: bw_grid = kwargs["bw_grid"]
+		else: # Crear grilla log-equiespaciada entre bw_seed/max_fact y bw_seed*max_fact
+			if "seed" in kwargs: bw_seed = kwargs["seed"]
+			else: bw_seed = optimize_bw("silv", N_eff=N_eff_data, dim=dim)
+			if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
+			else:  nsteps = 20
+			if "max_fact" in kwargs: max_fact = kwargs["max_fact"]
+			else: max_fact = 2
+			max_log = np.log10(max_fact)
+			bw_grid = list(np.logspace(-max_log,max_log,nsteps).reshape(-1,*np.ones_like(np.shape(bw_seed))) * bw_seed) # Grilla de bandwidths
+		#
+		if "cv" in kwargs: cv = kwargs["cv"] # CV folds
+		else: cv = 10
+		grid = GridSearchCV(CompatKDE(),
+		                    {'bw': bw_grid},
+		                    cv=cv,
+		                    verbose=10,
+		                    n_jobs=-1)
+		grid.fit(vecs, weights=ws)
+		plt.plot(grid.cv_results_['mean_test_score'])
+		plt.xlabel("grilla de anchos de banda")
+		plt.ylabel("mean test score")
+		plt.tight_layout()
+		if "show" in kwargs: show = kwargs["show"]
+		else: show = True
+		if(show): plt.show()
+		if grid.best_index_ in (0, len(grid.param_grid["bw"])-1):
+			raise Exception("No se encotro maximo en el rango de bw seleccionado. Mueva la grilla e intente nuevamente.")
+		bw_mlcv = grid.best_params_['bw']
+		if N_eff_data != N_eff:
+			bw_mlcv *= optimize_bw("silv", N_eff=N_eff, dim=dim) / optimize_bw("silv", N_eff=N_eff_data, dim=dim) # Reajusto N_eff con factor de Silverman
+		return bw_mlcv
+	#
+	elif bw_method == 'knn': # Metodo K Nearest Neighbours
+		if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
+		else: batch_size = 10000
+		batches = np.ceil(N / batch_size).astype(int)
+		batch_size = np.round(N / batches).astype(int) # Batch size
+		if 'k' in kwargs: # Cantidad de vecinos en un batch
+			k = kwargs['k']
+			f_k = 1.0
+			K = k * N_eff / batch_size
+		else:
+			if 'K' in kwargs: K = kwargs['K'] # Cantidad total de vecinos
+			else: K = 100 # Valor default
+			k_float = batch_size * K / N_eff
+			k = int(round(k_float) if round(k_float)>0 else 2)
+			f_k = k_float / k # Factor de correccion para k
+		print("Usando: k = {} / batch_size = {}, f_k = {} ===> K = {}".format(k, batch_size, f_k, K))
+		bw_knn = np.array([])
+		for batch in range(batches):
+			print("batch =", batch+1, "/", batches)
+			if batch < batches-1:
+				vs = vecs[batch*batch_size:(batch+1)*batch_size]
+			else:
+				vs = vecs[batch*batch_size:]
+			knn = NearestNeighbors(n_neighbors=k, n_jobs=-1)
+			knn.fit(vs)
+			ds,idxs = knn.kneighbors(vs)
+			bws = ds[:,-1] * (f_k)**(1/dim)
+			bw_knn = np.concatenate((bw_knn, bws))
+		return bw_knn
+	#
+	else:
+		raise Exception("bw_method invalido. Validos: 'silv', 'mlcv', 'knn'")
 
 class KSource:
 	def __init__(self, plist, geom, bw="silv", J=1):
 		self.plist = plist
 		self.geom = geom
+		self.bw_method = None
 		if isinstance(bw, str):
-			self.bw = None
 			self.bw_method = bw
-		elif isinstance(bw, (list, tuple, np.ndarray)):
-			self.bw = np.array(bw)
-			self.bw_method = None
-		elif np.isscalar(bw):
-			self.bw = bw * np.ones((geom.dim))
-			self.bw_method = None
-		else:
-			raise Exceprion("Invalid bandwidth")
-		self.kde = KernelDensity(bandwidth=1.0)
+			bw = 1.0
+		self.kde = TreeKDE(bw=bw)
 		self.J = J
 		self.fitted = False
 
-	def fit(self, N=-1, skip=0, **kwargs):
+	def fit(self, N=-1, skip=0, std=None, **kwargs):
 		parts,ws = self.plist.get(N, skip)
 		if len(parts) == 0:
-			raise Exceprion("No hay particulas para entrenamiento")
-		print("Usando {} particulas para entrenamiento".format(len(parts)))
-		self.vecs = self.geom.transform(parts)
-		self.ws = ws
+			raise Exception("No hay particulas para ajuste")
+		N = len(parts)
+		print("Usando {} particulas para ajuste".format(N))
+		vecs = self.geom.transform(parts)
+		if std is None: std = self.geom.std(vecs=vecs)
+		else: std = np.array(std)
+		assert len(std) == self.geom.dim
+		std[std == 0] = STD_DEFAULT
+		self.std = std
+		self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
 		if self.bw_method is not None:
 			print("Calculando bw ... ")
-			self.optimize_bw(**kwargs)
-			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, self.bw))
-		self.bw[self.bw == 0] = BW_DEFAULT
-		self.kde.fit(self.vecs/self.bw, sample_weight=self.ws)
+			bw = optimize_bw(self.bw_method, vecs/self.std, ws, **kwargs)
+			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, np.reshape(bw, (-1,1)) * self.std))
+			self.kde = TreeKDE(bw=bw)
+		self.kde.fit(vecs/self.std, weights=ws)
 		self.fitted = True
 
-	def score(self, parts):
+	def evaluate(self, parts):
 		if self.fitted == False:
-			raise Exception("Se debe fittear antes de evaluar")
+			raise Exception("Se debe ajustar (fit) antes de evaluar")
 		vecs = self.geom.transform(parts)
-		jacs = self.geom.jac(parts, bw=self.bw)
-		scores = 1/np.prod(self.bw) * np.exp(self.kde.score_samples(vecs/self.bw))
-		N_eff = np.sum(self.ws)**2 / np.sum(self.ws**2)
-		errs = np.sqrt(scores * R_gaussian**self.geom.dim / (N_eff * np.prod(self.bw)))
-		scores *= self.J * jacs
+		jacs = self.geom.jac(parts)
+		evals = 1/np.prod(self.std) * self.kde.evaluate(vecs/self.std)
+		errs = np.sqrt(evals * R_gaussian**self.geom.dim / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.std)))
+		evals *= self.J * jacs
 		errs *= self.J * jacs
-		return np.array([scores, errs])
+		return [evals, errs]
 
-	def save(self, sourcefilename=None, bwfilename=None):
+	def save(self, sourcefilename=None, bwfile=None, adjust_N=True):
 		if sourcefilename is None:
 			sourcefilename = self.plist.filename.split('.')[0]+"_source.txt"
-		if bwfilename is None:
-			bwfilename = self.plist.filename.split('.')[0]+"_bws"
+		if bwfile is None:
+			bwfile = bwfilename = self.plist.filename.split('.')[0]+"_bws"
+		elif isinstance(bwfile, str):
+			bwfilename = bwfile
+		else: # Asumo que es file object
+			bwfilename = bwfile.name
 		print("Archivo de definicion de fuente: {}".format(sourcefilename))
-		file = open(sourcefilename, "w")
-		file.write("# J [1/s]:\n")
-		file.write("%le\n" % (self.J))
-		file.write("# PList:\n")
-		self.plist.save(file)
-		file.write("# Metric:\n")
-		self.geom.save(file)
-		if self.bw.ndim == 2: # Ancho de banda variable
-			file.write("1\n")
-			self.bw.astype("float32").tofile(bwfilename, format="float32")
-			file.write(bwfilename+"\n")
-			print("Archivo de anchos de banda: {}".format(bwfilename))
-		else:
-			file.write("0\n")
-			np.savetxt(file, self.bw[np.newaxis,:])
-		file.close()
+		with open(sourcefilename, "w") as file:
+			file.write("# J [1/s]:\n")
+			file.write("%le\n" % (self.J))
+			file.write("# PList:\n")
+			self.plist.save(file)
+			file.write("# Metric:\n")
+			self.geom.save(file)
+			bw = np.reshape(self.kde.bw, (-1,1)) * self.std
+			if adjust_N:
+				N_eff_tot = self.N_eff * self.plist.N / len(self.kde.data)
+				dim = self.geom.dim
+				bw *= optimize_bw("silv", N_eff=N_eff_tot, dim=dim) / optimize_bw("silv", N_eff=self.N_eff, dim=dim) # Reajusto N_eff con factor de Silverman
+			if len(bw) == 1: # Ancho de banda constante
+				file.write("0\n")
+				np.savetxt(file, bw)
+			else: # Ancho de banda variable
+				file.write("1\n")
+				bw.astype("float32").tofile(bwfile, format="float32")
+				file.write(os.path.abspath(bwfilename)+"\n")
+				print("Archivo de anchos de banda: {}".format(bwfilename))
 		return sourcefilename
-
-	def optimize_bw(self, weightfun=None, maskfun=None, **kwargs):
-		vecs = self.vecs.copy()
-		ws = self.ws.copy()
-		if weightfun is not None: ws *= weightfun(vecs) # Aplico weightfun
-		mask = (ws > 0)
-		if maskfun is not None: mask = np.logical_and(mask, maskfun(vecs)) # Aplico maskfun
-		vecs = vecs[mask]
-		ws = ws[mask]
-		N = len(vecs)
-		N_tot = self.plist.N
-		if "N_tot" in kwargs: N_tot = kwargs["N_tot"]
-		std = self.geom.std(vecs=vecs)
-		#
-		if self.bw_method == 'silv': # Metodo de Silverman
-			bw_silv = C_gaussian(self.geom.dim) * std * N_tot**(-1/(4+self.geom.dim))
-			self.bw = bw_silv
-		#
-		elif self.bw_method == 'mlcv': # Metodo Maximum Likelihood Cross Validation
-			if "bw_grid" in kwargs: bw_grid = kwargs["bw_grid"]
-			else: # Crear grilla log-equiespaciada entre bw_seed/max_fact y bw_seed*max_fact
-				if "seed" in kwargs: bw_seed = kwargs["seed"]
-				else:
-					bw_seed = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
-				if "nsteps" in kwargs: nsteps = kwargs["nsteps"] # Cantidad de pasos para bw
-				else:  nsteps = 20
-				if "max_fact" in kwargs: max_fact = kwargs["max_fact"]
-				else: max_fact = 2
-				max_log = np.log10(max_fact)
-				bw_grid = np.logspace(-max_log,max_log,nsteps) # Grilla de bandwidths
-			#
-			if "cv" in kwargs: cv = kwargs["cv"] # CV folds
-			else: cv = 10
-			grid = GridSearchCV(KernelDensity(kernel='gaussian'),
-											  {'bandwidth': bw_grid},
-											  cv=cv,
-											  verbose=10,
-											  n_jobs=-1)
-			bw_seed[bw_seed == 0] = BW_DEFAULT
-			grid.fit(vecs/bw_seed)
-			plt.plot(bw_grid, np.exp(grid.cv_results_['mean_test_score']*cv/N))
-			plt.xlabel("ancho de banda normalizado")
-			plt.ylabel("CV score medio")
-			plt.show()
-			if grid.best_index_ in (0, len(grid.param_grid["bandwidth"])-1):
-				raise Exception("No se encotro maximo en el rango de bw seleccionado. Mueva la grilla e intente nuevamente.")
-			bw_mlcv = bw_seed * grid.best_params_['bandwidth']
-			bw_mlcv *= (N_tot/N)**(-1/(4+self.geom.dim)) # Reajusto N con factor de Silverman
-			#
-			self.bw = bw_mlcv
-		#
-		elif self.bw_method == 'knn': # Metodo K Nearest Neighbours
-			if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
-			else: batch_size = 10000
-			batches = np.ceil(N / batch_size).astype(int)
-			batch_size = np.round(N / batches).astype(int) # Batch size
-			if "seed" in kwargs: bw_seed = kwargs["seed"]
-			else:
-				bw_seed = C_gaussian(self.geom.dim) * std * N**(-1/(4+self.geom.dim)) # Regla del dedo de Silverman
-			bw_seed[bw_seed == 0] = BW_DEFAULT
-			if "K" in kwargs: K = kwargs["K"] # Cantidad de vecinos
-			elif "seed" in kwargs:
-				vs = vecs[:batch_size] / bw_seed
-				ks = []
-				for v in vs:
-					dists2 = np.sum((vs - v)**2, axis=1)
-					ks.append(np.sum(dists2 < 1))
-				k_mean = np.mean(ks)-1 # Resto 1 para descontar la dist2=0 cuando vs[i]=v
-				K = round(k_mean * N_tot/batch_size)
-			else: K = 10 # Valor default
-			if K == 0:
-				raise ValueError("En KNN, K no puede valer 0.")
-			print("Usando K = %d"%K)
-			k_float = K * batch_size/N_tot
-			k = int(round(k_float) if round(k_float)>0 else 1)
-			f_k = k_float / k # Factor de correccion para k
-			vecs /= bw_seed
-			bw_knn = np.zeros((0,self.geom.dim))
-			for batch in range(batches):
-				print("batch =", batch+1, "/", batches)
-				if batch < batches-1:
-					vs = vecs[batch*batch_size:(batch+1)*batch_size]
-				else:
-					vs = vecs[batch*batch_size:]
-				dks = [] # Distancias k-esimas
-				for v in vs:
-					dists2 = np.sum((vs - v)**2, axis=1)
-					dks.append(np.sqrt(np.partition(dists2, k)[k]))
-				bws = bw_seed * np.array(dks).reshape(-1,1) * (f_k)**(1/self.geom.dim)
-				bw_knn = np.concatenate((bw_knn, bws), axis=0)
-			self.bw = bw_knn
-		#
-		else:
-			raise Exception("Invalid method")
 
 	def plot_point(self, grid, idx, part0, **kwargs):
 		if self.fitted == False:
@@ -194,7 +203,7 @@ class KSource:
 		parts[:,idx] = grid
 		part0[idx] = 0
 		parts += part0
-		scores,errs = self.score(parts)
+		scores,errs = self.evaluate(parts)
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
@@ -207,6 +216,7 @@ class KSource:
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.geom.volunits))
 		plt.grid()
 		plt.legend()
+		plt.tight_layout()
 		#
 		return [plt.gcf(), [scores,errs]]
 
@@ -217,24 +227,25 @@ class KSource:
 			idx = self.geom.varmap[idx]
 		if not "xscale" in kwargs: kwargs["xscale"] = "linear"
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
-		trues = np.ones(len(self.vecs), dtype=bool)
+		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
-		vecs = self.vecs[:,idx][mask].reshape(-1,1)
-		ws = self.ws[mask]
-		bw = self.bw[idx]
-		kde = KernelDensity(bandwidth=1.0)
-		kde.fit(vecs/bw, sample_weight=ws)
-		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
+		vecs = self.kde.data[:,idx][mask].reshape(-1,1)
+		ws = self.kde.weights[mask]
 		N_eff = np.sum(ws)**2 / np.sum(ws**2)
-		errs = np.sqrt(scores * R_gaussian / (N_eff * bw))
+		std = self.std[idx]
+		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / optimize_bw("silv", N_eff=self.N_eff, dim=self.geom.dim)
+		kde = TreeKDE(bw=bw)
+		kde.fit(vecs, weights=ws)
+		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
+		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
 		scores *= self.J
 		errs *= self.J
 		if "fact" in kwargs:
@@ -249,33 +260,36 @@ class KSource:
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.geom.units[idx]))
 		plt.grid()
 		plt.legend()
+		plt.tight_layout()
 		#
 		return [plt.gcf(), [scores,errs]]
 
 	def plot_E(self, grid_E, vec0=None, vec1=None, **kwargs):
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
-		trues = np.ones(len(self.vecs), dtype=bool)
+		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		if sum(mask) == 0:
 			raise Exception("No hay tracks en el rango pedido")
-		vecs = self.vecs[:,0][mask].reshape(-1,1)
-		ws = self.ws[mask]
-		bw = self.bw[0]
-		kde = KernelDensity(bandwidth=1.0)
-		kde.fit(vecs/bw, sample_weight=ws)
+		vecs = self.kde.data[:,0][mask].reshape(-1,1)
+		ws = self.kde.weights[mask]
+		N_eff = np.sum(ws)**2 / np.sum(ws**2)
+		std = self.std[0]
+		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / optimize_bw("silv", N_eff=self.N_eff, dim=self.geom.dim)
+		kde = TreeKDE(bw=bw)
+		kde.fit(vecs, weights=ws)
 		grid = self.geom.ms[0].transform(grid_E)
 		jacs = self.geom.ms[0].jac(grid_E)
-		scores = 1/bw * np.exp(kde.score_samples(grid.reshape(-1,1)/bw))
-		errs = np.sqrt(scores * R_gaussian / (len(vecs) * bw))
+		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
+		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
 		scores *= self.J * jacs
 		errs *= self.J * jacs
 		if "fact" in kwargs:
@@ -290,6 +304,7 @@ class KSource:
 		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt))
 		plt.grid()
 		plt.legend()
+		plt.tight_layout()
 		#
 		return [plt.gcf(), [scores,errs]]
 
@@ -304,7 +319,7 @@ class KSource:
 		part0 = np.array(part0)
 		part0[idxs] = 0
 		parts += part0
-		scores,errs = self.J * self.score(parts)
+		scores,errs = self.J * self.evaluate(parts)
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
@@ -313,7 +328,7 @@ class KSource:
 		yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
 		if kwargs["scale"] == "log": norm = col.LogNorm()
 		else: norm = None
-		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
+		plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm)
 		plt.colorbar()
 		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
 		title += "\npart = "+np.array_str(np.array(part0), precision=2)
@@ -330,25 +345,26 @@ class KSource:
 		if isinstance(idxs[0], str):
 			idxs = [self.geom.varmap[idx] for idx in idxs]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
-		trues = np.array(len(self.vecs)*[True])
+		trues = np.array(len(self.kde.data)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.vecs, axis=1)
+			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.vecs <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
-		vecs = self.vecs[:,idxs][mask]
-		ws = self.ws[mask]
-		bw = self.bw[idxs]
-		kde = KernelDensity(bandwidth=1.0)
-		kde.fit(vecs/bw, sample_weight=ws)
-		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-		scores = 1/np.prod(bw) * np.exp(kde.score_samples(grid/bw))
+		vecs = self.kde.data[:,idxs][mask]
+		ws = self.kde.weights[mask]
 		N_eff = np.sum(ws)**2 / np.sum(ws**2)
-		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * bw[0]*bw[1]))
+		std = self.std[idxs]
+		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / optimize_bw("silv", N_eff=self.N_eff, dim=self.geom.dim)
+		kde = TreeKDE(bw=bw)
+		kde.fit(vecs, weights=ws)
+		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
+		scores = 1/np.prod(std) * kde.evaluate(grid/std)
+		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * np.mean(bw) * np.prod(std)))
 		scores *= self.J
 		errs *= self.J
 		if "fact" in kwargs:
@@ -359,7 +375,7 @@ class KSource:
 		yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
 		if kwargs["scale"] == "log": norm = col.LogNorm()
 		else: norm = None
-		plt.pcolormesh(xx, yy, scores.reshape(len(grids[0]), len(grids[1])), cmap="jet", norm=norm)
+		plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm)
 		plt.colorbar()
 		if self.geom.units[idxs[0]] == self.geom.units[idxs[1]]:
 			units = self.geom.units[idxs[0]]+"^2"

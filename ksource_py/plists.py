@@ -63,28 +63,28 @@ def join2mcpl(filenames, readformat):
 ptmap = {'n':2112, 'p':22, 'e':11, 'e+':-11}
 
 def savessv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2ascii (in mcpl.py)
-	fout = open(outfile,'w')
-	fout.write("#MCPL-ASCII\n#ASCII-FORMAT: v1\n#NPARTICLES: %i\n"%len(parts))
-	if comments is not None:
-		fout.write("#NCOMMENTS %d\n"%len(comments))
-		for comment in comments:
-			fout.write(comment)
-	fout.write("#END-HEADER\n")
-	fout.write("index     pdgcode               ekin[MeV]                   x[cm]          "
-			   +"         y[cm]                   z[cm]                      ux                  "
-			   +"    uy                      uz                time[ms]                  weight  "
-			   +"                 pol-x                   pol-y                   pol-z  userflags\n")
-	pdgcode = ptmap[pt]
-	fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
-	for idx,p in enumerate(parts):
-		fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
+	with open(outfile,'w') as fout:
+		fout.write("#MCPL-ASCII\n#ASCII-FORMAT: v1\n#NPARTICLES: %i\n"%len(parts))
+		if comments is not None:
+			fout.write("#NCOMMENTS %d\n"%len(comments))
+			for comment in comments:
+				fout.write(comment)
+		fout.write("#END-HEADER\n")
+		fout.write("index     pdgcode               ekin[MeV]                   x[cm]          "
+				   +"         y[cm]                   z[cm]                      ux                  "
+				   +"    uy                      uz                time[ms]                  weight  "
+				   +"                 pol-x                   pol-y                   pol-z  userflags\n")
+		pdgcode = ptmap[pt]
+		fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+		for idx,p in enumerate(parts):
+			fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
 
 def appendssv(pt, parts, ws, outfile, comments=None): # Equivalent to convert2ascii (in mcpl.py)
-	fout = open(outfile,'a')
-	pdgcode = ptmap[pt]
-	fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
-	for idx,p in enumerate(parts):
-		fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
+	with open(outfile,'a') as fout:
+		pdgcode = ptmap[pt]
+		fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+		for idx,p in enumerate(parts):
+			fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
 
 class PList:
 	def __init__(self, filename, readformat="mcpl", pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
@@ -155,7 +155,7 @@ class PList:
 
 	def save(self, file):
 		file.write(self.pt+'\n')
-		file.write(self.filename+'\n')
+		file.write(os.path.abspath(self.filename)+'\n')
 		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
 		else: file.write('\n')
 		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])

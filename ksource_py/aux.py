@@ -6,13 +6,6 @@ from scipy import interpolate
 import os
 
 
-# Parametros para KDE
-
-R_gaussian = 1 / (2*np.sqrt(np.pi)) # Roughness of gaussian kernel
-
-def C_gaussian(q): # Silverman costant for gaussian kernel and dimension q
-	return (4/(2+q))**(1/(4+q))
-
 # Conversion entre tipo de part (char) y pdgcode
 def pt2pdg(pt):
 	if pt == 'n': return 2112
