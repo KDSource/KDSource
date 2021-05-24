@@ -6,6 +6,8 @@
 #include "ksource.h"
 
 
+void KS_error(const char* msg);
+
 Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, const double* geom_par){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	int i;
@@ -48,15 +50,15 @@ Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int var
 	if(bwfilename) if(strlen(bwfilename)){
 		FILE* bwfile;
 		if((bwfile=fopen(bwfilename, "r")) == 0){
-			printf("Error en Geom_create: No se pudo abrir archivo %s\n", bwfilename);
-			return NULL;
+			printf("No se pudo abrir archivo %s\n", bwfilename);
+			KS_error("Error en Geom_create");
 		}
 		int dim=0;
 		for(i=0; i<ord; i++) dim += geom->ms[i]->dim;
 		double bws_test[dim];
 		if(dim != fread(bws_test, sizeof(float), dim, bwfile)){
-			printf("Error en Geom_create: No se pudo leer archivo %s\n", bwfilename);
-			return NULL;
+			printf("No se pudo leer archivo %s\n", bwfilename);
+			KS_error("Error en Geom_create");
 		}
 		rewind(bwfile);
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
@@ -129,10 +131,8 @@ int Geom_next(Geometry* geom){
 			for(i=0; i<geom->ord; i++)
 				readed += fread(geom->ms[i]->bw, sizeof(float), geom->ms[i]->dim, geom->bwfile);
 		}
-		if(count == 3){
-			printf("Error en Geom_next: No se pudo leer ancho de banda\n");
-			return 1;
-		}
+		if(count == 3)
+			KS_error("Error en Geom_next: No se pudo leer ancho de banda");
 	}
 	return 0;
 }
@@ -185,28 +185,34 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
 	double x=part->position[0], y=part->position[1], z=part->position[2], dx=part->direction[0], dy=part->direction[1], dz=part->direction[2];
 	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zmax=metric->geom_par[2], rcurv=metric->geom_par[3];
 	double t, theta, phi, theta0, dx2, dz2;
-	int cont=0;
+	int cont=0, mirror;
 	if(rcurv != 0){ // Transformar a variables de guia curva
 		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
 		x = copysign(1, rcurv) * r - rcurv; z = fabs(rcurv) * asin(z / r);
 		dx2 = dx; dz2 = dz; dx = dx2*cos(z/rcurv) + dz2*sin(z/rcurv); dz = -dx2*sin(z/rcurv) + dz2*cos(z/rcurv);
 	}
 	// Transformar de (x,y,z,dx,dy,dz) a (z,t,theta,phi)
-	if((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth)){      // espejo x pos
-		t = 0.5*yheight + y;
-		theta0 = acos(dx); phi = atan2(-dy, dz);
-	}
-	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)){ // espejo y pos
-		t = 1.0*yheight + 0.5*xwidth - x;
-		theta0 = acos(dy); phi = atan2(dx, dz);
-	}
-	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)){ // espejo x neg
-		t = 1.5*yheight + 1.0*xwidth - y;
-		theta0 = acos(-dx); phi = atan2(dy, dz);
-	}
-	else{                                                        // espejo y neg
-		t = 2.0*yheight + 1.5*xwidth + x;
-		theta0 = acos(-dy); phi = atan2(-dx, dz);
+	if((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth))      mirror=0; // espejo x pos
+	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)) mirror=1; // espejo y pos
+	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)) mirror=2; // espejo x neg
+	else                                                        mirror=3; // espejo y neg
+	switch(mirror){
+		case 0:
+			t = 0.5*yheight + y;
+			theta0 = acos(dx); phi = atan2(-dy, dz);
+			break;
+		case 1:
+			t = 1.0*yheight + 0.5*xwidth - x;
+			theta0 = acos(dy); phi = atan2(dx, dz);
+			break;
+		case 2:
+			t = 1.5*yheight + 1.0*xwidth - y;
+			theta0 = acos(-dx); phi = atan2(dy, dz);
+			break;
+		case 3:
+			t = 2.0*yheight + 1.5*xwidth + x;
+			theta0 = acos(-dy); phi = atan2(-dx, dz);
+			break;
 	}
 	// Perturbar
 	z += metric->bw[0] * rand_norm();
@@ -225,22 +231,30 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
 	else if(z > zmax) z = zmax;
 	while(t < 0) t += 2*(xwidth+yheight);
 	while(t > 2*(xwidth+yheight)) t -= 2*(xwidth+yheight);
+	switch(mirror){
+		case 0: if(t<  0)              t=  0;              else if(t>  yheight)          t=  yheight;          break;
+		case 1: if(t<  yheight)        t=  yheight;        else if(t>  yheight+  xwidth) t=  yheight+  xwidth; break;
+		case 2: if(t<  yheight+xwidth) t=  yheight+xwidth; else if(t>2*yheight+  xwidth) t=2*yheight+  xwidth; break;
+		case 3: if(t<2*yheight+xwidth) t=2*yheight+xwidth; else if(t>2*yheight+2*xwidth) t=2*yheight+2*xwidth; break;
+	}
 	// Antitransformar de (z,t,theta_n,theta_t) a (x,y,z,dx,dy,dz)
-	if(t < yheight){                                         // espejo x pos
-		x =  xwidth/2; y =  t - 0.5*yheight;
-		dx = cos(theta); dz = sin(theta)*cos(phi); dy = -sin(theta)*sin(phi);
-	}
-	else if((t > yheight) && (t <   yheight+xwidth)){        // espejo y pos
-		y =  yheight/2; x = -t + yheight + 0.5*xwidth;
-		dy = cos(theta); dz = sin(theta)*cos(phi); dx = sin(theta)*sin(phi);
-	}
-	else if((t > yheight+xwidth) && (t < 2*yheight+xwidth)){ // espejo x neg
-		x = -xwidth/2; y = -t + 1.5*yheight + xwidth;
-		dx = -cos(theta); dz = sin(theta)*cos(phi); dy = sin(theta)*sin(phi);
-	}
-	else{                                                    // espejo y neg
-		y = -yheight/2; x =  t - 2*yheight - 1.5*xwidth;
-		dy = -cos(theta); dz = sin(theta)*cos(phi); dx = -sin(theta)*sin(phi);
+	switch(mirror){
+		case 0:
+			x =  xwidth/2; y =  t - 0.5*yheight;
+			dx = cos(theta); dz = sin(theta)*cos(phi); dy = -sin(theta)*sin(phi);
+			break;
+		case 1:
+			y =  yheight/2; x = -t + yheight + 0.5*xwidth;
+			dy = cos(theta); dz = sin(theta)*cos(phi); dx = sin(theta)*sin(phi);
+			break;
+		case 2:
+			x = -xwidth/2; y = -t + 1.5*yheight + xwidth;
+			dx = -cos(theta); dz = sin(theta)*cos(phi); dy = sin(theta)*sin(phi);
+			break;
+		case 3:
+			y = -yheight/2; x =  t - 2*yheight - 1.5*xwidth;
+			dy = -cos(theta); dz = sin(theta)*cos(phi); dx = -sin(theta)*sin(phi);
+			break;
 	}
 	if(rcurv != 0){ // Antitransformar de variables de guia curva
 		double r = (rcurv + x) * copysign(1, rcurv), ang = z / rcurv;

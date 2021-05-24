@@ -6,6 +6,11 @@
 #include "ksource.h"
 
 
+void KS_error(const char* msg){
+	printf("KSource error: %s\n", msg);
+	exit(EXIT_FAILURE);
+}
+
 KSource* KS_create(double J, PList* plist, Geometry* geom){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
 	ks->J = J;
@@ -31,13 +36,13 @@ KSource* KS_open(const char* filename){
 	// Leer archivo
 	FILE* file;
 	if((file=fopen(filename, "r")) == 0){
-		printf("Error en KS_open: No se pudo abrir archivo %s\n", filename);
-		return NULL;
+		printf("No se pudo abrir archivo %s\n", filename);
+		KS_error("Error en KS_open");
 	}
 	fgets(buffer, LINE_MAX_LEN, file); // # J
 	if(strcmp(buffer, "# J [1/s]:\n") != 0){
-		printf("Error en KS_open: Formato de archivo de fuente %s invalido\n", filename);
-		return NULL;
+		printf("Formato de archivo de fuente %s invalido\n", filename);
+		KS_error("Error en KS_open");
 	}
 	fscanf(file, "%le\n", &J); // Leer J
 	// PList
@@ -107,8 +112,8 @@ KSource* KS_open(const char* filename){
 		else if(strcmp(metricnames[i], "Polar\n") == 0) perturbs[i] = Polar_perturb;
 		else if(strcmp(metricnames[i], "Isotrop\n") == 0) perturbs[i] = Isotrop_perturb;
 		else{
-			printf("Error: Metrica %s invalida\n", metricnames[i]);
-			return NULL;
+			printf("Metrica %s invalida\n", metricnames[i]);
+			KS_error("Error en KS_open");
 		}
 	}
 	Metric* metrics[ord_geom];

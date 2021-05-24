@@ -6,6 +6,8 @@
 #include "ksource.h"
 
 
+void KS_error(const char* msg);
+
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	plist->pt = pt;
@@ -73,10 +75,8 @@ int PList_next(PList* plist){
 		while(1){ // Intento leer 2 veces
 			plist->part = mcpl_read(plist->file);
 			if(plist->part != NULL) break;
-			if(++count == 2){ // Luego del 2do intento fallido tiro error
-				printf("Error en PList_next: No se pudo leer particula\n");
-				return 1;
-			}
+			if(++count == 2) // Luego del 2do intento fallido tiro error
+				KS_error("Error en PList_next: No se pudo leer particula");
 			mcpl_rewind(plist->file); // Luego del 1er intento fallido rebobino
 		}
 		if(plist->part->weight > 0) break;

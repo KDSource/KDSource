@@ -98,7 +98,7 @@ def optimize_bw(bw_method, vecs=None, ws=None, **kwargs):
 			k_float = batch_size * K / N_eff
 			k = int(round(k_float) if round(k_float)>0 else 2)
 			f_k = k_float / k # Factor de correccion para k
-		print("Usando: k = {} / batch_size = {}, f_k = {} ===> K = {}".format(k, batch_size, f_k, K))
+		print("Usando: k = {} / batch_size = {}, f_k = {} ===> K_eff = {}".format(k, batch_size, f_k, K))
 		bw_knn = np.array([])
 		for batch in range(batches):
 			print("batch =", batch+1, "/", batches)
