@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .aux import *
+from .kde import *
 
 from .metrics import *
 from .plists import *
