@@ -218,7 +218,7 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
 	z += metric->bw[0] * rand_norm();
 	t += metric->bw[1] * rand_norm();
 	theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
-	while((theta0-M_PI/2)*(theta-M_PI/2) < 0){ // Evitar que perturbacion cambie sentido de propagacion
+	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
 		theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
 		if(cont++ == MAX_RESAMPLES){
 			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
@@ -300,7 +300,7 @@ int Polar_perturb(const Metric* metric, mcpl_particle_t* part){
 	theta0 = acos(part->direction[2]);
 	phi   = atan2(part->direction[1], part->direction[0]);
 	theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
-	while((theta0-M_PI/2)*(theta-M_PI/2) < 0){ // Evitar que perturbacion cambie sentido de propagacion
+	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
 		theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
 		if(cont++ == MAX_RESAMPLES){
 			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");

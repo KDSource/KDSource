@@ -8,8 +8,6 @@ import mcpl
 
 from .aux import pt2pdg,pdg2pt
 
-MCPLPATH = "/opt/mcpl/bin/"
-
 
 def convert2mcpl(filename, readformat):
 	# Buscar archivo MCPL con mismo nombre
@@ -32,7 +30,7 @@ def convert2mcpl(filename, readformat):
 		raise Exception("Formato {} invalido".format(readformat))
 	print("Converting {} file to MCPL...".format(readformat))
 	filename_mcpl = filename.split(".")[0]+".mcpl"
-	result = subprocess.run(["ksource", MCPLPATH+readformat+"2mcpl", filename, filename_mcpl],
+	result = subprocess.run(["ksource", readformat+"2mcpl", filename, filename_mcpl],
 							stdout=subprocess.PIPE,
 							stderr=subprocess.PIPE,
 							check=True) # if result.returncode != 0: raise exception

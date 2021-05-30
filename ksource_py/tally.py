@@ -87,6 +87,7 @@ class T4Tally:
 			grid2 = np.linspace(mins[1], maxs[1], Ns[1]+1)
 			grid3 = np.linspace(mins[2], maxs[2], Ns[2]+1)
 			self.grids = [grid1, grid2, grid3]
+			self.vcell = np.abs((grid1[1]-grid1[0])*(grid2[1]-grid2[0])*(grid3[1]-grid3[0]))
 			# Leer coordenadas
 			if not "FRAME CARTESIAN" in line:
 				raise Exception("Se debe tener FRAME CARTESIAN")
@@ -133,8 +134,8 @@ class T4Tally:
 			print("Tally {} leido exitosamente".format(tallyname))
 		else:
 			print("Lectura de tally {} incompleta".format(tallyname))
-		self.I = np.reshape(I, Ns)
-		self.err = np.reshape(err, Ns)
+		self.I = np.reshape(I, Ns) / self.vcell
+		self.err = np.reshape(err, Ns) / self.vcell
 
 	def save_tracks(self, tracksfile=None):
 		pt = "p"
@@ -184,8 +185,10 @@ class T4Tally:
 		else: # Graficar para las celdas indicada
 			slc = cells.copy()
 			slc.insert(idx, slice(None))
-			scores = self.J * self.I[tuple(slc)]
-			errs = self.J * self.err[tuple(slc)]
+			scores = self.I[tuple(slc)]
+			errs = self.err[tuple(slc)]
+		scores *= self.J
+		errs *= self.J
 		if np.sum(scores) == 0:
 			print("Tally nulo en la region a graficar")
 			return [None, [scores,errs]]
@@ -222,8 +225,10 @@ class T4Tally:
 		else: # Graficar para la celda indicada
 			slc = 2 * [slice(None)]
 			slc.insert(idx, cell)
-			scores = self.J * self.I[tuple(slc)]
-			errs = self.J * self.err[tuple(slc)]
+			scores = self.I[tuple(slc)]
+			errs = self.err[tuple(slc)]
+		scores *= self.J
+		errs *= self.J
 		if np.sum(scores) == 0:
 			print("Tally nulo en la region a graficar")
 			return [None, [scores,errs]]

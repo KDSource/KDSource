@@ -59,12 +59,12 @@ def optimize_bw(bw_method, vecs=None, ws=None, **kwargs):
 			if "max_fact" in kwargs: max_fact = kwargs["max_fact"]
 			else: max_fact = 2
 			max_log = np.log10(max_fact)
-			bw_grid = list(np.logspace(-max_log,max_log,nsteps).reshape(-1,*np.ones_like(np.shape(bw_seed))) * bw_seed) # Grilla de bandwidths
+			bw_grid = np.logspace(-max_log,max_log,nsteps).reshape(-1,*np.ones(np.ndim(bw_seed),dtype=int)) * bw_seed # Grilla de bandwidths
 		#
 		if "cv" in kwargs: cv = kwargs["cv"] # CV folds
 		else: cv = 10
 		grid = GridSearchCV(CompatKDE(),
-		                    {'bw': bw_grid},
+		                    {'bw': list(bw_grid)},
 		                    cv=cv,
 		                    verbose=10,
 		                    n_jobs=-1)
@@ -86,8 +86,7 @@ def optimize_bw(bw_method, vecs=None, ws=None, **kwargs):
 	elif bw_method == 'knn': # Metodo K Nearest Neighbours
 		if "batch_size" in kwargs: batch_size = kwargs["batch_size"] # Tamaño de batch
 		else: batch_size = 10000
-		batches = np.ceil(N / batch_size).astype(int)
-		batch_size = np.round(N / batches).astype(int) # Batch size
+		batches = np.max(1, np.round(N / batch_size)).astype(int)
 		if 'k' in kwargs: # Cantidad de vecinos en un batch
 			k = kwargs['k']
 			f_k = 1.0
@@ -100,16 +99,12 @@ def optimize_bw(bw_method, vecs=None, ws=None, **kwargs):
 			f_k = k_float / k # Factor de correccion para k
 		print("Usando: k = {} / batch_size = {}, f_k = {} ===> K_eff = {}".format(k, batch_size, f_k, K))
 		bw_knn = np.array([])
-		for batch in range(batches):
+		for batch,vs in enumerate(np.array_split(vecs, batches)):
 			print("batch =", batch+1, "/", batches)
-			if batch < batches-1:
-				vs = vecs[batch*batch_size:(batch+1)*batch_size]
-			else:
-				vs = vecs[batch*batch_size:]
 			knn = NearestNeighbors(n_neighbors=k, n_jobs=-1)
 			knn.fit(vs)
 			ds,idxs = knn.kneighbors(vs)
-			bws = ds[:,-1] * (f_k)**(1/dim)
+			bws = ds[:,-1] * (f_k)**(1/dim) # Selecciono k-esima columna y aplico factor de correccion
 			bw_knn = np.concatenate((bw_knn, bws))
 		return bw_knn
 	#
@@ -209,11 +204,11 @@ class KSource:
 			errs *= kwargs["fact"]
 		#
 		lbl = "part = "+np.array_str(np.array(part0), precision=2)
-		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
+		plt.errorbar(grid, scores, errs, fmt='-', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idx], units[idx]))
-		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.geom.volunits))
+		plt.ylabel(r"$J\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.geom.volunits))
 		plt.grid()
 		plt.legend()
 		plt.tight_layout()
@@ -229,11 +224,11 @@ class KSource:
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -246,18 +241,18 @@ class KSource:
 		kde.fit(vecs, weights=ws)
 		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
 		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
-		scores *= self.J
-		errs *= self.J
+		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
+		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
 		lbl = np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
-		plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
+		plt.errorbar(grid, scores, errs, fmt='-', label=lbl)
 		plt.xscale(kwargs["xscale"])
 		plt.yscale(kwargs["yscale"])
 		plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[idx], self.geom.units[idx]))
-		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.geom.units[idx]))
+		plt.ylabel(r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.geom.units[idx]))
 		plt.grid()
 		plt.legend()
 		plt.tight_layout()
@@ -269,11 +264,11 @@ class KSource:
 			raise Exception("Se debe fittear antes de evaluar")
 		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -290,18 +285,18 @@ class KSource:
 		jacs = self.geom.ms[0].jac(grid_E)
 		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
 		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
-		scores *= self.J * jacs
-		errs *= self.J * jacs
+		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
+		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
 		#
 		lbl = np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
-		plt.errorbar(grid_E, scores, errs, fmt='-s', label=lbl)
+		plt.errorbar(grid_E, scores, errs, fmt='-', label=lbl)
 		plt.xscale('log')
 		plt.yscale('log')
 		plt.xlabel(r"$E\ [MeV]$")
-		plt.ylabel(r"$\Phi\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt))
+		plt.ylabel(r"$J\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt))
 		plt.grid()
 		plt.legend()
 		plt.tight_layout()
@@ -330,7 +325,7 @@ class KSource:
 		else: norm = None
 		plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm)
 		plt.colorbar()
-		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
+		title = r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
 		title += "\npart = "+np.array_str(np.array(part0), precision=2)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(varnames[idxs[0]], units[idxs[0]]))
@@ -347,11 +342,11 @@ class KSource:
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.kde.data)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0 <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -365,8 +360,8 @@ class KSource:
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
 		scores = 1/np.prod(std) * kde.evaluate(grid/std)
 		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * np.mean(bw) * np.prod(std)))
-		scores *= self.J
-		errs *= self.J
+		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
+		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		if "fact" in kwargs:
 			scores *= kwargs["fact"]
 			errs *= kwargs["fact"]
@@ -381,7 +376,7 @@ class KSource:
 			units = self.geom.units[idxs[0]]+"^2"
 		else:
 			units = self.geom.units[idxs[0]] + self.geom.units[idxs[1]]
-		title = r"$\Phi\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
+		title = r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
 		title += "\n"+np.array_str(np.array(vec0), precision=2)+" <= vec <= "+np.array_str(np.array(vec1), precision=2)
 		plt.title(title)
 		plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[idxs[0]], self.geom.units[idxs[0]]))
