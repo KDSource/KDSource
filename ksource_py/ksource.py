@@ -209,8 +209,8 @@ class KSource:
 	def plot2D_point(self, grids, idxs, part0, **kwargs):
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
-		if isinstance(idxs[0], str):
-			idxs = [varmap[idx] for idx in idxs]
+		if isinstance(idxs[0], str): idxs[0] = self.geom.varmap[idxs[0]]
+		if isinstance(idxs[1], str): idxs[1] = self.geom.varmap[idxs[1]]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		parts = np.zeros((len(grids[0])*len(grids[1]), 7))
 		parts[:,idxs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
@@ -240,8 +240,8 @@ class KSource:
 	def plot2D_integr(self, grids, idxs, vec0=None, vec1=None, **kwargs):
 		if self.fitted == False:
 			raise Exception("Se debe fittear antes de evaluar")
-		if isinstance(idxs[0], str):
-			idxs = [self.geom.varmap[idx] for idx in idxs]
+		if isinstance(idxs[0], str): idxs[0] = self.geom.varmap[idxs[0]]
+		if isinstance(idxs[1], str): idxs[1] = self.geom.varmap[idxs[1]]
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.kde.data)*[True])
 		if vec0 is not None:

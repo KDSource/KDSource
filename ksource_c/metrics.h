@@ -9,7 +9,7 @@
 #define MAX_RESAMPLES 1000
 #define E_MIN 1e-11
 #define E_MAX 20
-#define NAME_MAX_LEN 96
+#define NAME_MAX_LEN 256
 
 
 typedef struct Metric Metric;

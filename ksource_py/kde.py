@@ -56,33 +56,35 @@ def _kde_cv_score(bw, data, weights=None, cv=10, modelKDE=TreeKDE):
 		kde = modelKDE(bw=bw_train)
 		kde.fit(data_train, weights=weights_train)
 		if weights_test is not None:
-			score = np.sum(weights_test * np.log(kde.evaluate(data_test)))
+			score = np.mean(weights_test * np.log(kde.evaluate(data_test)))
 		else:
-			score = np.sum(np.log(kde.evaluate(data_test)))
+			score = np.mean(np.log(kde.evaluate(data_test)))
 		scores.append(score)
 	return np.mean(scores)
 
 def bw_mlcv(data, weights=None, cv=10, seed=None, grid=None, show=True):
-		if seed is None:
-			N_eff = len(data) if weights is None else np.sum(weights)**2/np.sum(weights**2)
-			seed = bw_silv(np.shape(data)[1], N_eff)
-		if grid is None:
-			grid = np.logspace(-1, 1, 20)
-		bw_grid = np.reshape(grid, (-1,*np.ones(np.ndim(seed),dtype=int))) * seed
-		#
-		cv_scores = Parallel(n_jobs=-1, verbose=10)(
-			delayed(_kde_cv_score)(bw, data, weights=weights, cv=cv) for bw in bw_grid)
-		idx_best = np.argmax(cv_scores)
-		#
-		plt.plot(cv_scores)
-		plt.xlabel("Indice en grilla de BWs")
-		plt.ylabel("Mean Test Score")
-		plt.tight_layout()
-		if(show): plt.show()
-		if idx_best in (0, len(bw_grid)-1):
-			raise Exception("No se encotro maximo en el rango de bw seleccionado. Mueva la grilla e intente nuevamente.")
-		bw_mlcv = bw_grid[idx_best]
-		return bw_mlcv
+	if seed is None:
+		N_eff = len(data) if weights is None else np.sum(weights)**2/np.sum(weights**2)
+		seed = bw_silv(np.shape(data)[1], N_eff)
+	if grid is None:
+		grid = np.logspace(-1, 1, 20)
+	bw_grid = np.reshape(grid, (-1,*np.ones(np.ndim(seed),dtype=int))) * seed
+	if cv > len(data):
+		cv = len(data)
+
+	cv_scores = Parallel(n_jobs=-1, verbose=10)(
+		delayed(_kde_cv_score)(bw, data, weights=weights, cv=cv) for bw in bw_grid)
+	idx_best = np.argmax(cv_scores)
+	
+	plt.plot(grid, cv_scores)
+	plt.xlabel("Ancho de banda normalizado")
+	plt.ylabel("Mean Test Score")
+	plt.tight_layout()
+	if(show): plt.show()
+	if idx_best in (0, len(bw_grid)-1):
+		raise Exception("No se encotro maximo en el rango de bw seleccionado. Mueva la grilla e intente nuevamente.")
+	bw_mlcv = bw_grid[idx_best]
+	return bw_mlcv
 
 def optimize_bw(bw_method, vecs=None, ws=None, weightfun=None, maskfun=None, **kwargs):
 	vecs = np.array(vecs)
