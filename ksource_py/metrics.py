@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from xml.etree import ElementTree as ET
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
@@ -29,10 +31,12 @@ class Metric:
 			vecs = self.transform(parts)
 		mn = np.mean(vecs, axis=0)
 		return np.std(vecs-mn, axis=0)
-	def save(self, file):
-		file.write(self.__class__.__name__+'\n')
-		file.write("{}\n".format(self.dim))
-		file.write('0\n')
+	def save(self, mtree):
+		ET.SubElement(mtree, "dim").text = str(self.dim)
+		ET.SubElement(mtree, "params").set("nps", "0")
+	@staticmethod
+	def load(mtree):
+		raise Exception("Load method not implemented")
 
 class Geometry (Metric):
 	def __init__(self, metrics, trasl=None, rot=None):
@@ -112,20 +116,37 @@ class Geometry (Metric):
 			end = start + metric.dim
 			stds.append(metric.std(vecs=vecs[:,start:end]))
 		return np.concatenate(stds)
-	def save(self, file):
-		file.write("{}\n".format(len(self.ms)))
+	def save(self, gtree):
+		gtree.set("order", str(len(self.ms)))
 		for metric in self.ms:
-			metric.save(file)
-		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
-		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])
-		else: file.write('\n')
+			mtree = ET.SubElement(gtree, metric.__class__.__name__)
+			metric.save(mtree)
+		trasl = np.array_str(self.trasl)[2:-2] if self.trasl is not None else ""
+		ET.SubElement(gtree, "trasl").text = trasl
+		rot = np.array_str(self.rot.as_rotvec())[2:-2] if self.rot is not None else ""
+		ET.SubElement(gtree, "rot").text = rot
+	@staticmethod
+	def load(gtree):
+		order = int(gtree.attrib["order"])
+		metrics = []
+		for i in range(order):
+			metricname = gtree[i].tag
+			if metricname not in _metrics:
+				raise Exception("Invalid metric name {}".format(metricname))
+			metrics.append(_metrics[metricname].load(gtree[i]))
+		if gtree[-2].text: trasl = np.array(gtree[-2].text.split(), dtype="float64")
+		else: trasl = None
+		if gtree[-1].text: rot = np.array(gtree[-1].text.split(), dtype="float64")
+		else: rot = None
+		return Geometry(metrics, trasl=trasl, rot=rot)
 
 # Clases heredadas
 
 class Energy (Metric):
 	def __init__(self):
 		super().__init__([0], ["E"], ["MeV"], "MeV")
+	def load(mtree):
+		return Energy()
 
 class Lethargy (Metric):
 	def __init__(self, E0=10):
@@ -137,10 +158,18 @@ class Lethargy (Metric):
 		return self.E0 * np.exp(-us)
 	def jac(self, Es):
 		return 1/Es.reshape(-1)
-	def save(self, file):
-		file.write(self.__class__.__name__+'\n')
-		file.write("{}\n".format(self.dim))
-		file.write("1 {}\n".format(self.E0))
+	def save(self, mtree):
+		ET.SubElement(mtree, "dim").text = str(self.dim)
+		paramsel = ET.SubElement(mtree, "params")
+		paramsel.set("nps", "1")
+		paramsel.text = "{}".format(self.E0)
+	@staticmethod
+	def load(mtree):
+		dim = int(mtree[0].text)
+		params = np.array(mtree[1].text.split(), dtype="float64")
+		if dim!=1 or len(params)!=1 or int(mtree[1].attrib["nps"])!=1:
+			raise Exception("Invalid metric tree")
+		return Lethargy(*params)
 
 class Vol (Metric):
 	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf, zmax=np.inf):
@@ -151,10 +180,18 @@ class Vol (Metric):
 		self.ymax = ymax
 		self.zmin = zmin
 		self.zmax = zmax
-	def save(self, file):
-		file.write(self.__class__.__name__+'\n')
-		file.write("{}\n".format(self.dim))
-		file.write("6 {} {} {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax))
+	def save(self, mtree):
+		ET.SubElement(mtree, "dim").text = str(self.dim)
+		paramsel = ET.SubElement(mtree, "params")
+		paramsel.set("nps", "6")
+		paramsel.text = "{} {} {} {} {} {}".format(self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax)
+	@staticmethod
+	def load(mtree):
+		dim = int(mtree[0].text)
+		params = np.array(mtree[1].text.split(), dtype="float64")
+		if dim!=3 or len(params)!=6 or int(mtree[1].attrib["nps"])!=6:
+			raise Exception("Invalid metric tree")
+		return Vol(*params)
 
 class SurfXY (Metric):
 	def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0):
@@ -169,10 +206,18 @@ class SurfXY (Metric):
 	def inverse_transform(self, poss):
 		z_col = np.broadcast_to(self.z, (*poss.shape[:-1],1))
 		return np.concatenate((poss, z_col), axis=1)
-	def save(self, file):
-		file.write(self.__class__.__name__+'\n')
-		file.write("{}\n".format(self.dim))
-		file.write("5 {} {} {} {} {}\n".format(self.xmin, self.xmax, self.ymin, self.ymax, self.z))
+	def save(self, mtree):
+		ET.SubElement(mtree, "dim").text = str(self.dim)
+		paramsel = ET.SubElement(mtree, "params")
+		paramsel.set("nps", "5")
+		paramsel.text = "{} {} {} {} {}".format(self.xmin, self.xmax, self.ymin, self.ymax, self.z)
+	@staticmethod
+	def load(mtree):
+		dim = int(mtree[0].text)
+		params = np.array(mtree[1].text.split(), dtype="float64")
+		if dim!=2 or len(params)!=5 or int(mtree[1].attrib["nps"])!=5:
+			raise Exception("Invalid metric tree")
+		return SurfXY(*params)
 
 class Guide (Metric):
 	def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
@@ -244,12 +289,18 @@ class Guide (Metric):
 		thetas[mask2] = np.arccos(-dxs[mask2])
 		thetas[mask3] = np.arccos(-dys[mask3])
 		return (180/np.pi)**2 / np.sin(thetas)
-	def save(self, file):
-		file.write(self.__class__.__name__+'\n')
-		file.write("{}\n".format(self.dim))
-		rcurv = self.rcurv
-		if rcurv is None: rcurv = 0
-		file.write("4 {} {} {} {}\n".format(self.xwidth, self.yheight, self.zmax, rcurv))
+	def save(self, mtree):
+		ET.SubElement(mtree, "dim").text = str(self.dim)
+		paramsel = ET.SubElement(mtree, "params")
+		paramsel.set("nps", "4")
+		paramsel.text = "{} {} {} {}".format(self.xwidth, self.yheight, self.zmax, rcurv)
+	@staticmethod
+	def load(mtree):
+		dim = int(mtree[0].text)
+		params = np.array(mtree[1].text.split(), dtype="float64")
+		if dim!=6 or len(params)!=4 or int(mtree[1].attrib["nps"])!=4:
+			raise Exception("Invalid metric tree")
+		return Guide(*params)
 
 class Isotrop (Metric):
 	def __init__(self):
@@ -267,6 +318,9 @@ class Isotrop (Metric):
 		mn = self.mean(vecs, transform=False)
 		std = np.std(vecs-mn)
 		return np.array(3*[std])
+	@staticmethod
+	def load(mtree):
+		return Isotrop()
 
 class Polar (Metric):
 	def __init__(self):
@@ -284,6 +338,19 @@ class Polar (Metric):
 	def jac(self, dirs):
 		thetas = np.arccos(dirs[:,2])
 		return (180/np.pi)**2 / np.sin(thetas)
+	@staticmethod
+	def load(mtree):
+		return Polar()
+
+_metrics = {
+	"Energy":Energy,
+	"Lethargy":Lethargy,
+	"Vol":Vol,
+	"SurfXY":SurfXY,
+	"Guide":Guide,
+	"Isotrop":Isotrop,
+	"Polar":Polar
+}
 
 # Alias para geometrias mas usuales
 

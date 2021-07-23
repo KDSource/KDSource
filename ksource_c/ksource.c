@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<math.h>
 #include<string.h>
+#include<libxml/parser.h>
 
 #include "ksource.h"
 
@@ -20,113 +21,144 @@ KSource* KS_create(double J, PList* plist, Geometry* geom){
 }
 
 KSource* KS_open(const char* filename){
-	int i, j;
-	char buffer[LINE_MAX_LEN], *pbuffer;
+	xmlKeepBlanksDefault(0);
+
+	int i, j, n;
 	double J;
+	char *buf;
 
 	char pt;	
 	char mcplfile[NAME_MAX_LEN];
 	double *trasl_plist=NULL, *rot_plist=NULL;
 
-	int ord_geom;
-	double *trasl_metric=NULL, *rot_metric=NULL;
+	int order;
+	double *trasl_geom=NULL, *rot_geom=NULL;
 	int switch_x2z, variable_bw;
 	char* bwfilename=NULL;
+	double bw=0;
 
 	// Leer archivo
-	FILE* file;
-	if((file=fopen(filename, "r")) == 0){
+	printf("Reading xmlfile %s...\n", filename);
+    xmlDocPtr doc = xmlReadFile(filename, NULL, 0);
+	if(doc == NULL){
 		printf("No se pudo abrir archivo %s\n", filename);
 		KS_error("Error en KS_open");
 	}
-	fgets(buffer, LINE_MAX_LEN, file); // # J
-	if(strcmp(buffer, "# J [1/s]:\n") != 0){
+    xmlNodePtr root = xmlDocGetRootElement(doc);
+	if(strcmp(root->name, "KSource") != 0){
 		printf("Formato de archivo de fuente %s invalido\n", filename);
 		KS_error("Error en KS_open");
 	}
-	fscanf(file, "%le\n", &J); // Leer J
+    xmlNodePtr node = root->children; // Nodo: J
+	sscanf(xmlNodeGetContent(node), "%lf", &J); // Leer J
+
 	// PList
-	fgets(buffer, LINE_MAX_LEN, file); // # PList
-	fscanf(file, "%c\n", &pt); // Leer pt
-	fgets(mcplfile, NAME_MAX_LEN, file); // Leer nombre de archivo mcpl
-	mcplfile[strcspn(mcplfile, "\n")] = 0;
-	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de PList
-	if(strlen(buffer) > 1){
+	xmlNodePtr pltree = node->next;
+	node = pltree->children; // Nodo: pt
+	sscanf(xmlNodeGetContent(node), "%c", &pt); // Leer pt
+	node = node->next; // Nodo: mcplname
+	if(strlen(xmlNodeGetContent(node)) > NAME_MAX_LEN){
+		printf("mcpl file name %s exceeds NAME_MAX_LEN=%d", xmlNodeGetContent(node), NAME_MAX_LEN);
+		KS_error("Error en KS_open");
+	}
+	strcpy(mcplfile, xmlNodeGetContent(node)); // Leer nombre de archivo mcpl
+	node = node->next; // Nodo: trasl
+	if(strlen(xmlNodeGetContent(node)) > 1){
 		trasl_plist = (double*)malloc(3 * sizeof(double));
-		sscanf(buffer, "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
+		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
 	}
-	fgets(buffer, LINE_MAX_LEN, file); // Leer rotacion de PList
-	if(strlen(buffer) > 1){
+	node = node->next; // Nodo: rot
+	if(strlen(xmlNodeGetContent(node)) > 1){
 		rot_plist = (double*)malloc(3 * sizeof(double));
-		sscanf(buffer, "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
+		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
 	}
-	fscanf(file, "%d\n", &switch_x2z); // Leer switch_x2z
-	// Metric
-	fgets(buffer, LINE_MAX_LEN, file); // # Metric
-	fscanf(file, "%d\n", &ord_geom); // Leer ord_geom
-	int dims[ord_geom], ngps[ord_geom];
-	char metricnames[ord_geom][NAME_MAX_LEN];
-	double *gps[ord_geom];
-	double *bws[ord_geom];
-	PerturbFun perturbs[ord_geom];
-	for(i=0; i<ord_geom; i++){
-		fgets(metricnames[i], NAME_MAX_LEN, file); // Leer metricname
-		fscanf(file, "%d\n", &dims[i]); // Leer dim
-		fscanf(file, "%d", &ngps[i]); // Leer ngp
-		gps[i] = (double*)malloc(ngps[i]*sizeof(double));
-		for(j=0; j<ngps[i]; j++) fscanf(file, "%lf", &gps[i][j]); // Leer gp
-		fgets(buffer, LINE_MAX_LEN, file);
+	node = node->next; // Nodo: x2z
+	sscanf(xmlNodeGetContent(node), "%d", &switch_x2z); // Leer switch_x2z
+
+	// Geometry
+	xmlNodePtr gtree = pltree->next;
+	sscanf(xmlGetProp(gtree, "order"), "%d", &order); // Leer order
+	int dims[order], nps[order];
+	char metricnames[order][NAME_MAX_LEN];
+	double *params[order];
+	double *scalings[order];
+	PerturbFun perturbs[order];
+	xmlNodePtr mtree = gtree->children;
+	for(i=0; i<order; i++){
+		strcpy(metricnames[i], mtree->name); // Leer metricname
+		node = mtree->children; // Nodo: dim
+		sscanf(xmlNodeGetContent(node), "%d", &dims[i]); // Leer dim
+		scalings[i] = (double*)malloc(dims[i]*sizeof(double));
+		node = node->next; // Nodo: params
+		sscanf(xmlGetProp(node,"nps"), "%d", &nps[i]); // Leer ngp
+		params[i] = (double*)malloc(nps[i]*sizeof(double));
+		buf = xmlNodeGetContent(node);
+		for(j=0; j<nps[i]; j++){ // Leer params
+			sscanf(buf, "%lf %n", &params[i][j], &n);
+			buf += n;
+		}
+		mtree = mtree->next;
 	}
-	fgets(buffer, LINE_MAX_LEN, file); // Leer traslacion de Metric
-	if(strlen(buffer) > 1){
-		trasl_metric = (double*)malloc(3 * sizeof(double));
-		sscanf(buffer, "%lf %lf %lf", &trasl_metric[0], &trasl_metric[1], &trasl_metric[2]);
+	node = mtree; // Nodo: trasl
+	if(strlen(xmlNodeGetContent(node)) > 1){
+		trasl_geom = (double*)malloc(3 * sizeof(double));
+		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &trasl_geom[0], &trasl_geom[1], &trasl_geom[2]);
 	}
-	fgets(buffer, LINE_MAX_LEN, file); // Leer rotacion de Metric
-	if(strlen(buffer) > 1){
-		rot_metric = (double*)malloc(3 * sizeof(double));
-		sscanf(buffer, "%lf %lf %lf", &rot_metric[0], &rot_metric[1], &rot_metric[2]);
+	node = node->next; // Nodo: rot
+	if(strlen(xmlNodeGetContent(node)) > 1){
+		rot_geom = (double*)malloc(3 * sizeof(double));
+		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &rot_geom[0], &rot_geom[1], &rot_geom[2]);
 	}
-	fscanf(file, "%d\n", &variable_bw); // Leer variable_bw
-	if(variable_bw){
-		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
-		fgets(bwfilename, NAME_MAX_LEN, file);
-		bwfilename[strcspn(bwfilename, "\n")] = 0;
-		for(i=0; i<ord_geom; i++) bws[i] = NULL;
-	}
-	else{
-		for(i=0; i<ord_geom; i++){
-			bws[i] = (double*)malloc(dims[i]*sizeof(double));
-			for(j=0; j<dims[i]; j++) fscanf(file, "%lf", &bws[i][j]);
+	node = gtree->next; // Nodo: scaling
+	buf = xmlNodeGetContent(node);
+	for(i=0; i<order; i++){ // Leer scalings
+		for(j=0; j<dims[i]; j++){
+			sscanf(buf, "%lf %n", &scalings[i][j], &n);
+			buf += n;
 		}
 	}
+	node = node->next; // Nodo: BW
+	sscanf(xmlGetProp(node,"variable"), "%d", &variable_bw); // Leer variable_bw
+	if(variable_bw){
+		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
+		if(strlen(xmlNodeGetContent(node)) > NAME_MAX_LEN){
+			printf("BW file name %s exceeds NAME_MAX_LEN=%d", xmlNodeGetContent(node), NAME_MAX_LEN);
+			KS_error("Error en KS_open");
+		}
+		strcpy(bwfilename, xmlNodeGetContent(node)); // Leer nombre de archivo de bw
+	}
+	else
+		sscanf(xmlNodeGetContent(node), "%lf", &bw); // Leer BW
+
 	// Crear PList
 	PList* plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);
 	// Crear Metric
-	for(i=0; i<ord_geom; i++){
-		if(strcmp(metricnames[i], "Energy\n") == 0) perturbs[i] = E_perturb;
-		else if(strcmp(metricnames[i], "Lethargy\n") == 0) perturbs[i] = Let_perturb;
-		else if(strcmp(metricnames[i], "SurfXY\n") == 0) perturbs[i] = SurfXY_perturb;
-		else if(strcmp(metricnames[i], "Vol\n") == 0) perturbs[i] = Vol_perturb;
-		else if(strcmp(metricnames[i], "Guide\n") == 0) perturbs[i] = Guide_perturb;
-		else if(strcmp(metricnames[i], "Polar\n") == 0) perturbs[i] = Polar_perturb;
-		else if(strcmp(metricnames[i], "Isotrop\n") == 0) perturbs[i] = Isotrop_perturb;
+	for(i=0; i<order; i++){
+		if(strcmp(metricnames[i], "Energy") == 0) perturbs[i] = E_perturb;
+		else if(strcmp(metricnames[i], "Lethargy") == 0) perturbs[i] = Let_perturb;
+		else if(strcmp(metricnames[i], "SurfXY") == 0) perturbs[i] = SurfXY_perturb;
+		else if(strcmp(metricnames[i], "Vol") == 0) perturbs[i] = Vol_perturb;
+		else if(strcmp(metricnames[i], "Guide") == 0) perturbs[i] = Guide_perturb;
+		else if(strcmp(metricnames[i], "Polar") == 0) perturbs[i] = Polar_perturb;
+		else if(strcmp(metricnames[i], "Isotrop") == 0) perturbs[i] = Isotrop_perturb;
 		else{
 			printf("Metrica %s invalida\n", metricnames[i]);
 			KS_error("Error en KS_open");
 		}
 	}
-	Metric* metrics[ord_geom];
-	for(i=0; i<ord_geom; i++) metrics[i] = Metric_create(dims[i], bws[i], perturbs[i], ngps[i], gps[i]);
-	Geometry* metric = Geom_create(ord_geom, metrics, bwfilename, variable_bw, trasl_metric, rot_metric);
+	Metric* metrics[order];
+	for(i=0; i<order; i++) metrics[i] = Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
+	Geometry* geom = Geom_create(order, metrics, bw, bwfilename, trasl_geom, rot_geom);
 	// Crear KSource
-	KSource* s = KS_create(J, plist, metric);
+	KSource* s = KS_create(J, plist, geom);
+
 	// Liberar variables alocadas
 	free(trasl_plist); free(rot_plist);
-	free(trasl_metric); free(rot_metric);
+	free(trasl_geom); free(rot_geom);
 	free(bwfilename);
-	for(i=0; i<ord_geom; i++){ free(gps[i]); free(bws[i]); }
-	fclose(file);
+	for(i=0; i<order; i++){ free(params[i]); free(scalings[i]); }
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
 
 	return s;
 }

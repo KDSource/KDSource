@@ -8,17 +8,17 @@
 
 void KS_error(const char* msg);
 
-Metric* Metric_create(int dim, const double* bw, PerturbFun perturb, int n_gp, const double* geom_par){
+Metric* Metric_create(int dim, const double* scaling, PerturbFun perturb, int nps, const double* params){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	int i;
 	metric->dim = dim;
-	metric->bw = (float*)malloc(dim*sizeof(float));
-	if(bw) for(i=0; i<dim; i++) metric->bw[i] = (float)bw[i];
-	else for(i=0; i<dim; i++) metric->bw[i] = 0;
+	metric->scaling = (float*)malloc(dim*sizeof(float));
+	if(scaling) for(i=0; i<dim; i++) metric->scaling[i] = (float)scaling[i];
+	else for(i=0; i<dim; i++) metric->scaling[i] = 0;
 	metric->perturb = perturb;
-	metric->n_gp = n_gp;
-	metric->geom_par = (double*)malloc(n_gp * sizeof(double));
-	for(i=0; i<n_gp; i++) metric->geom_par[i] = geom_par[i];
+	metric->nps = nps;
+	metric->params = (double*)malloc(nps * sizeof(double));
+	for(i=0; i<nps; i++) metric->params[i] = params[i];
 	return metric;
 }
 
@@ -26,25 +26,26 @@ Metric* Metric_copy(const Metric* from){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
 	*metric = *from;
 	int i;
-	metric->bw = (float*)malloc(metric->dim*sizeof(double));
-	for(i=0; i<metric->dim; i++) metric->bw[i] = from->bw[i];
-	metric->geom_par = (double*)malloc(metric->n_gp * sizeof(double));
-	for(i=0; i<metric->n_gp; i++) metric->geom_par[i] = from->geom_par[i];
+	metric->scaling = (float*)malloc(metric->dim*sizeof(double));
+	for(i=0; i<metric->dim; i++) metric->scaling[i] = from->scaling[i];
+	metric->params = (double*)malloc(metric->nps * sizeof(double));
+	for(i=0; i<metric->nps; i++) metric->params[i] = from->params[i];
 	return metric;
 }
 
 void Metric_destroy(Metric* metric){
-	free(metric->bw);
+	free(metric->scaling);
 	free(metric);
 }
 
-Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int variable_bw,
+Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilename,
 		const double* trasl, const double* rot){
 	Geometry* geom = (Geometry*)malloc(sizeof(Geometry));
 	geom->ord = ord;
 	int i;
 	geom->ms = (Metric**)malloc(ord * sizeof(Metric*));
 	for(i=0; i<ord; i++) geom->ms[i] = metrics[i];
+	geom->bw = bw;
 	geom->bwfilename = NULL;
 	geom->bwfile = NULL;
 	if(bwfilename) if(strlen(bwfilename)){
@@ -53,22 +54,10 @@ Geometry* Geom_create(int ord, Metric** metrics, const char* bwfilename, int var
 			printf("No se pudo abrir archivo %s\n", bwfilename);
 			KS_error("Error en Geom_create");
 		}
-		int dim=0;
-		for(i=0; i<ord; i++) dim += geom->ms[i]->dim;
-		double bws_test[dim];
-		if(dim != fread(bws_test, sizeof(float), dim, bwfile)){
-			printf("No se pudo leer archivo %s\n", bwfilename);
-			KS_error("Error en Geom_create");
-		}
-		rewind(bwfile);
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		strcpy(geom->bwfilename, bwfilename);
 		geom->bwfile = bwfile;
 		Geom_next(geom);
-		if(!variable_bw){
-			fclose(geom->bwfile);
-			geom->bwfile = NULL;
-		}
 	}
 	if(trasl){
 		geom->trasl = (double*)malloc(3 * sizeof(double));
@@ -115,7 +104,7 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 	if(geom->trasl) traslv(part->position, geom->trasl, 1);
 	if(geom->rot){ rotv(part->position, geom->rot, 1); rotv(part->direction, geom->rot, 1); }
 	for(i=0; i<geom->ord; i++)
-		ret += geom->ms[i]->perturb(geom->ms[i], part);
+		ret += geom->ms[i]->perturb(geom->ms[i], part, geom->bw);
 	if(geom->rot){ rotv(part->position, geom->rot, 0); rotv(part->direction, geom->rot, 0); }
 	if(geom->trasl) traslv(part->position, geom->trasl, 0);
 	return ret;
@@ -123,13 +112,10 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 
 int Geom_next(Geometry* geom){
 	if(geom->bwfile){
-		int i, dim=0, readed=0, count=0;
-		for(i=0; i<geom->ord; i++) dim += geom->ms[i]->dim;
-		while(readed!=dim && count++<2){ // Intento leer 2 veces
+		int i, readed=0, count=0;
+		while(readed!=1 && count++<2){ // Intento leer 2 veces
 			if(count == 2) rewind(geom->bwfile); // Antes del 2do intento rebobino
-			readed = 0;
-			for(i=0; i<geom->ord; i++)
-				readed += fread(geom->ms[i]->bw, sizeof(float), geom->ms[i]->dim, geom->bwfile);
+			readed = fread(&geom->bw, sizeof(float), 1, geom->bwfile);
 		}
 		if(count == 3)
 			KS_error("Error en Geom_next: No se pudo leer ancho de banda");
@@ -147,43 +133,43 @@ void Geom_destroy(Geometry* geom){
 }
 
 
-int E_perturb(const Metric* metric, mcpl_particle_t* part){
-	part->ekin += metric->bw[0] * rand_norm();
+int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->ekin += bw*metric->scaling[0] * rand_norm();
 	if(part->ekin < E_MIN) part->ekin = E_MIN;
 	if(part->ekin > E_MAX) part->ekin = E_MAX;
 	return 0;
 }
-int Let_perturb(const Metric* metric, mcpl_particle_t* part){
-	part->ekin *= exp(metric->bw[0] * rand_norm());
+int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->ekin *= exp(bw*metric->scaling[0] * rand_norm());
 	if(part->ekin < E_MIN) part->ekin = E_MIN;
 	if(part->ekin > E_MAX) part->ekin = E_MAX;
 	return 0;
 }
 
-int Vol_perturb(const Metric* metric, mcpl_particle_t* part){
-	part->position[0] += metric->bw[0] * rand_norm();
-	part->position[1] += metric->bw[1] * rand_norm();
-	part->position[2] += metric->bw[2] * rand_norm();
-	if(part->position[0] < metric->geom_par[0]) part->position[0] = metric->geom_par[0];
-	else if(part->position[0] > metric->geom_par[1]) part->position[0] = metric->geom_par[1];
-	if(part->position[1] < metric->geom_par[2]) part->position[1] = metric->geom_par[2];
-	else if(part->position[1] > metric->geom_par[3]) part->position[1] = metric->geom_par[3];
-	if(part->position[2] < metric->geom_par[4]) part->position[2] = metric->geom_par[4];
-	else if(part->position[2] > metric->geom_par[5]) part->position[2] = metric->geom_par[5];
+int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->position[0] += bw*metric->scaling[0] * rand_norm();
+	part->position[1] += bw*metric->scaling[1] * rand_norm();
+	part->position[2] += bw*metric->scaling[2] * rand_norm();
+	if(part->position[0] < metric->params[0]) part->position[0] = metric->params[0];
+	else if(part->position[0] > metric->params[1]) part->position[0] = metric->params[1];
+	if(part->position[1] < metric->params[2]) part->position[1] = metric->params[2];
+	else if(part->position[1] > metric->params[3]) part->position[1] = metric->params[3];
+	if(part->position[2] < metric->params[4]) part->position[2] = metric->params[4];
+	else if(part->position[2] > metric->params[5]) part->position[2] = metric->params[5];
 	return 0;
 }
-int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part){
-	part->position[0] += metric->bw[0] * rand_norm();
-	part->position[1] += metric->bw[1] * rand_norm();
-	if(part->position[0] < metric->geom_par[0]) part->position[0] = metric->geom_par[0];
-	else if(part->position[0] > metric->geom_par[1]) part->position[0] = metric->geom_par[1];
-	if(part->position[1] < metric->geom_par[2]) part->position[1] = metric->geom_par[2];
-	else if(part->position[1] > metric->geom_par[3]) part->position[1] = metric->geom_par[3];
+int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->position[0] += bw*metric->scaling[0] * rand_norm();
+	part->position[1] += bw*metric->scaling[1] * rand_norm();
+	if(part->position[0] < metric->params[0]) part->position[0] = metric->params[0];
+	else if(part->position[0] > metric->params[1]) part->position[0] = metric->params[1];
+	if(part->position[1] < metric->params[2]) part->position[1] = metric->params[2];
+	else if(part->position[1] > metric->params[3]) part->position[1] = metric->params[3];
 	return 0;
 }
-int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
+int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	double x=part->position[0], y=part->position[1], z=part->position[2], dx=part->direction[0], dy=part->direction[1], dz=part->direction[2];
-	double xwidth=metric->geom_par[0], yheight=metric->geom_par[1], zmax=metric->geom_par[2], rcurv=metric->geom_par[3];
+	double xwidth=metric->params[0], yheight=metric->params[1], zmax=metric->params[2], rcurv=metric->params[3];
 	double t, theta, phi, theta0, dx2, dz2;
 	int cont=0, mirror;
 	if(rcurv != 0){ // Transformar a variables de guia curva
@@ -215,17 +201,17 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
 			break;
 	}
 	// Perturbar
-	z += metric->bw[0] * rand_norm();
-	t += metric->bw[1] * rand_norm();
-	theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
+	z += bw*metric->scaling[0] * rand_norm();
+	t += bw*metric->scaling[1] * rand_norm();
+	theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
 	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
-		theta = theta0 + metric->bw[2]*M_PI/180 * rand_norm();
+		theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
 		if(cont++ == MAX_RESAMPLES){
 			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
 			break;
 		}
 	}
-	phi += metric->bw[3]*M_PI/180 * rand_norm();
+	phi += bw*metric->scaling[3]*M_PI/180 * rand_norm();
 	// Aplicar restricciones a perturbaciones
 	if(z < 0) z = 0;
 	else if(z > zmax) z = zmax;
@@ -266,18 +252,18 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part){
 	return 0;
 }
 
-int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part){
-	if(metric->bw[0] == INFINITY){
+int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	if(bw*metric->scaling[0] == INFINITY){
 		part->direction[2] = -1 + 2.*rand()/RAND_MAX;
 		double dxy = sqrt(1-part->direction[2]*part->direction[2]);
 		double phi = 2.*M_PI*rand()/RAND_MAX;
 		part->direction[0] = dxy*cos(phi);
 		part->direction[1] = dxy*sin(phi);
 	}
-	else if(metric->bw[0] > 0){
+	else if(bw*metric->scaling[0] > 0){
 		double xi = (double)rand()/RAND_MAX;
 		double w = 1;
-		w += metric->bw[0]*metric->bw[0] * log(xi+(1-xi)*exp(-2/(metric->bw[0]*metric->bw[0])));
+		w += bw*metric->scaling[0]*bw*metric->scaling[0] * log(xi+(1-xi)*exp(-2/(bw*metric->scaling[0]*bw*metric->scaling[0])));
 		double phi = 2.*M_PI*rand()/RAND_MAX;
 		double uv = sqrt(1-w*w), u = uv*cos(phi), v = uv*sin(phi);
 		double x=part->direction[0], y=part->direction[1], z=part->direction[2];
@@ -294,20 +280,20 @@ int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part){
 	return 0;
 }
 
-int Polar_perturb(const Metric* metric, mcpl_particle_t* part){
+int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	double theta, phi, theta0;
 	int cont=0;
 	theta0 = acos(part->direction[2]);
 	phi   = atan2(part->direction[1], part->direction[0]);
-	theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
+	theta = theta0 + bw*metric->scaling[0]*M_PI/180 * rand_norm();
 	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
-		theta = theta0 + metric->bw[0]*M_PI/180 * rand_norm();
+		theta = theta0 + bw*metric->scaling[0]*M_PI/180 * rand_norm();
 		if(cont++ == MAX_RESAMPLES){
 			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
 			break;
 		}
 	}
-	phi   += metric->bw[1]*M_PI/180 * rand_norm();
+	phi   += bw*metric->scaling[1]*M_PI/180 * rand_norm();
 	part->direction[0] = sin(theta) * cos(phi);
 	part->direction[1] = sin(theta) * sin(phi);
 	part->direction[2] = cos(theta);

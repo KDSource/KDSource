@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from xml.etree import ElementTree as ET
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
@@ -151,11 +153,22 @@ class PList:
 			parts = np.array([ekin,y,z,x,uy,uz,ux]).T
 		return parts,ws
 
-	def save(self, file):
-		file.write(self.pt+'\n')
-		file.write(os.path.abspath(self.filename)+'\n')
-		if self.trasl is not None: np.savetxt(file, self.trasl[np.newaxis,:])
-		else: file.write('\n')
-		if self.rot is not None: np.savetxt(file, self.rot.as_rotvec()[np.newaxis,:])
-		else: file.write('\n')
-		file.write("%d\n" % (self.x2z))
+	def save(self, pltree):
+		ET.SubElement(pltree, "pt").text = self.pt
+		ET.SubElement(pltree, "mcplname").text = os.path.abspath(self.filename)
+		trasl = np.array_str(self.trasl)[2:-2] if self.trasl is not None else ""
+		ET.SubElement(pltree, "trasl").text = trasl
+		rot = np.array_str(self.rot.as_rotvec())[2:-2] if self.rot is not None else ""
+		ET.SubElement(pltree, "rot").text = rot
+		ET.SubElement(pltree, "x2z").text = str(int(self.x2z))
+
+	@staticmethod
+	def load(pltree):
+		pt = pltree[0].text
+		filename = pltree[1].text
+		if pltree[2].text: trasl = np.array(pltree[2].text.split(), dtype="float64")
+		else: trasl = None
+		if pltree[3].text: rot = np.array(pltree[3].text.split(), dtype="float64")
+		else: rot = None
+		switch_x2z = bool(int(pltree[4].text))
+		return PList(filename, pt=pt, trasl=trasl, rot=rot, switch_x2z=switch_x2z)

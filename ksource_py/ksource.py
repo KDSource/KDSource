@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from xml.etree import ElementTree as ET
+from xml.dom import minidom
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
 import os
 from KDEpy import TreeKDE
+
+from .plists import PList
+from .metrics import Geometry
 
 np.set_printoptions(precision=3)
 
@@ -16,36 +22,44 @@ STD_DEFAULT = 1
 
 
 class KSource:
-	def __init__(self, plist, geom, bw="silv", J=1):
+	def __init__(self, plist, geom, bw="silv", scaling=None, J=1):
 		self.plist = plist
 		self.geom = geom
 		self.bw_method = None
 		if isinstance(bw, str):
 			self.bw_method = bw
 			bw = 1.0
+		elif isinstance(bw, np.ndarray):
+			if np.ndim(bw) >= 2:
+				raise ValueError("BW dimension must be < 2. Use scaling for anisotropic KDE.")
 		self.kde = TreeKDE(bw=bw)
+		if scaling is not None:
+			scaling = np.array(scaling).ravel()
+			if len(scaling)!=1 and len(scaling)!=geom.dim:
+				raise ValueError("scaling len must be equal to geom dim.")
+		else:
+			scaling = np.ones(geom.dim)
+		self.scaling = scaling
 		self.J = J
 		self.fitted = False
 
-	def fit(self, N=-1, skip=0, std=None, **kwargs):
+	def fit(self, N=-1, skip=0, **kwargs):
 		parts,ws = self.plist.get(N, skip)
 		if len(parts) == 0:
 			raise Exception("No hay particulas para ajuste")
 		N = len(parts)
 		print("Usando {} particulas para ajuste".format(N))
 		vecs = self.geom.transform(parts)
-		if std is None: std = self.geom.std(vecs=vecs)
-		else: std = np.array(std)
-		assert len(std) == self.geom.dim
-		std[std == 0] = STD_DEFAULT
-		self.std = std
 		self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
 		if self.bw_method is not None:
 			print("Calculando bw ... ")
-			bw = optimize_bw(self.bw_method, vecs/self.std, ws, **kwargs)
-			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, np.reshape(bw, (-1,1)) * self.std))
+			scaling = self.geom.std(vecs=vecs)
+			scaling[scaling == 0] = STD_DEFAULT
+			self.scaling = scaling
+			bw = optimize_bw(self.bw_method, vecs/self.scaling, ws, **kwargs)
+			print("Hecho\nOptimal bw ({}) = {}".format(self.bw_method, np.reshape(bw, (-1,1)) * self.scaling))
 			self.kde = TreeKDE(bw=bw)
-		self.kde.fit(vecs/self.std, weights=ws)
+		self.kde.fit(vecs/self.scaling, weights=ws)
 		self.fitted = True
 
 	def evaluate(self, parts):
@@ -53,42 +67,69 @@ class KSource:
 			raise Exception("Se debe ajustar (fit) antes de evaluar")
 		vecs = self.geom.transform(parts)
 		jacs = self.geom.jac(parts)
-		evals = 1/np.prod(self.std) * self.kde.evaluate(vecs/self.std)
-		errs = np.sqrt(evals * R_gaussian**self.geom.dim / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.std)))
+		evals = 1/np.prod(self.scaling) * self.kde.evaluate(vecs/self.scaling)
+		errs = np.sqrt(evals * R_gaussian**self.geom.dim / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling)))
 		evals *= self.J * jacs
 		errs *= self.J * jacs
 		return [evals, errs]
 
-	def save(self, sourcefilename=None, bwfile=None, adjust_N=True):
-		if sourcefilename is None:
-			sourcefilename = self.plist.filename.split('.')[0]+"_source.txt"
+	def save(self, xmlfilename=None, bwfile=None, adjust_N=True):
+		# Procesar argumentos
+		if xmlfilename is None:
+			xmlfilename = self.plist.filename.split('.')[0]+"_source.xml"
 		if bwfile is None:
 			bwfile = bwfilename = self.plist.filename.split('.')[0]+"_bws"
 		elif isinstance(bwfile, str):
 			bwfilename = bwfile
 		else: # Asumo que es file object
 			bwfilename = bwfile.name
-		print("Archivo de definicion de fuente: {}".format(sourcefilename))
-		with open(sourcefilename, "w") as file:
-			file.write("# J [1/s]:\n")
-			file.write("%le\n" % (self.J))
-			file.write("# PList:\n")
-			self.plist.save(file)
-			file.write("# Metric:\n")
-			self.geom.save(file)
-			bw = np.reshape(self.kde.bw, (-1,1)) * self.std
-			if adjust_N: # Reajusto N_eff con factor de Silverman
-				dim = self.geom.dim
-				bw *= bw_silv(dim, self.plist.N) / bw_silv(dim, len(self.kde.data))
-			if len(bw) == 1: # Ancho de banda constante
-				file.write("0\n")
-				np.savetxt(file, bw)
-			else: # Ancho de banda variable
-				file.write("1\n")
-				bw.astype("float32").tofile(bwfile, format="float32")
-				file.write(os.path.abspath(bwfilename)+"\n")
-				print("Archivo de anchos de banda: {}".format(bwfilename))
-		return sourcefilename
+		print("Archivo de definicion de fuente: {}".format(xmlfilename))
+		bw = self.kde.bw
+		if adjust_N: # Reajusto N_eff con factor de Silverman
+			dim = self.geom.dim
+			bw *= bw_silv(dim, self.plist.N) / bw_silv(dim, len(self.kde.data))
+		# Construir arbol XML
+		root = ET.Element("KSource")
+		Jel = ET.SubElement(root, "J")
+		Jel.set('units', '1/s')
+		Jel.text = str(self.J)
+		pltree = ET.SubElement(root, "PList")
+		self.plist.save(pltree)
+		gtree = ET.SubElement(root, "Geom")
+		self.geom.save(gtree)
+		ET.SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
+		bwel = ET.SubElement(root, "BW")
+		if np.isscalar(bw): # Ancho de banda constante
+			bwel.set('variable', '0')
+			bwel.text = str(bw)
+		else: # Ancho de banda variable
+			bwel.set('variable', '1')
+			bw.astype("float32").tofile(bwfile, format="float32")
+			print("Archivo de anchos de banda: {}".format(bwfilename))
+			bwel.text = os.path.abspath(bwfilename)
+		# Escribir archivo XML
+		xmlstr = ET.tostring(root, encoding='utf8', method='xml')
+		xmlstr = minidom.parseString(xmlstr).toprettyxml()
+		with open(xmlfilename, "w") as file:
+			file.write(xmlstr)
+		return xmlfilename
+
+	@staticmethod
+	def load(xmlfilename):
+		tree = ET.parse(xmlfilename)
+		root = tree.getroot()
+		J = np.double(root[0].text)
+		plist = PList.load(root[1])
+		geom = Geometry.load(root[2])
+		scaling = np.array(root[3].text.split(), dtype="float64")
+		bwel = root[4]
+		if bool(int(bwel.attrib["variable"])):
+			bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
+		else:
+			bw = np.double(bwel.text)
+		return KSource(plist, geom, bw, scaling, J=1)
+
+	# Plot methods
 
 	def plot_point(self, grid, idx, part0, **kwargs):
 		if self.fitted == False:
@@ -127,23 +168,23 @@ class KSource:
 		if not "yscale" in kwargs: kwargs["yscale"] = "log"
 		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		vecs = self.kde.data[:,idx][mask].reshape(-1,1)
 		ws = self.kde.weights[mask]
 		N_eff = np.sum(ws)**2 / np.sum(ws**2)
-		std = self.std[idx]
+		scaling = self.scaling[idx]
 		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
 		kde = TreeKDE(bw=bw)
 		kde.fit(vecs, weights=ws)
-		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
-		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
+		scores = 1/scaling * kde.evaluate(grid.reshape(-1,1)/scaling)
+		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
 		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		if "fact" in kwargs:
@@ -167,11 +208,11 @@ class KSource:
 			raise Exception("Se debe fittear antes de evaluar")
 		trues = np.ones(len(self.kde.data), dtype=bool)
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
@@ -180,14 +221,14 @@ class KSource:
 		vecs = self.kde.data[:,0][mask].reshape(-1,1)
 		ws = self.kde.weights[mask]
 		N_eff = np.sum(ws)**2 / np.sum(ws**2)
-		std = self.std[0]
+		scaling = self.scaling[0]
 		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
 		kde = TreeKDE(bw=bw)
 		kde.fit(vecs, weights=ws)
 		grid = self.geom.ms[0].transform(grid_E)
 		jacs = self.geom.ms[0].jac(grid_E)
-		scores = 1/std * kde.evaluate(grid.reshape(-1,1)/std)
-		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * std))
+		scores = 1/scaling * kde.evaluate(grid.reshape(-1,1)/scaling)
+		errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
 		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
 		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
 		if "fact" in kwargs:
@@ -245,24 +286,24 @@ class KSource:
 		if not "scale" in kwargs: kwargs["scale"] = "linear"
 		trues = np.array(len(self.kde.data)*[True])
 		if vec0 is not None:
-			mask1 = np.logical_and.reduce(vec0/self.std <= self.kde.data, axis=1)
+			mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
 		else:
 			mask1 = trues
 		if vec1 is not None:
-			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.std, axis=1)
+			mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
 		else:
 			mask2 = trues
 		mask = np.logical_and(mask1, mask2)
 		vecs = self.kde.data[:,idxs][mask]
 		ws = self.kde.weights[mask]
 		N_eff = np.sum(ws)**2 / np.sum(ws**2)
-		std = self.std[idxs]
+		scaling = self.scaling[idxs]
 		bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
 		kde = TreeKDE(bw=bw)
 		kde.fit(vecs, weights=ws)
 		grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-		scores = 1/np.prod(std) * kde.evaluate(grid/std)
-		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * np.mean(bw) * np.prod(std)))
+		scores = 1/np.prod(scaling) * kde.evaluate(grid/scaling)
+		errs = np.sqrt(scores * R_gaussian**2 / (N_eff * np.mean(bw) * np.prod(scaling)))
 		scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
 		if "fact" in kwargs:

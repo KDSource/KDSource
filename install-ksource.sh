@@ -38,13 +38,13 @@ mkdir $KS/include
 cp ksource_c/*.h $KS/include
 mkdir $KS/lib
 export LD_LIBRARY_PATH=$KS/mcpl/lib/:$LD_LIBRARY_PATH
-gcc ksource_c/*.c -o $KS/lib/libksource.so -lm -lmcpl -I$KS/include -I$KS/mcpl/include -L$KS/mcpl/lib -shared -fPIC
+gcc ksource_c/*.c -o $KS/lib/libksource.so -lm -lmcpl -lxml2 -I$KS/include -I$KS/mcpl/include -I/usr/include/libxml2 -L$KS/mcpl/lib -shared -fPIC
 
 # Binaries
 mkdir $KS/bin
 cp scripts/ksource.sh $KS/bin/ksource
 cp scripts/templates.sh $KS/bin/ksource-templates
 export LD_LIBRARY_PATH=$KS/lib/:$LD_LIBRARY_PATH
-gcc scripts/resample.c -o $KS/bin/ksource-resample -lksource -lmcpl -lm -I$KS/include -L$KS/lib -I$KS/mcpl/include -L$KS/mcpl/lib
+gcc scripts/resample.c -o $KS/bin/ksource-resample -lm -lksource -lmcpl -lxml2 -I$KS/include -L$KS/lib -I$KS/mcpl/include -L$KS/mcpl/lib  -I/usr/include/libxml2
 
 echo -e "\n¡Instalacion exitosa!"
