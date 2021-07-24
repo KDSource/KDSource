@@ -66,9 +66,9 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 		printf("\nCargando fuentes...  ");
 
 		msource = MS_open(len, filenames, ws);
-		w_crit = use_kde ? KS_w_mean(ksource, 1000, NULL): -1;
+		w_crit = use_kde ? MS_w_mean(msource, 1000, bias) : -1;
 
-		N_simul = (param[0]-1)*param[1] + 500 + 1000;
+		N_simul = param[0]*param[1];
 
 		srand(time(NULL));
 
@@ -77,6 +77,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	}
 
 	// ********************************************** Sorteo ***********************************************************
+
 	mcpl_particle_t part;
 	double w;
 	char pt;

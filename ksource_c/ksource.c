@@ -138,14 +138,13 @@ KSource* KS_open(const char* filename){
 	PList* plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);
 	// Crear Metric
 	for(i=0; i<order; i++){
-		if(strcmp(metricnames[i], "Energy") == 0) perturbs[i] = E_perturb;
-		else if(strcmp(metricnames[i], "Lethargy") == 0) perturbs[i] = Let_perturb;
-		else if(strcmp(metricnames[i], "SurfXY") == 0) perturbs[i] = SurfXY_perturb;
-		else if(strcmp(metricnames[i], "Vol") == 0) perturbs[i] = Vol_perturb;
-		else if(strcmp(metricnames[i], "Guide") == 0) perturbs[i] = Guide_perturb;
-		else if(strcmp(metricnames[i], "Polar") == 0) perturbs[i] = Polar_perturb;
-		else if(strcmp(metricnames[i], "Isotrop") == 0) perturbs[i] = Isotrop_perturb;
-		else{
+		for(j=0; j<_n_metrics; j++){
+			if(strcmp(metricnames[i], _metric_names[j]) == 0){
+				perturbs[i] = _metric_perturbs[j];
+				break;
+			}
+		}
+		if(j == _n_metrics){
 			printf("Metrica %s invalida\n", metricnames[i]);
 			KS_error("Error en KS_open");
 		}
@@ -155,6 +154,8 @@ KSource* KS_open(const char* filename){
 	Geometry* geom = Geom_create(order, metrics, bw, bwfilename, trasl_geom, rot_geom);
 	// Crear KSource
 	KSource* s = KS_create(J, plist, geom);
+
+	printf("Done\n");
 
 	// Liberar variables alocadas
 	free(trasl_plist); free(rot_plist);

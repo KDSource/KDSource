@@ -55,6 +55,11 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
 
 int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
 int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+
+static const int _n_metrics = 8;
+static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "Guide", "Isotrop", "Polar", "PolarMu"};
+static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb};
 
 
 #endif

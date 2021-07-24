@@ -133,41 +133,72 @@ void Geom_destroy(Geometry* geom){
 
 
 int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	part->ekin += bw*metric->scaling[0] * rand_norm();
-	if(part->ekin < E_MIN) part->ekin = E_MIN;
-	if(part->ekin > E_MAX) part->ekin = E_MAX;
+	int cont=0;
+	double E0 = part->ekin, E=E0;
+	E = E0 + bw*metric->scaling[0] * rand_norm();
+	while((E < E_MIN || E > E_MAX)  && cont++ < MAX_RESAMPLES){ // Mantener E dentro del rango [E_MIN,E_MAX]
+		E = E0 + bw*metric->scaling[0] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en E_perturb: MAX_RESAMPLES alcanzado (E0 = %le)\n", E0);
+	part->ekin = E;
 	return 0;
 }
 int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	part->ekin *= exp(bw*metric->scaling[0] * rand_norm());
-	if(part->ekin < E_MIN) part->ekin = E_MIN;
-	if(part->ekin > E_MAX) part->ekin = E_MAX;
+	int cont=0;
+	double E0 = part->ekin, E=E0;
+	E = E0 * exp(bw*metric->scaling[0] * rand_norm());
+	while((E < E_MIN || E > E_MAX)  && cont++ < MAX_RESAMPLES){ // Mantener E dentro del rango [E_MIN,E_MAX]
+		E = E0 * exp(bw*metric->scaling[0] * rand_norm());
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Let_perturb: MAX_RESAMPLES alcanzado (E0 = %le)\n", E0);
+	part->ekin = E;
 	return 0;
 }
 
 int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	part->position[0] += bw*metric->scaling[0] * rand_norm();
-	part->position[1] += bw*metric->scaling[1] * rand_norm();
-	part->position[2] += bw*metric->scaling[2] * rand_norm();
-	if(part->position[0] < metric->params[0]) part->position[0] = metric->params[0];
-	else if(part->position[0] > metric->params[1]) part->position[0] = metric->params[1];
-	if(part->position[1] < metric->params[2]) part->position[1] = metric->params[2];
-	else if(part->position[1] > metric->params[3]) part->position[1] = metric->params[3];
-	if(part->position[2] < metric->params[4]) part->position[2] = metric->params[4];
-	else if(part->position[2] > metric->params[5]) part->position[2] = metric->params[5];
+	int cont=0;
+	double x0=part->position[0], y0=part->position[1], z0=part->position[1], x=x0, y=y0, z=z0;
+	double xmin=metric->params[0], xmax=metric->params[1], ymin=metric->params[2], ymax=metric->params[3], zmin=metric->params[4], zmax=metric->params[5];
+	x = x0 + bw*metric->scaling[0] * rand_norm();
+	while((x < xmin || x > xmax)  && cont++ < MAX_RESAMPLES){ // Mantener x dentro del rango [xmin,xmax]
+		x = x0 + bw*metric->scaling[0] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Vol_perturb: MAX_RESAMPLES alcanzado (x0 = %lf)\n", x0);
+	cont = 0;
+	y = y0 + bw*metric->scaling[1] * rand_norm();
+	while((y < ymin || y > ymax)  && cont++ < MAX_RESAMPLES){ // Mantener y dentro del rango [ymin,ymax]
+		y = y0 + bw*metric->scaling[1] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Vol_perturb: MAX_RESAMPLES alcanzado (y0 = %lf)\n", y0);
+	cont = 0;
+	z = z0 + bw*metric->scaling[2] * rand_norm();
+	while((z < zmin || z > zmax)  && cont++ < MAX_RESAMPLES){ // Mantener z dentro del rango [zmin,zmax]
+		z = z0 + bw*metric->scaling[2] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Vol_perturb: MAX_RESAMPLES alcanzado (z0 = %lf)\n", z0);
+	part->position[0] = x; part->position[1] = y; part->position[2] = z;
 	return 0;
 }
 int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	part->position[0] += bw*metric->scaling[0] * rand_norm();
-	part->position[1] += bw*metric->scaling[1] * rand_norm();
-	if(part->position[0] < metric->params[0]) part->position[0] = metric->params[0];
-	else if(part->position[0] > metric->params[1]) part->position[0] = metric->params[1];
-	if(part->position[1] < metric->params[2]) part->position[1] = metric->params[2];
-	else if(part->position[1] > metric->params[3]) part->position[1] = metric->params[3];
+	int cont=0;
+	double x0=part->position[0], y0=part->position[1], x=x0, y=y0;
+	double xmin=metric->params[0], xmax=metric->params[1], ymin=metric->params[2], ymax=metric->params[3];
+	x = x0 + bw*metric->scaling[0] * rand_norm();
+	while((x < xmin || x > xmax)  && cont++ < MAX_RESAMPLES){ // Mantener x dentro del rango [xmin,xmax]
+		x = x0 + bw*metric->scaling[0] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en SurfXY_perturb: MAX_RESAMPLES alcanzado (x0 = %lf)\n", x0);
+	cont = 0;
+	y = y0 + bw*metric->scaling[1] * rand_norm();
+	while((y < ymin || y > ymax)  && cont++ < MAX_RESAMPLES){ // Mantener y dentro del rango [ymin,ymax]
+		y = y0 + bw*metric->scaling[1] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en SurfXY_perturb: MAX_RESAMPLES alcanzado (y0 = %lf)\n", y0);
+	part->position[0] = x; part->position[1] = y;
 	return 0;
 }
 int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	double x=part->position[0], y=part->position[1], z=part->position[2], dx=part->direction[0], dy=part->direction[1], dz=part->direction[2];
+	double x=part->position[0], y=part->position[1], z0=part->position[2], z=z0, dx=part->direction[0], dy=part->direction[1], dz=part->direction[2];
 	double xwidth=metric->params[0], yheight=metric->params[1], zmax=metric->params[2], rcurv=metric->params[3];
 	double t, theta, phi, theta0, dx2, dz2;
 	int cont=0, mirror;
@@ -200,22 +231,21 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 			break;
 	}
 	// Perturbar
-	z += bw*metric->scaling[0] * rand_norm();
-	t += bw*metric->scaling[1] * rand_norm();
-	theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
-	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
-		theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
-		if(cont++ == MAX_RESAMPLES){
-			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
-			break;
-		}
+	z = z0 + bw*metric->scaling[0] * rand_norm();
+	while((z < 0 || z > zmax)  && cont++ < MAX_RESAMPLES){ // Mantener z dentro del rango [0,zmax]
+		z = z0 + bw*metric->scaling[0] * rand_norm();
 	}
-	phi += bw*metric->scaling[3]*M_PI/180 * rand_norm();
-	// Aplicar restricciones a perturbaciones
-	if(z < 0) z = 0;
-	else if(z > zmax) z = zmax;
+	if(cont > MAX_RESAMPLES) printf("Warning en Guide_perturb: MAX_RESAMPLES alcanzado (z0 = %lf)\n", z0);
+	t += bw*metric->scaling[1] * rand_norm();
 	while(t < 0) t += 2*(xwidth+yheight);
 	while(t > 2*(xwidth+yheight)) t -= 2*(xwidth+yheight);
+	theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
+	cont = 0;
+	while(cos(theta0)*cos(theta) < 0 && cont++ < MAX_RESAMPLES){ // Evitar que perturbacion cambie sentido de propagacion
+		theta = theta0 + bw*metric->scaling[2]*M_PI/180 * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Guide_perturb: MAX_RESAMPLES alcanzado (theta0 = %lf)\n", theta0);
+	phi += bw*metric->scaling[3]*M_PI/180 * rand_norm();
 	switch(mirror){
 		case 0: if(t<  0)              t=  0;              else if(t>  yheight)          t=  yheight;          break;
 		case 1: if(t<  yheight)        t=  yheight;        else if(t>  yheight+  xwidth) t=  yheight+  xwidth; break;
@@ -285,16 +315,30 @@ int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	theta0 = acos(part->direction[2]);
 	phi   = atan2(part->direction[1], part->direction[0]);
 	theta = theta0 + bw*metric->scaling[0]*M_PI/180 * rand_norm();
-	while(cos(theta0)*cos(theta) < 0){ // Evitar que perturbacion cambie sentido de propagacion
+	while(cos(theta0)*cos(theta) < 0 && cont++ < MAX_RESAMPLES){ // Evitar que perturbacion cambie sentido de propagacion
 		theta = theta0 + bw*metric->scaling[0]*M_PI/180 * rand_norm();
-		if(cont++ == MAX_RESAMPLES){
-			printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado\n");
-			break;
-		}
 	}
+	if(cont > MAX_RESAMPLES) printf("Warning en Polar_perturb: MAX_RESAMPLES alcanzado (theta0 = %lf)\n", theta0);
 	phi   += bw*metric->scaling[1]*M_PI/180 * rand_norm();
 	part->direction[0] = sin(theta) * cos(phi);
 	part->direction[1] = sin(theta) * sin(phi);
 	part->direction[2] = cos(theta);
+	return 0;
+}
+
+int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	double mu, phi, mu0;
+	int cont=0;
+	mu0 = part->direction[2];
+	phi   = atan2(part->direction[1], part->direction[0]);
+	mu = mu0 + bw*metric->scaling[0] * rand_norm();
+	while(mu*mu0 < 0 && cont++ < MAX_RESAMPLES){ // Evitar que perturbacion cambie sentido de propagacion
+		mu = mu0 + bw*metric->scaling[0] * rand_norm();
+	}
+	if(cont > MAX_RESAMPLES) printf("Warning en PolarMu_perturb: MAX_RESAMPLES alcanzado (mu0 = %lf)\n", mu0);
+	phi   += bw*metric->scaling[1]*M_PI/180 * rand_norm();
+	part->direction[0] = sqrt(1-mu*mu) * cos(phi);
+	part->direction[1] = sqrt(1-mu*mu) * sin(phi);
+	part->direction[2] = mu;
 	return 0;
 }
