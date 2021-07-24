@@ -43,7 +43,7 @@ Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilena
 	const double* trasl, const double* rot);
 Geometry* Geom_copy(const Geometry* from);
 int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
-int Geom_next(Geometry* geom);
+int Geom_next(Geometry* geom, int loop);
 void Geom_destroy(Geometry* geom);
 
 int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw);

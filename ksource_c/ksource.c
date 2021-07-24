@@ -11,6 +11,10 @@ void KS_error(const char* msg){
 	printf("KSource error: %s\n", msg);
 	exit(EXIT_FAILURE);
 }
+void KS_end(const char* msg){
+	printf("KSource terminate: %s\n", msg);
+	exit(EXIT_SUCCESS);
+}
 
 KSource* KS_create(double J, PList* plist, Geometry* geom){
 	KSource* ks = (KSource*)malloc(sizeof(KSource));
@@ -163,11 +167,12 @@ KSource* KS_open(const char* filename){
 	return s;
 }
 
-int KS_sample(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias){
+int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias, int loop){
+	int ret=0;
 	if(w_crit <= 0){
 		PList_get(ks->plist, part);
-		PList_next(ks->plist);
-		Geom_next(ks->geom);
+		ret += PList_next(ks->plist, loop);
+		ret += Geom_next(ks->geom, loop);
 	}
 	else{ // Normalizo w a 1
 		double bs;
@@ -178,22 +183,27 @@ int KS_sample(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, We
 			else bs = 1;
 			if(part->weight*bs > w_crit){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
 				if(rand() < w_crit/(part->weight*bs)*RAND_MAX){
-					PList_next(ks->plist);
-					Geom_next(ks->geom);
+					ret += PList_next(ks->plist, loop);
+					ret += Geom_next(ks->geom, loop);
 				}
 				break;
 			}
 			else{ // Si w*bs<w_crit, uso w*bs/w_crit como prob de tomar la particula
-				PList_next(ks->plist);
-				Geom_next(ks->geom);
+				ret += PList_next(ks->plist, loop);
+				ret += Geom_next(ks->geom, loop);
 				if(rand() < (part->weight*bs)/w_crit*RAND_MAX) break;
 			}
-			if(resamples++ > MAX_RESAMPLES) return 1;
+			if(resamples++ > MAX_RESAMPLES)
+				KS_error("Error en KS_sample: MAX_RESAMPLES alcanzado");
 		}
 		part->weight = 1/bs;
 	}
 	if(perturb) Geom_perturb(ks->geom, part);
-	return 0;
+	return ret;
+}
+
+int KS_sample(KSource* ks, mcpl_particle_t* part){
+	return KS_sample2(ks, part, 1, 1, NULL, 1);
 }
 
 double KS_w_mean(KSource* ks, int N, WeightFun bias){
@@ -202,7 +212,7 @@ double KS_w_mean(KSource* ks, int N, WeightFun bias){
 	mcpl_particle_t part;
 	double w_mean=0;;
 	for(i=0; i<N; i++){
-		KS_sample(ks, &part, 0, -1, NULL);
+		KS_sample2(ks, &part, 0, -1, NULL, 1);
 		if(bias) w_mean += part.weight * bias(&part);
 		else w_mean += part.weight;
 	}
@@ -241,15 +251,19 @@ MultiSource* MS_open(int len, const char** filenames, const double* ws){
 	return MS_create(len, s, ws);
 }
 
-int MS_sample(MultiSource* ms, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias){
+int MS_sample2(MultiSource* ms, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias, int loop){
 	double y = rand() / ((double)RAND_MAX+1);
 	int i, ret;
 	if(ms->cdf[ms->len-1] <= 0) i = (int)(y*ms->len);
 	else for(i=0; y*ms->cdf[ms->len-1]>ms->cdf[i]; i++);
-	ret = KS_sample(ms->s[i], part, perturb, w_crit, bias);
+	ret = KS_sample2(ms->s[i], part, perturb, w_crit, bias, loop);
 	if(ms->cdf[ms->len-1] > 0) part->weight *= (ms->s[i]->J/ms->J) / (ms->ws[i]/ms->cdf[ms->len-1]);
 	else part->weight *= (ms->s[i]->J/ms->J) * ms->len;
 	return ret;
+}
+
+int MS_sample(MultiSource* ms, mcpl_particle_t* part){
+	return MS_sample2(ms, part, 1, 1, NULL, 1);
 }
 
 double MS_w_mean(MultiSource* ms, int N, WeightFun bias){

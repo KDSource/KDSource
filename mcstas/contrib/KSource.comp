@@ -39,7 +39,7 @@
 
 DEFINE COMPONENT KSource
 DEFINITION PARAMETERS ()
-SETTING PARAMETERS (string sourcefile, use_kde=0)
+SETTING PARAMETERS (string sourcefile, use_kde=1, loop=1)
 OUTPUT PARAMETERS (I, p2, N)
 /* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
 
@@ -70,7 +70,7 @@ TRACE
 	mcpl_particle_t part;
 	double w, v;
 
-	KS_sample(ksource, &part, use_kde, w_crit, NULL);
+	KS_sample2(ksource, &part, use_kde, w_crit, NULL, loop);
 
 	x = part.position[0]/100;
 	y = part.position[1]/100;

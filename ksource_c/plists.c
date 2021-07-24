@@ -7,6 +7,7 @@
 
 
 void KS_error(const char* msg);
+void KS_end(const char* msg);
 
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z){
 	PList* plist = (PList*)malloc(sizeof(PList));
@@ -28,7 +29,7 @@ PList* PList_create(char pt, const char* filename, const double* trasl, const do
 	else plist->rot = NULL;
 	plist->x2z = switch_x2z;
 	plist->part = NULL;
-	PList_next(plist);
+	PList_next(plist, 1);
 	return plist;
 }
 
@@ -48,7 +49,7 @@ PList* PList_copy(const PList* from){
 		for(i=0; i<3; i++) plist->rot[i] = from->rot[i];
 	}
 	plist->part = NULL;
-	PList_next(plist);
+	PList_next(plist, 1);
 	return plist;
 }
 
@@ -69,20 +70,21 @@ int PList_get(const PList* plist, mcpl_particle_t* part){
 	return 0;
 }
 
-int PList_next(PList* plist){
-	int count=0, resamples=0;
-	while(1){
-		while(1){ // Intento leer 2 veces
+int PList_next(PList* plist, int loop){
+	int ret=0, resamples=0;
+	while(resamples++ < MAX_RESAMPLES){
+		plist->part = mcpl_read(plist->file);
+		if(plist->part == NULL){ // Luego del 1er intento fallido rebobino
+			if(!loop) KS_end("PList_next: Fin de lista de particulas alcanzado");
+			ret = 1;
+			mcpl_rewind(plist->file);
 			plist->part = mcpl_read(plist->file);
-			if(plist->part != NULL) break;
-			if(++count == 2) // Luego del 2do intento fallido tiro error
-				KS_error("Error en PList_next: No se pudo leer particula");
-			mcpl_rewind(plist->file); // Luego del 1er intento fallido rebobino
+			if(plist->part == NULL)
+				KS_error("Error en PList_next: No se pudo obtener particula");
 		}
-		if(plist->part->weight > 0) break;
-		if(resamples++ > MAX_RESAMPLES) return 1;
+		if(plist->part->weight > 0) return ret;
 	}
-	return 0;
+	KS_error("Error en PList_next: MAX_RESAMPLES alcanzado");
 }
 
 void PList_destroy(PList* plist){

@@ -28,7 +28,7 @@ typedef struct PList{
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z);
 PList* PList_copy(const PList* from);
 int PList_get(const PList* plist, mcpl_particle_t* part);
-int PList_next(PList* plist);
+int PList_next(PList* plist, int loop);
 void PList_destroy(PList* plist);
 
 

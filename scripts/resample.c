@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
 	printf("Resampleando...\n");
 	long int i;
 	for(i=0; i<N; i++){
-		KS_sample(ks, &part, 1, w_crit, NULL);
+		KS_sample2(ks, &part, 1, w_crit, NULL, 1);
 		mcpl_add_particle(file, &part);
 	}
 	mcpl_closeandgzip_outfile(file);

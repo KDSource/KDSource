@@ -7,6 +7,7 @@
 
 
 void KS_error(const char* msg);
+void KS_end(const char* msg);
 
 Metric* Metric_create(int dim, const double* scaling, PerturbFun perturb, int nps, const double* params){
 	Metric* metric = (Metric*)malloc(sizeof(Metric));
@@ -57,7 +58,7 @@ Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilena
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		strcpy(geom->bwfilename, bwfilename);
 		geom->bwfile = bwfile;
-		Geom_next(geom);
+		Geom_next(geom, 1);
 	}
 	if(trasl){
 		geom->trasl = (double*)malloc(3 * sizeof(double));
@@ -84,7 +85,7 @@ Geometry* Geom_copy(const Geometry* from){
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		strcpy(geom->bwfilename, from->bwfilename);
 		geom->bwfile = fopen(geom->bwfilename, "r");
-		Geom_next(geom);
+		Geom_next(geom, 1);
 	}
 	if(from->trasl){
 		geom->trasl = (double*)malloc(3 * sizeof(double));
@@ -110,15 +111,13 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 	return ret;
 }
 
-int Geom_next(Geometry* geom){
+int Geom_next(Geometry* geom, int loop){
 	if(geom->bwfile){
-		int i, readed=0, count=0;
-		while(readed!=1 && count++<2){ // Intento leer 2 veces
-			if(count == 2) rewind(geom->bwfile); // Antes del 2do intento rebobino
-			readed = fread(&geom->bw, sizeof(float), 1, geom->bwfile);
-		}
-		if(count == 3)
-			KS_error("Error en Geom_next: No se pudo leer ancho de banda");
+		if(fread(&geom->bw, sizeof(float), 1, geom->bwfile) == 1) return 0;
+		if(!loop) KS_end("Geom_next: Fin de lista de BWs alcanzado");
+		rewind(geom->bwfile); // Luego de 1er intento fallido rebobino
+		if(fread(&geom->bw, sizeof(float), 1, geom->bwfile) == 1) return 1;
+		KS_error("Error en Geom_next: No se pudo leer ancho de banda");
 	}
 	return 0;
 }

@@ -30,20 +30,23 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	#define len 1
 	const char* filenames[len] = {"tracksfile.mcpl"};
 	double ws[len] = {1};
-	int bw_null = 0;
+	int use_kde = 1;
+	int loop = 1;
 
 	// Activacion en bunker
 	#define len 2
 	const char* filenames[len] = {"../2_bunker_n/mapa_activ_fe_source.txt", "../2_bunker_n/mapa_activ_al_source.txt"};
 	double ws[len] = {1, 1};
-	int bw_null = 0;
+	int use_kde = 1;
+	int loop = 1;
 	*/
 
 	// Guias
 	#define len 2
 	const char* filenames[len] = {"../1_guia_n/BC_tracks_source.txt", "../1_guia_n/D_tracks_source.txt"};
 	double ws[len] = {1, 1};
-	int bw_null = 0;
+	int use_kde = 1;
+	int loop = 1;
 
 	WeightFun bias = NULL; // Funcion de bias
 
@@ -62,8 +65,8 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	if(initialized == 0){
 		printf("\nCargando fuentes...  ");
 
-		msource = MS_open(len, filenames, ws, bw_null);
-		w_crit = MS_w_mean(msource, 1000, bias);
+		msource = MS_open(len, filenames, ws);
+		w_crit = use_kde ? KS_w_mean(ksource, 1000, NULL): -1;
 
 		N_simul = (param[0]-1)*param[1] + 500 + 1000;
 
@@ -78,7 +81,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	double w;
 	char pt;
 
-	MS_sample(msource, &part, w_crit, bias);
+	MS_sample2(msource, &part, use_kde, w_crit, bias, loop);
 
 	if(part.pdgcode == 2112) *ipt = 1;
 	else if(part.pdgcode == 22) *ipt = 2;
