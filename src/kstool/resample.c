@@ -1,7 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
 #include<string.h>
+
+#include<math.h>
 
 #include "ksource.h"
 
@@ -9,13 +10,13 @@
 
 
 void display_usage(){
-	printf("Uso: ksource resample sourcefile [opciones]\n\n");
-	printf("Resamplea muestras de la fuente definida en sourcefile, y las guarda\n");
-	printf("en un archivo MCPL.\n\n");
-	printf("Opciones:\n");
-	printf("\t-o outfile:  nombre del archivo MCPL con las nuevas muestras\n");
-	printf("\t             (default: \"resampled.mcpl\")\n");
-	printf("\t-n N:        cantidad de nuevas muestras (default: 1E5).\n");
+	printf("Usage: kstool resample sourcefile [options]\n\n");
+	printf("Resample particles from source defined in sourcefile, and save them in a MCPL\n");
+	printf("file.\n\n");
+	printf("Options:\n");
+	printf("\t-o outfile: Name of MCPL file with new samples\n");
+	printf("\t            (default: \"resampled.mcpl\").\n");
+	printf("\t-n N:       Number of new samples (default: 1E5).\n");
 
 }
 
@@ -39,19 +40,19 @@ int resample_parse_args(int argc, char **argv, const char** filename, const char
 			*N = atof(argv[++i]);
 			continue;
 		}
-    	if(argv[i][0] == '-'){
-			printf("Error: Argumento invalido: %s\n",argv[i]);
+		if(argv[i][0] == '-'){
+			printf("Error: Invalid argument: %s\n",argv[i]);
 			exit(1);
-    	}
+		}
 		if(!*filename){
 			*filename = argv[i];
 			continue;
 		}
-		printf("Demasiados argumentos. Use -h o --help para ayuda.\n");
+		printf("Too many arguments. Use -h or --help for help.\n");
 		exit(1);
 	}
 	if(!*filename){
-		printf("No se especifico archivo de fuente. Use -h o --help para ayuda.\n");
+		printf("No source file. Use -h or --help for help.\n");
 		exit(1);
 	}
 	if(!*outfilename) *outfilename = "resampled.mcpl";
@@ -65,7 +66,7 @@ int main(int argc, char *argv[]){
 
 	if(resample_parse_args(argc, argv, &filename, &outfilename, &N)) return 1;
 
-    KSource* ks = KS_open(filename);
+	KSource* ks = KS_open(filename);
 	mcpl_particle_t part;
 
 	mcpl_outfile_t file = mcpl_create_outfile(outfilename);
@@ -73,14 +74,14 @@ int main(int argc, char *argv[]){
 
 	double w_crit = KS_w_mean(ks, 1000, NULL);
 
-	printf("Resampleando...\n");
+	printf("Resampling...\n");
 	long int i;
 	for(i=0; i<N; i++){
 		KS_sample2(ks, &part, 1, w_crit, NULL, 1);
 		mcpl_add_particle(file, &part);
 	}
 	mcpl_closeandgzip_outfile(file);
-	printf("Resampleo exitoso\n");
+	printf("Successfully sampled %ld particles.\n", N);
 
-    return 0;
+	return 0;
 }

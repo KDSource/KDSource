@@ -5,19 +5,28 @@
 *         Risoe National Laboratory, Roskilde, Denmark
 *         Institut Laue Langevin, Grenoble, France
 *
-* Component: Distrib2McStas_window
+* Component: KSource
 *
 * %I
-* Written by: 
-* Date: 
-* Origin: 
+* Written by: Osiris Inti Abbate
+* Date: Ago 2021
+* Origin: Balseiro Institute
 *
-* Neutron guide.
+* Distributional source, based on a MCPL-format particle list, on which
+* the Kernel Density Estimation (KDE) method is applied.
 *
 * %D
-* Description
+* Distributional source, based on a MCPL-format particle list, on which
+* the Kernel Density Estimation (KDE) method is applied.
+* 
+* It allows sampling more particles than the number present in a virtual,
+* previously generated virtual source, without repeating samples.
+* 
+* It requires a XML parameters file containing the needed configurations
+* for an optimized KDE source, which can be generated with the KSource
+* package.
 *
-* Example: Distrib2McStas_window(...)
+* Example: KSource("optimized_source.xml")
 *
 * %VALIDATION
 *
@@ -25,11 +34,10 @@
 *
 * %P
 * INPUT PARAMETERS:
-*
-* file_d1: [str]    File with current distribution in E
-* file_d2: [str]    File with current distribution in E, x, y
-* file_d3: [str]    File with current distribution in E, x, y, mu
-* file_d4: [str]    File with current distribution in E, x, y, mu, phi
+* 
+* sourcefile [str]  Name of the XML parameters file containing KSource definition.
+* use_kde    [0/1]  Whether to use KDE or just sample particles from the MCPL file. Default: 1
+* loop       [0/1]  Whether to loop over the file when reaching its end. Default: 1
 *
 * %D
 * Example values:
@@ -53,14 +61,14 @@ DECLARE
 %{
 	int N;
 	double I, p2;
-    
+	
 	KSource *ksource;
 	double w_crit;
 %}
 
 INITIALIZE
 %{  
-    ksource = KS_open(sourcefile);
+	ksource = KS_open(sourcefile);
 	w_crit = use_kde ? KS_w_mean(ksource, 1000, NULL): -1;
 %}
 
@@ -106,11 +114,11 @@ FINALLY
 MCDISPLAY
 %{
 	multiline(5,
-    	-1.0, -1.0, 0.0,
-    	 1.0, -1.0, 0.0,
-    	 1.0,  1.0, 0.0,
-    	-1.0,  1.0, 0.0,
-    	-1.0, -1.0, 0.0);
+		-1.0, -1.0, 0.0,
+		 1.0, -1.0, 0.0,
+		 1.0,  1.0, 0.0,
+		-1.0,  1.0, 0.0,
+		-1.0, -1.0, 0.0);
 %}
 
 END

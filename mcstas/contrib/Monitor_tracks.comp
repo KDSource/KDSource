@@ -5,19 +5,24 @@
 *         Risoe National Laboratory, Roskilde, Denmark
 *         Institut Laue Langevin, Grenoble, France
 *
-* Component: Distrib2McStas_window
+* Component: Monitor_tracks
 *
 * %I
-* Written by: 
-* Date: 
-* Origin: 
+* Written by: Osiris Inti Abbate
+* Date: Ago 2021
+* Origin: Balseiro Institute
 *
-* Neutron guide.
+* Detector-like component that writes neutron state parameters into an mcpl-format
+* binary, virtual-source neutron file.
 *
 * %D
-* Description
+* Detector-like component that writes neutron state parameters into an mcpl-format
+* binary, virtual-source neutron file.
 *
-* Example: Distrib2McStas_window(...)
+* MCPL is short for Monte Carlo Particle List, and is a format for sharing events
+* between e.g. MCNP(X), Geant4 and McStas.
+*
+* Example: Monitor_tracks(pt="n", filename="source.mcpl", xwidth=10, yheight=10)
 *
 * %VALIDATION
 *
@@ -26,13 +31,12 @@
 * %P
 * INPUT PARAMETERS:
 *
-* file_d1: [str]    File with current distribution in E
-* file_d2: [str]    File with current distribution in E, x, y
-* file_d3: [str]    File with current distribution in E, x, y, mu
-* file_d4: [str]    File with current distribution in E, x, y, mu, phi
+* pt       [str]  Particle type. "n" for neutron (default), "p" for photon.
+* filename [str]  Name of MCPL file to write. If not given, the component name will be used to create one.
+* xwidth   [cm]   Detector width.
+* yheight  [cm]   Detector height.
 *
 * %D
-* Example values:
 *
 * %E
 *******************************************************************************/
@@ -108,11 +112,11 @@ FINALLY
 MCDISPLAY
 %{
 	multiline(5,
-    	-1.0, -1.0, 0.0,
-    	 1.0, -1.0, 0.0,
-    	 1.0,  1.0, 0.0,
-    	-1.0,  1.0, 0.0,
-    	-1.0, -1.0, 0.0);
+		-1.0, -1.0, 0.0,
+		 1.0, -1.0, 0.0,
+		 1.0,  1.0, 0.0,
+		-1.0,  1.0, 0.0,
+		-1.0, -1.0, 0.0);
 %}
 
 END

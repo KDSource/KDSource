@@ -1,8 +1,9 @@
 #include<stdlib.h>
 #include<stdio.h>
-#include<math.h>
 #include<string.h>
 #include<time.h>
+
+#include<math.h>
 
 #include "mcpl.h"
 
@@ -25,45 +26,29 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 /************************************************* Input *****************************************************/
 	
-	/*
-	// Plantilla
-	#define len 1
-	const char* filenames[len] = {"tracksfile.mcpl"};
-	double ws[len] = {1};
-	int use_kde = 1;
-	int loop = 1;
+	#define len 1                                          // Number of sources
+	const char* filenames[len] = {"../simul1/source.xml"}; // Source XML files
+	double ws[len] = {1};                                  // Weight of each source
+	int use_kde = 1;                                       // Whether to use KDE for sampling
+	int loop = 1;                                          // Whether to loop over list when reach end
 
-	// Activacion en bunker
-	#define len 2
-	const char* filenames[len] = {"../2_bunker_n/mapa_activ_fe_source.txt", "../2_bunker_n/mapa_activ_al_source.txt"};
-	double ws[len] = {1, 1};
-	int use_kde = 1;
-	int loop = 1;
-	*/
+	WeightFun bias = NULL;                                 // Bias function
 
-	// Guias
-	#define len 2
-	const char* filenames[len] = {"../1_guia_n/BC_tracks_source.txt", "../1_guia_n/D_tracks_source.txt"};
-	double ws[len] = {1, 1};
-	int use_kde = 1;
-	int loop = 1;
+/*********************************************** End Input ***************************************************/
 
-	WeightFun bias = NULL; // Funcion de bias
 
-/*********************************************** Fin Input ***************************************************/
-
-   // *********************************** Declaracion variables globales **************************************
+   // *********************************** Global variables declaration ***************************************
 
 	static long int N_simul;
 
 	static MultiSource *msource;
 	static double w_crit;
 
-	// **************************************** Inicializacion ************************************************
+	// **************************************** Initialization ************************************************
 
 	int i;
 	if(initialized == 0){
-		printf("\nCargando fuentes...  ");
+		printf("\nLoading sources...\n");
 
 		msource = MS_open(len, filenames, ws);
 		w_crit = use_kde ? MS_w_mean(msource, 1000, bias) : -1;
@@ -73,10 +58,10 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 		srand(time(NULL));
 
 		initialized = 1;
-		printf("Hecho\n");
+		printf("Done.\n");
 	}
 
-	// ********************************************** Sorteo ***********************************************************
+	// ********************************************** Sampling ************************************************
 
 	mcpl_particle_t part;
 	double w;
@@ -89,7 +74,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	else if(part.pdgcode == 11) *ipt = 3;
 	else if(part.pdgcode == -11) *ipt = 4;
 	else{
-		printf("Error: Particula no reconocida. Se tomara como neutron.\n");
+		printf("Warning: PDG code %d unknown. Taking as neutron.\n", part.pdgcode);
 		*ipt = 1;
 	}
 	*x = part.position[0];
@@ -112,14 +97,14 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	// *********************************************** Finalizacion ***************************************************
 
 		if(N%N_simul == 0){
-		printf("\nDestruyendo fuentes...  ");
+		printf("\nDestroying sources...\n");
 		
 		MS_destroy(msource);
 
 		initialized = 0;
-		printf("Hecho\n");
-		printf("Tiempo de muestreo: %lf s\n", t_sample);
-		printf("Particulas producidas: I err N %lf %lf %ld\n", I, sqrt(p2), N);
+		printf("Done.\n");
+		printf("Sampling time: %lf s\n", t_sample);
+		printf("Produced particles: I err N %lf %lf %ld\n", I, sqrt(p2), N);
 	}
 
 	clock_t end = clock();

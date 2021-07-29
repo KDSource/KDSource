@@ -1,10 +1,21 @@
-#include<stdio.h>
-#include<stdlib.h>
-
 #ifndef METRICS_H
 #define METRICS_H
 
+#include<stdio.h>
+#include<stdlib.h>
+
+/***********************************************************************************/
+/*                                                                                 */
+/*  Utilities for geometry and metrics handling for KSource.                       */
+/*                                                                                 */
+/*  This file can be freely used as per the terms in the LICENSE file.             */
+/*                                                                                 */
+/*  Written by Osiris Inti Abbate, 2021.                                           */
+/*                                                                                 */
+/***********************************************************************************/
+
 #include "mcpl.h"
+
 
 #define MAX_RESAMPLES 1000
 #define E_MIN 1e-11
@@ -17,11 +28,11 @@ typedef struct Metric Metric;
 typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part, double bw);
 
 struct Metric{
-	int dim; // Dimensiones de cada submetrica
-	float* scaling; // Escaleos de variables
-	PerturbFun perturb; // Funcion de perturbacion
-	int nps; // Cantidad de parametros geometricos
-	double* params; // Parametros geometricos de cada submetrica
+	int dim;            // Dimension
+	float* scaling;     // Variables scaling
+	PerturbFun perturb; // Perturbation function
+	int nps;            // Number of metric parameters
+	double* params;     // Metric parameters
 };
 
 Metric* Metric_create(int dim, const double* scaling, PerturbFun perturb, int nps, const double* params);
@@ -29,14 +40,14 @@ Metric* Metric_copy(const Metric* from);
 void Metric_destroy(Metric* metric);
 
 typedef struct Geometry{
-	int ord; // Cantidad de submetricas
-	Metric** ms; // Submetricas
-	char* bwfilename; // Nombre de archivo con anchos de banda
-	FILE* bwfile; // Archivo con anchos de banda
-	double bw; // Ancho de banda normalizado
+	int ord;          // Number of submetrics
+	Metric** ms;      // Submetrics
+	char* bwfilename; // Bandwidth file name
+	FILE* bwfile;     // Bandwidth file
+	double bw;        // Normalized bandwidth
 
-	double* trasl; // Traslacion de la metrica
-	double* rot; // Rotacion de la metrica
+	double* trasl;    // Geometry translation
+	double* rot;      // Geometry rotation
 } Geometry;
 
 Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilename,

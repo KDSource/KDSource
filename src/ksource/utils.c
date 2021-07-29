@@ -5,13 +5,13 @@
 #include "ksource.h"
 
 
-// Sampleo con distribucion normal (x0=0, s=1)
+// Sample with normal distribution (x0=0, s=1)
 double rand_norm(){
 	double y1 = (double)(rand()+1) / ((double)RAND_MAX+1), y2 = rand() / (double)RAND_MAX;
 	return sqrt(-2 * log(y1)) * cos(2 * M_PI * y2);
 }
 
-// Traslacion
+// Translation
 double *traslv(double *vect, const double *trasl, int inverse){
 	int i;
 	if(!inverse) for(i=0; i<3; i++) vect[i] += trasl[i];
@@ -19,7 +19,7 @@ double *traslv(double *vect, const double *trasl, int inverse){
 	return vect;
 }
 
-// Rotacion (rotvec en formato axis-angle)
+// Rotation (rotvec in axis-angle format)
 double *rotv(double *vect, const double *rotvec, int inverse){
 	double theta, kdotv, kcrossv[3], vrot[3];
 	int i;
@@ -37,7 +37,7 @@ double *rotv(double *vect, const double *rotvec, int inverse){
 	return vect;
 }
 
-// Conversion entre char pt y codigo pdg para tipo de particula
+// Conversion between char pt and pdg code for particle type
 long pt2pdg(char pt){
 	if(pt == 'n') return 2112;
 	if(pt == 'p') return 22;
@@ -51,10 +51,10 @@ char pdg2pt(long pdgcode){
 	return '0';
 }
 
-// Interpolacion
+// Interpolation
 double interp(double x, const double *xs, const double *ys, int N){
 	if(x<xs[0] || x>xs[N-1]){
-		printf("Error en interp: x fuera de rango\n");
+		printf("Error in interp: x outside range.\n");
 		return 0;
 	}
 	int i = 0;
@@ -62,7 +62,7 @@ double interp(double x, const double *xs, const double *ys, int N){
 	return ys[i] + (ys[i+1]-ys[i])*(x-xs[i])/(xs[i+1]-xs[i]);
 }
 
-// Factores dosimetricos
+// Dosimetric factors
 
 #define N_n_ARN 15
 const double log_E_n_ARN[N_n_ARN] = {-1e3,-1.75e+01,-6.21e+00,-3.69e+00,-1.94e+00,-1.39e+00,-5.71e-01,1.82e-01,9.16e-01,1.03e+00,1.16e+00,1.61e+00,2.69e+00,2.94e+00,3.91e+00};

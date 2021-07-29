@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+
 #include<math.h>
 
 #include "ksource.h"
@@ -74,17 +75,18 @@ int PList_next(PList* plist, int loop){
 	int ret=0, resamples=0;
 	while(resamples++ < MAX_RESAMPLES){
 		plist->part = mcpl_read(plist->file);
-		if(plist->part == NULL){ // Luego del 1er intento fallido rebobino
-			if(!loop) KS_end("PList_next: Fin de lista de particulas alcanzado");
+		if(plist->part == NULL){ // After 1st failed try, rewind
+			if(!loop) KS_end("PList_next: End of particle list reached.");
 			ret = 1;
 			mcpl_rewind(plist->file);
 			plist->part = mcpl_read(plist->file);
 			if(plist->part == NULL)
-				KS_error("Error en PList_next: No se pudo obtener particula");
+				KS_error("Error in PList_next: Could not get particle");
 		}
 		if(plist->part->weight > 0) return ret;
 	}
-	KS_error("Error en PList_next: MAX_RESAMPLES alcanzado");
+	KS_error("Error in PList_next: MAX_RESAMPLES reached.");
+	return 1;
 }
 
 void PList_destroy(PList* plist){

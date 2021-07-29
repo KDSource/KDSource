@@ -1,8 +1,25 @@
+#ifndef KSOURCE_H
+#define KSOURCE_H
+
 #include<stdio.h>
 #include<stdlib.h>
 
-#ifndef KSOURCE_H
-#define KSOURCE_H
+/***********************************************************************************/
+/*                                                                                 */
+/*  KSource: KDE particle sources                                                  */
+/*                                                                                 */
+/*  Utilities for sampling particles from a KDE source. KSource sources use        */
+/*  particle lists in MCPL format, and apply on them the Kernel Density Estimation */
+/*  (KDE) method. This allows coupling different Monte Carlo radiation transport   */
+/*  simulations, and gives variance reduction.                                     */
+/*                                                                                 */
+/*  Find more information and updates at https://github.com/inti-abbate/KSource    */
+/*                                                                                 */
+/*  This file can be freely used as per the terms in the LICENSE file.             */
+/*                                                                                 */
+/*  Written by Osiris Inti Abbate, 2021.                                           */
+/*                                                                                 */
+/***********************************************************************************/
 
 #include "mcpl.h"
 
@@ -33,9 +50,9 @@ void KS_destroy(KSource* ks);
 struct MultiSource{
 	int len;
 	KSource** s;
-	double J; // Corriente total
-	double* ws; // Pesos de cada fuente
-	double* cdf; // cdf de los pesos de fuentes
+	double J;    // Total current [1/s]
+	double* ws;  // Weights of each source
+	double* cdf; // cdf of sources weights
 };
 
 MultiSource* MS_create(int len, KSource** s, const double* ws);

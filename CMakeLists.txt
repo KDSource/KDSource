@@ -3,10 +3,7 @@
 #                                                                                #
 # CMake file to be used to install KSource distribution.                         #
 #                                                                                #
-# See INSTALL.txt file for installation instructions, or simply execute:         #
-#                                                                                #
-#  $> cmake /path/to/sourcedir -DCMAKE_INSTALL_PREFIX=/path/to/installdir        #
-#  $> make install                                                               #
+# See README.md file for installation instructions.                              #
 #                                                                                #
 # Written 2021 by O. I. Abbate.                                                  #
 #                                                                                #
@@ -38,10 +35,10 @@ add_library(ksource SHARED "${SRC}/ksource/ksource.c"
 target_include_directories(ksource PUBLIC "${SRC}/ksource" "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(ksource PUBLIC m LibXml2::LibXml2 mcpl)
 install(TARGETS ksource DESTINATION lib)
-install(FILES "${SRC}/ksource/ksource.c"
-              "${SRC}/ksource/plist.c"
-              "${SRC}/ksource/geom.c"
-              "${SRC}/ksource/utils.c"
+install(FILES "${SRC}/ksource/ksource.h"
+              "${SRC}/ksource/plist.h"
+              "${SRC}/ksource/geom.h"
+              "${SRC}/ksource/utils.h"
               DESTINATION include)
 
 install(PROGRAMS "${SRC}/kstool/kstool.sh" DESTINATION bin RENAME kstool)
@@ -52,6 +49,8 @@ install(TARGETS kstool-resample DESTINATION bin)
 
 add_subdirectory(tests)
 
+install(DIRECTORY docs examples mcstas templates DESTINATION .)
+
 if (INSTALL_PY)
-  install(DIRECTORY "python/ksource" DESTINATION python)
+	install(DIRECTORY "python/ksource" DESTINATION python)
 endif()

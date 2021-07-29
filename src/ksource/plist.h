@@ -1,28 +1,40 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
-
-#include "mcpl.h"
-
 #ifndef PLISTS_H
 #define PLISTS_H
+
+#include<stdio.h>
+#include<stdlib.h>
+
+#include<math.h>
+
+/***********************************************************************************/
+/*                                                                                 */
+/*  Utilities for particle lists handling for KSource.                             */
+/*                                                                                 */
+/*  This file can be freely used as per the terms in the LICENSE file.             */
+/*                                                                                 */
+/*  Written by Osiris Inti Abbate, 2021.                                           */
+/*                                                                                 */
+/***********************************************************************************/
+
+#include "mcpl.h"
 
 
 #define MAX_SEARCH 1E5
 #define LINE_MAX_LEN 1024
 #define NAME_MAX_LEN 256
 
+
 typedef struct PList{
-	char pt; // Tipo de particula (n, p, ...)
+	char pt;                     // Particle type ("n", "p", "e", ...)
 
-	char* filename; // Nombres de archivos de tracks (unico o uno por variable)
-	mcpl_file_t file; // Archivos de tracks (unico o uno por variable)
+	char* filename;              // Name of MCPL file
+	mcpl_file_t file;            // MCPL file
 
-	double* trasl; // Traslacion a aplicar
-	double* rot; // Rotacion a aplicar
-	int x2z; // Si es true, se aplica permutacion x,y,z -> y,z,x
+	double* trasl;               // PList translation
+	double* rot;                 // PList rotation
+	int x2z;                     // If true, apply permutation x,y,z -> y,z,x
 
-	const mcpl_particle_t* part; // Puntero a la particula seleccionada
+	const mcpl_particle_t* part; // Pointer to selected particle
 } PList;
 
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z);

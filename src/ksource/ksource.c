@@ -1,7 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<math.h>
 #include<string.h>
+
+#include<math.h>
 #include<libxml/parser.h>
 
 #include "ksource.h"
@@ -31,7 +32,7 @@ KSource* KS_open(const char* filename){
 	double J;
 	char *buf;
 
-	char pt;	
+	char pt;    
 	char mcplfile[NAME_MAX_LEN];
 	double *trasl_plist=NULL, *rot_plist=NULL;
 
@@ -41,47 +42,47 @@ KSource* KS_open(const char* filename){
 	char* bwfilename=NULL;
 	double bw=0;
 
-	// Leer archivo
+	// Read file
 	printf("Reading xmlfile %s...\n", filename);
-    xmlDocPtr doc = xmlReadFile(filename, NULL, 0);
+	xmlDocPtr doc = xmlReadFile(filename, NULL, 0);
 	if(doc == NULL){
-		printf("No se pudo abrir archivo %s\n", filename);
-		KS_error("Error en KS_open");
+		printf("Could not open file %s\n", filename);
+		KS_error("Error in KS_open");
 	}
-    xmlNodePtr root = xmlDocGetRootElement(doc);
-	if(strcmp(root->name, "KSource") != 0){
-		printf("Formato de archivo de fuente %s invalido\n", filename);
-		KS_error("Error en KS_open");
+	xmlNodePtr root = xmlDocGetRootElement(doc);
+	if(strcmp((char*)root->name, "KSource") != 0){
+		printf("Invalid format in source XML file %s\n", filename);
+		KS_error("Error in KS_open");
 	}
-    xmlNodePtr node = root->children; // Nodo: J
-	sscanf(xmlNodeGetContent(node), "%lf", &J); // Leer J
+	xmlNodePtr node = root->children; // Node: J
+	sscanf((char*)xmlNodeGetContent(node), "%lf", &J); // Read J
 
 	// PList
 	xmlNodePtr pltree = node->next;
-	node = pltree->children; // Nodo: pt
-	sscanf(xmlNodeGetContent(node), "%c", &pt); // Leer pt
-	node = node->next; // Nodo: mcplname
-	if(strlen(xmlNodeGetContent(node)) > NAME_MAX_LEN){
-		printf("mcpl file name %s exceeds NAME_MAX_LEN=%d", xmlNodeGetContent(node), NAME_MAX_LEN);
-		KS_error("Error en KS_open");
+	node = pltree->children; // Node: pt
+	sscanf((char*)xmlNodeGetContent(node), "%c", &pt); // Read pt
+	node = node->next; // Node: mcplname
+	if(strlen((char*)xmlNodeGetContent(node)) > NAME_MAX_LEN){
+		printf("mcpl file name %s exceeds NAME_MAX_LEN=%d", (char*)xmlNodeGetContent(node), NAME_MAX_LEN);
+		KS_error("Error in KS_open");
 	}
-	strcpy(mcplfile, xmlNodeGetContent(node)); // Leer nombre de archivo mcpl
-	node = node->next; // Nodo: trasl
-	if(strlen(xmlNodeGetContent(node)) > 1){
+	strcpy(mcplfile, (char*)xmlNodeGetContent(node)); // Read mcpl file name
+	node = node->next; // Node: trasl
+	if(strlen((char*)xmlNodeGetContent(node)) > 1){
 		trasl_plist = (double*)malloc(3 * sizeof(double));
-		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
+		sscanf((char*)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
 	}
-	node = node->next; // Nodo: rot
-	if(strlen(xmlNodeGetContent(node)) > 1){
+	node = node->next; // Node: rot
+	if(strlen((char*)xmlNodeGetContent(node)) > 1){
 		rot_plist = (double*)malloc(3 * sizeof(double));
-		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
+		sscanf((char*)xmlNodeGetContent(node), "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
 	}
-	node = node->next; // Nodo: x2z
-	sscanf(xmlNodeGetContent(node), "%d", &switch_x2z); // Leer switch_x2z
+	node = node->next; // Node: x2z
+	sscanf((char*)xmlNodeGetContent(node), "%d", &switch_x2z); // Read switch_x2z
 
 	// Geometry
 	xmlNodePtr gtree = pltree->next;
-	sscanf(xmlGetProp(gtree, "order"), "%d", &order); // Leer order
+	sscanf((char*)xmlGetProp(gtree, (const xmlChar*)"order"), "%d", &order); // Read order
 	int dims[order], nps[order];
 	char metricnames[order][NAME_MAX_LEN];
 	double *params[order];
@@ -89,54 +90,54 @@ KSource* KS_open(const char* filename){
 	PerturbFun perturbs[order];
 	xmlNodePtr mtree = gtree->children;
 	for(i=0; i<order; i++){
-		strcpy(metricnames[i], mtree->name); // Leer metricname
-		node = mtree->children; // Nodo: dim
-		sscanf(xmlNodeGetContent(node), "%d", &dims[i]); // Leer dim
+		strcpy(metricnames[i], (char*)mtree->name); // Read metricname
+		node = mtree->children; // Node: dim
+		sscanf((char*)xmlNodeGetContent(node), "%d", &dims[i]); // Read dim
 		scalings[i] = (double*)malloc(dims[i]*sizeof(double));
-		node = node->next; // Nodo: params
-		sscanf(xmlGetProp(node,"nps"), "%d", &nps[i]); // Leer ngp
+		node = node->next; // Node: params
+		sscanf((char*)xmlGetProp(node,(const xmlChar*)"nps"), "%d", &nps[i]); // Read ngp
 		params[i] = (double*)malloc(nps[i]*sizeof(double));
-		buf = xmlNodeGetContent(node);
-		for(j=0; j<nps[i]; j++){ // Leer params
+		buf = (char*)xmlNodeGetContent(node);
+		for(j=0; j<nps[i]; j++){ // Read params
 			sscanf(buf, "%lf %n", &params[i][j], &n);
 			buf += n;
 		}
 		mtree = mtree->next;
 	}
-	node = mtree; // Nodo: trasl
-	if(strlen(xmlNodeGetContent(node)) > 1){
+	node = mtree; // Node: trasl
+	if(strlen((char*)xmlNodeGetContent(node)) > 1){
 		trasl_geom = (double*)malloc(3 * sizeof(double));
-		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &trasl_geom[0], &trasl_geom[1], &trasl_geom[2]);
+		sscanf((char*)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_geom[0], &trasl_geom[1], &trasl_geom[2]);
 	}
-	node = node->next; // Nodo: rot
-	if(strlen(xmlNodeGetContent(node)) > 1){
+	node = node->next; // Node: rot
+	if(strlen((char*)xmlNodeGetContent(node)) > 1){
 		rot_geom = (double*)malloc(3 * sizeof(double));
-		sscanf(xmlNodeGetContent(node), "%lf %lf %lf", &rot_geom[0], &rot_geom[1], &rot_geom[2]);
+		sscanf((char*)xmlNodeGetContent(node), "%lf %lf %lf", &rot_geom[0], &rot_geom[1], &rot_geom[2]);
 	}
-	node = gtree->next; // Nodo: scaling
-	buf = xmlNodeGetContent(node);
-	for(i=0; i<order; i++){ // Leer scalings
+	node = gtree->next; // Node: scaling
+	buf = (char*)xmlNodeGetContent(node);
+	for(i=0; i<order; i++){ // Read scalings
 		for(j=0; j<dims[i]; j++){
 			sscanf(buf, "%lf %n", &scalings[i][j], &n);
 			buf += n;
 		}
 	}
-	node = node->next; // Nodo: BW
-	sscanf(xmlGetProp(node,"variable"), "%d", &variable_bw); // Leer variable_bw
+	node = node->next; // Node: BW
+	sscanf((char*)xmlGetProp(node,(const xmlChar*)"variable"), "%d", &variable_bw); // Read variable_bw
 	if(variable_bw){
 		bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
-		if(strlen(xmlNodeGetContent(node)) > NAME_MAX_LEN){
-			printf("BW file name %s exceeds NAME_MAX_LEN=%d", xmlNodeGetContent(node), NAME_MAX_LEN);
-			KS_error("Error en KS_open");
+		if(strlen((char*)xmlNodeGetContent(node)) > NAME_MAX_LEN){
+			printf("BW file name %s exceeds NAME_MAX_LEN=%d", (char*)xmlNodeGetContent(node), NAME_MAX_LEN);
+			KS_error("Error in KS_open");
 		}
-		strcpy(bwfilename, xmlNodeGetContent(node)); // Leer nombre de archivo de bw
+		strcpy(bwfilename, (char*)xmlNodeGetContent(node)); // Read BW file name
 	}
 	else
-		sscanf(xmlNodeGetContent(node), "%lf", &bw); // Leer BW
+		sscanf((char*)xmlNodeGetContent(node), "%lf", &bw); // Read BW
 
-	// Crear PList
+	// Create PList
 	PList* plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);
-	// Crear Metric
+	// Create Metric
 	for(i=0; i<order; i++){
 		for(j=0; j<_n_metrics; j++){
 			if(strcmp(metricnames[i], _metric_names[j]) == 0){
@@ -145,25 +146,25 @@ KSource* KS_open(const char* filename){
 			}
 		}
 		if(j == _n_metrics){
-			printf("Metrica %s invalida\n", metricnames[i]);
-			KS_error("Error en KS_open");
+			printf("Invalid %s metric.\n", metricnames[i]);
+			KS_error("Error in KS_open");
 		}
 	}
 	Metric* metrics[order];
 	for(i=0; i<order; i++) metrics[i] = Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
 	Geometry* geom = Geom_create(order, metrics, bw, bwfilename, trasl_geom, rot_geom);
-	// Crear KSource
+	// Create KSource
 	KSource* s = KS_create(J, plist, geom);
 
-	printf("Done\n");
+	printf("Done.\n");
 
-	// Liberar variables alocadas
+	// Free allocated variables
 	free(trasl_plist); free(rot_plist);
 	free(trasl_geom); free(rot_geom);
 	free(bwfilename);
 	for(i=0; i<order; i++){ free(params[i]); free(scalings[i]); }
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
 
 	return s;
 }
@@ -175,27 +176,27 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 		ret += PList_next(ks->plist, loop);
 		ret += Geom_next(ks->geom, loop);
 	}
-	else{ // Normalizo w a 1
+	else{ // Normalize w to 1
 		double bs;
 		int resamples = 0;
 		while(1){
 			PList_get(ks->plist, part);
 			if(bias) bs = bias(part);
 			else bs = 1;
-			if(part->weight*bs > w_crit){ // Si w*bs>w_crit, uso w_crit/w*bs como prob de avanzar en la lista
+			if(part->weight*bs > w_crit){ // If w*bs>w_crit, use w_crit/w*bs as prob of going forward in list
 				if(rand() < w_crit/(part->weight*bs)*RAND_MAX){
 					ret += PList_next(ks->plist, loop);
 					ret += Geom_next(ks->geom, loop);
 				}
 				break;
 			}
-			else{ // Si w*bs<w_crit, uso w*bs/w_crit como prob de tomar la particula
+			else{ // If w*bs<w_crit, use w*bs/w_crit as prob of taking particle
 				ret += PList_next(ks->plist, loop);
 				ret += Geom_next(ks->geom, loop);
 				if(rand() < (part->weight*bs)/w_crit*RAND_MAX) break;
 			}
 			if(resamples++ > MAX_RESAMPLES)
-				KS_error("Error en KS_sample: MAX_RESAMPLES alcanzado");
+				KS_error("Error in KS_sample: MAX_RESAMPLES reached.");
 		}
 		part->weight = 1/bs;
 	}

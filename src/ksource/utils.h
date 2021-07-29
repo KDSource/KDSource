@@ -1,8 +1,18 @@
+#ifndef AUX_H
+#define AUX_H
+
 #include<stdio.h>
 #include<stdlib.h>
 
-#ifndef AUX_H
-#define AUX_H
+/***********************************************************************************/
+/*                                                                                 */
+/*  General utilities for KSource.                                                 */
+/*                                                                                 */
+/*  This file can be freely used as per the terms in the LICENSE file.             */
+/*                                                                                 */
+/*  Written by Osiris Inti Abbate, 2021.                                           */
+/*                                                                                 */
+/***********************************************************************************/
 
 
 double rand_norm();

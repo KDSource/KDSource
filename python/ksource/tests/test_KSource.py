@@ -8,7 +8,7 @@ from ksource import KSource
 
 @pytest.mark.parametrize("number", [1])
 def test_test(number):
-	assert number == 1
+	print("Python tests still not implemented.")
 
 if __name__ == "__main__":
     # --durations=10  <- May be used to show potentially slow tests

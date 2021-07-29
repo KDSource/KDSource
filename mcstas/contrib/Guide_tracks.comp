@@ -5,36 +5,71 @@
 *         Risoe National Laboratory, Roskilde, Denmark
 *         Institut Laue Langevin, Grenoble, France
 *
-* Component: McStas2Distrib_guide
+* Component: Guide_tracks
 *
 * %I
-* Written by: 
-* Date: 
-* Origin: 
+* Written by: Osiris Inti Abbate
+* Date: Ago 2021
+* Origin: Balseiro Institute
 *
-* Neutron guide.
+* Neutron guide that records leakages in a MCPL-format virtual-source file.
 *
 * %D
-* Models a rectangular guide tube centered on the Z axis. The entrance lies
-* in the X-Y plane.
-* For details on the geometry calculation see the description in the McStas
-* reference manual.
-* The reflectivity profile may either use an analytical mode (see Component
-* Manual) or a 2-columns reflectivity free text outfile with format
-* [q(Angs-1) R(0-1)].
+* Neutron guide that, while it propagates neutrons in its interior, writes
+* state parameters of non-reflected neutrons (leakages) into an mcpl-format
+* binary, virtual-source neutron file. The resulting particle list can be
+* used, for example, for a shielding calculation outside the guide.
+* 
+* Guide mirrors parameters can be different for each one, and the guide can be
+* curved. Guide curvature, however, is modelling internally, preserving an
+* artificial straight geometry in the simulation. Curvature is always towards
+* negative x. Use a component rotation of 180 deg. to model curvature towards
+* positive x.
 *
-* Example: McStas2Distrib_guide(...)
+* Example: Guide_tracks(pt="n", filename="leakages.mcpl",
+	xwidth=7, yheight=20, length=300)
 *
 * %VALIDATION
 *
 * %BUGS
-* This component does not work with gravitation on. Use component Guide_gravity then.
 *
 * %P
 * INPUT PARAMETERS:
+* 
+* pt:      [str]   Particle type. "n" for neutron (default), "p" for photon.
+* filename:[str]   Name of MCPL file to write. If not given, the component name will be used to create one.
+* xwidth:  [cm]    Width of the guide (same at entry and exit).
+* yheight: [cm]    Height of the guide (same at entry and exit).
+* length:  [cm]    Length of the guide.
+* rcurv:   [cm]    Curvature radius of the guide.
+* R0:      [1]     Low-angle reflectivity. Overrides values for all mirrors.
+* Qc:      [AA-1]  Critical scattering vector. Overrides values for all mirrors.
+* alpha:   [AA]    Slope of reflectivity. Overrides values for all mirrors.
+* m:       [1]     m-value of material. Zero means completely absorbing. Overrides values for all mirrors.
+* W:       [AA-1]  Width of supermirror cut-off. Overrides values for all mirrors.
+* R0_1:    [1]     Low-angle reflectivity, for positive x mirror.
+* Qc_1:    [AA-1]  Critical scattering vector, for positive x mirror.
+* alpha_1: [AA]    Slope of reflectivity, for positive x mirror.
+* m_1:     [1]     m-value of material. Zero means completely absorbing, for positive x mirror.
+* W_1 :    [AA-1]  Width of supermirror cut-off, for positive x mirror.
+* R0_2:    [1]     Low-angle reflectivity, for positive y mirror.
+* Qc_2:    [AA-1]  Critical scattering vector, for positive y mirror.
+* alpha_2: [AA]    Slope of reflectivity, for positive y mirror.
+* m_2:     [1]     m-value of material. Zero means completely absorbing, for positive y mirror.
+* W_2:     [AA-1]  Width of supermirror cut-off, for positive y mirror.
+* R0_3:    [1]     Low-angle reflectivity, for negative x mirror.
+* Qc_3:    [AA-1]  Critical scattering vector, for negative x mirror.
+* alpha_3: [AA]    Slope of reflectivity, for negative x mirror.
+* m_3:     [1]     m-value of material. Zero means completely absorbing, for negative x mirror.
+* W_3:     [AA-1]  Width of supermirror cut-off, for negative x mirror.
+* R0_4:    [1]     Low-angle reflectivity, for negative y mirror.
+* Qc_4:    [AA-1]  Critical scattering vector, for negative y mirror.
+* alpha_4: [AA]    Slope of reflectivity, for negative y mirror.
+* m_4:     [1]     m-value of material. Zero means completely absorbing, for negative y mirror.
+* W_4:     [AA-1]  Width of supermirror cut-off, for negative y mirror.
+* reflect: [str]   Reflectivity file name. Format <q(Angs-1) R(0-1)>
 *
 * %D
-* Example values: m=4 Qc=0.0219 W=1/300 alpha=6.49 R0=1
 *
 * %E
 *******************************************************************************/
@@ -66,7 +101,7 @@ DECLARE
 	int N;
 	mcpl_particle_t* part;
 
-	t_Table pTable; // Tabla de reflectividad
+	t_Table pTable; // Reflectivity table
 %}
 
 INITIALIZE
@@ -82,7 +117,7 @@ INITIALIZE
 
 	if(!rcurv || rcurv==INFINITY) rcurv = 0;
 
-	// Espejos iguales entre si
+	// Equal parameters for all mirrors
 	if(R0 != 0){R0_1=R0; R0_2=R0; R0_3=R0; R0_4=R0;}
 	if(Qc != 0){Qc_1=Qc; Qc_2=Qc; Qc_3=Qc; Qc_4=Qc;}
 	if(alpha != 0){alpha_1=alpha; alpha_2=alpha; alpha_3=alpha; alpha_4=alpha;}
@@ -96,8 +131,8 @@ TRACE
 	int im;                                                 /* Which mirror hit? */
 	double weight;                                          /* Internal probability weight */
 	double q;                                               /* Q [1/AA] of reflection */
-	// Variables en mayusculas representan variables absolutas, modelando a la guia como curvada
-	// Variables en minusculas representan variables modificadas para enderezar la guia
+	// Uppercase variables represent absolute variables, modelling the guide as curved
+	// Lowercase variables represent variables modified to straighten the guide
 	double a, b, c, X, Y, Z, VX, VY, VZ;
 	
 	PROP_Z0; /* Propagate neutron to guide entrance. */
@@ -106,7 +141,7 @@ TRACE
 
 	while(1){
 		
-		// Determinar posicion y velocidad absolutas
+		// Determine absolute position and velocity
 		if(rcurv == 0){
 			X = x; Y = y; Z = z;
 			VX = vx; VY = vy; VZ = vz;
@@ -116,14 +151,14 @@ TRACE
 			VX = vx*cos(z/rcurv)-vz*sin(z/rcurv); VY = vy; VZ = vx*sin(z/rcurv)+vz*cos(z/rcurv);
 		}
 
-		// Determinar tiempo de interseccion y cual espejo impacta
+		// Determine intersection time and which mirror hit
 		if(rcurv == 0) t1 = (length - Z)/VZ;
 		else t1 = ((rcurv+X)*tan(length/rcurv)-Z)/(VZ-VX*tan(length/rcurv));
 		im = -1;
 		if(rcurv == 0){
-			if(vx > 0 && (t2 = (xwidth/2.-x)/vx) < t1){t1 = t2; im = 0;} // Positive x mirror
-			if(vy > 0 && (t2 = (yheight/2.-y)/vy) < t1){t1 = t2; im = 1;} // Positive y mirror
-			if(vx < 0 && (t2 = (x+xwidth/2.)/(-vx)) < t1){t1 = t2; im = 2;} // Negative x mirror
+			if(vx > 0 && (t2 = (xwidth/2.-x)/vx) < t1){t1 = t2; im = 0;}     // Positive x mirror
+			if(vy > 0 && (t2 = (yheight/2.-y)/vy) < t1){t1 = t2; im = 1;}    // Positive y mirror
+			if(vx < 0 && (t2 = (x+xwidth/2.)/(-vx)) < t1){t1 = t2; im = 2;}  // Negative x mirror
 			if(vy < 0 && (t2 = (y+yheight/2.)/(-vy)) < t1){t1 = t2; im = 3;} // Negative y mirror
 		}
 		else{
@@ -135,7 +170,7 @@ TRACE
 			if(VY < 0 && (t2 = (Y + yheight/2)/(-VY)) < t1){ t1 = t2; im = 3; } // Negative y mirror
 		}
 
-		// Propagar hasta interseccion
+		// Propagate until intersection
 		if(rcurv == 0) PROP_DT(t1);
 		else{
 			x = sqrt((rcurv+X+VX*t1)*(rcurv+X+VX*t1) + (Z+VZ*t1)*(Z+VZ*t1)) - rcurv;
@@ -147,7 +182,7 @@ TRACE
 		}
 		if(im == -1) break;                    /* Neutron left guide. */
 
-		// Determinar nueva posicion y velocidad absolutas
+		// Determine new absolute position and velocity
 		if(rcurv == 0){
 			X = x; Y = y; Z = z;
 			VX = vx; VY = vy; VZ = vz;
@@ -157,7 +192,7 @@ TRACE
 			VX = vx*cos(z/rcurv)-vz*sin(z/rcurv); VY = vy; VZ = vx*sin(z/rcurv)+vz*cos(z/rcurv);
 		}
 
-		// Registrar neutron antes de reflexion
+		// Record neutron parameters before reflection
 		double V2 = (VX*VX + VY*VY + VZ*VZ);
 		double E = 1e-9 * VS2E * V2;
 		double V = sqrt(V2);
@@ -165,39 +200,39 @@ TRACE
 		part->position[0] = X*100.0; part->position[1] = Y*100.0; part->position[2] = Z*100.0;
 		part->direction[0] = VX/V; part->direction[1] = VY/V; part->direction[2] = VZ/V;
 
-		// Reflejar en el espejo im
+		// Reflect in im mirror
 		switch(im){
-		  	case 0:                   // Positive x mirror
-		  		vx = -vx;
-		    	q = V2Q*2*vx;
+			case 0:                   // Positive x mirror
+				vx = -vx;
+				q = V2Q*2*vx;
 				weight = 1.0;
 				if(reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) TableReflecFunc(q, &pTable, &weight);
 				else{double par[] = {R0_1, Qc_1, alpha_1, m_1, W_1}; StdReflecFunc(q, par, &weight);}
 				break;
-		  	case 1:                   // Positive y mirror
-		  		vy = -vy;
-		    	q = V2Q*2*vy;
+			case 1:                   // Positive y mirror
+				vy = -vy;
+				q = V2Q*2*vy;
 				weight = 1.0;
 				if(reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) TableReflecFunc(q, &pTable, &weight);
 				else{double par[] = {R0_2, Qc_2, alpha_2, m_2, W_2}; StdReflecFunc(q, par, &weight);}
-		    	break;
-		  	case 2:                   // Negative x mirror
-		  		vx = -vx;
-		    	q = V2Q*2*(-vx);
+				break;
+			case 2:                   // Negative x mirror
+				vx = -vx;
+				q = V2Q*2*(-vx);
 				weight = 1.0;
 				if(reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) TableReflecFunc(q, &pTable, &weight);
 				else{double par[] = {R0_3, Qc_3, alpha_3, m_3, W_3}; StdReflecFunc(q, par, &weight);}
-		    	break;
-		  	case 3:                   // Negative y mirror
-		  		vy = -vy;
-		    	q = V2Q*2*(-vy);
+				break;
+			case 3:                   // Negative y mirror
+				vy = -vy;
+				q = V2Q*2*(-vy);
 				weight = 1.0;
 				if(reflect && strlen(reflect) && strcmp(reflect,"NULL") && strcmp(reflect,"0")) TableReflecFunc(q, &pTable, &weight);
 				else{double par[] = {R0_4, Qc_4, alpha_4, m_4, W_4}; StdReflecFunc(q, par, &weight);}
-		    	break;
+				break;
 		}
 
-		// Registrar peso estadistico no reflejado y guardar
+		// Record non reflected statistic weight and save
 		part->weight = p*(1-weight);
 		double dir2 = part->direction[0]*part->direction[0]+part->direction[1]*part->direction[1]+part->direction[2]*part->direction[2];
 		if(dir2 != 1){
@@ -212,7 +247,7 @@ TRACE
 		N++;
 
 
-		// Actualizar peso reflejado
+		// Update reflected weight
 		if(weight==0) ABSORB;
 		p *= weight;
 		SCATTER;
@@ -232,11 +267,11 @@ FINALLY
 MCDISPLAY
 %{
 	multiline(5,
-    	-xwidth/2.0, -yheight/2.0, 0.0,
-    	 xwidth/2.0, -yheight/2.0, 0.0,
-    	 xwidth/2.0,  yheight/2.0, 0.0,
-    	-xwidth/2.0,  yheight/2.0, 0.0,
-    	-xwidth/2.0, -yheight/2.0, 0.0);
+		-xwidth/2.0, -yheight/2.0, 0.0,
+		 xwidth/2.0, -yheight/2.0, 0.0,
+		 xwidth/2.0,  yheight/2.0, 0.0,
+		-xwidth/2.0,  yheight/2.0, 0.0,
+		-xwidth/2.0, -yheight/2.0, 0.0);
 	multiline(5,
 		-xwidth/2.0, -yheight/2.0, (double)length,
 		 xwidth/2.0, -yheight/2.0, (double)length,

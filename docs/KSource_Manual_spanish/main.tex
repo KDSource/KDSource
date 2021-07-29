@@ -1,0 +1,49 @@
+\documentclass{article}
+
+% Paquetes esenciales
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{graphicx}
+\usepackage{amssymb, amsmath}
+\usepackage{textcomp}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage[bookmarks]{hyperref}
+\usepackage[titletoc]{appendix}
+
+% Paquetes opcionales
+
+
+% Título
+\title{\textbf{KSource: Fuentes de partículas por \emph{Kernel Density Estimation}} \vspace{4mm} }
+\author{
+    \textbf{Osiris Inti Abbate} \vspace{2mm} \\
+    \textit{Instituto Balseiro, UNCuyo - CNEA}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+KSource es una herramiente que asiste cálculos de blindajes por Monte Carlo con reducción de varianza. Procesa listas de partículas capturadas en posiciones intermedias, estima su distribución por el método \emph{Kernel Density Estimation}, y produce nuevas partículas respetando la densidad estimada. Esto permite producir más partículas que las presentes en la lista original, sin repeticiones.
+
+\end{abstract}
+
+\input{1-intro}
+
+\input{2-desarrollo}
+
+\appendix
+
+\input{anexo}
+
+\begin{thebibliography}{9}
+
+	\bibitem{cita} N. M. Apellido, ``Título del artículo'', \textit{Título Revista}, vol. 1, pp. 20-25, Mes Año
+
+\end{thebibliography}
+
+\end{document}

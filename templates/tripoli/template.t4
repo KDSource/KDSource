@@ -1,81 +1,84 @@
-// Data file para TRIPOLI-4
+// Data file for TRIPOLI-4
 
-// *: Elegir una o mas opciones
-// #: Elegir entre opciones excluyentes
-// <KWORD>: Remplazar con keyword
+// *: Choose one or more options
+// #: Choose between exclusionary options
+// <KWORD>: Replace with keyword
 
-// Definir geometria del problema
+// Define problem geometry
 GEOMETRY
 	TITLE title
-*	TYPE num(type) // Elemento geometrico a ser usado en definicion combinatoria de volumen
+*   TYPE num(type) // Geometric element to be used in combinatory definition of volume
 		Definition for type num(type)
 	...
-*	SURF num(surf ) // Superficie a ser usada para construir volumen
+*   SURF num(surf ) // Surface to be used to build volume
 		Definition for surface num(surf )
 	...
-	VOLU num(volu) // Volumenes del problema
+	VOLU num(volu) // Problem volumes
 		Definition for volume num(volu)
 	ENDV
 	...
-	POSITION x y z // Devuelve volumen al que pertenece (x,y,z)
+	POSITION x y z // Returns volume which (x,y,z) belongs to
 	COLOR
 		Colormap
-	GRAPH
-		Data on 2D-cut
+	GRAPH // Graph on 2D cut. It is recommended to plot tally regions
+		x0 y0 z0
+		0 0 1 1 0 0
+		Lz Lx
+		4 // Show plot and save as .ps
 ENDGEOM
 
-// Asignar valores de area o volumen
+// Assign area or volume values
 VOLSURF
-*	SURFACE nb(surfaces)
+*   SURFACE nb(surfaces)
 		numvol 1 (1) numvol 2 (1) surface(1)
 		...
 		numvol 1 (n) numvol 2 (n) surface(n)
-*	VOLUME nb(volumes)
+*   VOLUME nb(volumes)
 		numvol(1) volume(1)
 		...
 		numvol(n) volume(n)
 END_VOLSURF
 
-// Condiciones de contorno. Default: escape
+// Boundary conditions. Default: leakage
 BOUNDARY_CONDITION nb(conditions)
-	num(vol1)	<TYPE_CONDITION>
+	num(vol1)   <TYPE_CONDITION>
 	num(face1)
 	...
-	num(voln)	<TYPE_CONDITION>
+	num(voln)   <TYPE_CONDITION>
 	num(facen)
 END BOUNDARY_CONDITION
 
-// Composiciones (materiales) presentes en el problema
+// Compositions (materials) present in the problem
 COMPOSITION nb(compositions)
-*	FILE
+*   FILE
 		<ELECTRONIC_PROPERTIES>
 		temperature name(compo)
 		filename
-*	POINT_WISE
+*   POINT_WISE
 		<ELECTRONIC_PROPERTIES>
 		temperature name(compo)
 		Composition data
 		...
-*	DENSITY
+*   DENSITY
 		<ELECTRONIC_PROPERTIES>
 		temperature name(compo)
 		Composition data
 		...
-*	MULTIGROUP_HOMOGENEOUS
+*   MULTIGROUP_HOMOGENEOUS
 		temperature name(compo)
 		Composition data
 		...
-*	MULTIGROUP
+*   MULTIGROUP
 		temperature name(compo)
 		Composition data
 		...
-*	MULTIGROUP_DENSITY
+*   MULTIGROUP_DENSITY
 		temperature name(compo)
 		Composition data
 		...
 END_COMPOSITION
 
-// Asignacion de composicion a cada volumen
+// Assign compositions to volumes
 GEOMCOMP
 	name-compo(1) nb-volu(1)
 		volu(1). . . volu[nb-volu(1)]
@@ -84,19 +87,25 @@ GEOMCOMP
 		volu(1). . . volu[nb-volu(n)]
 END_GEOMCOMP
 
-// Fuentes (puntual, factoriz o ext) del problema
+// Sources (puntual, factoriz o ext) in the problem
 SOURCES_LIST nb(sources)
 	NORM norm(list)
 	SOURCE
 		Description of first source
-	END SOURCES
+	...
+	SOURCE // External source
+		INTENSITY 1
+		ALL_PARTICLE
+		EXTERNAL source.so
+			PARAM 2
+				BATCH, SIZE
 	...
 	SOURCE
 		Description of last source
-	END SOURCES
+	END_SOURCES
 END_SOURCES_LIST
 
-// Variables fisicas a registrar
+// Physical magnitudes to record
 RESPONSES nb(responses)
 	NAME <name1>
 		<type1> <particle1>
@@ -107,7 +116,7 @@ RESPONSES nb(responses)
 		<additional data>
 END_RESPONSES
 
-// Grillas en energia, angulo y tiempo para registrar RESPONSES
+// Energy, angle and time grids to record RESPONSES
 GRID_LIST nb(grids)
 	name(grid 1 )
 		nb(bounds)
@@ -118,91 +127,58 @@ GRID_LIST nb(grids)
 		bound(1). . . bound(n)
 END_GRID_LIST
 
-// Definicion de zonas y grillas para registrar RESPONSES 
+// Definition of regions and grids to record RESPONSES 
 SCORE nb(scores)
-	Descriptions of scores
+	...
+	// Example score
+	NAME score_name
+		response_name
+		TRACK
+		GRID energy_grid_name
+		EXTENDED_MESH
+			WINDOW
+				x0 y0 z0
+				x1 y1 z1
+				Nx Ny Nz
+			FRAME CARTESIAN
+				0 0 0
+				1 0 0
+				0 1 0
+				0 0 1
+	...
 END_SCORE
 
-// Metodo para reduccion de varianza
-VARIANCE_REDUCTION
-	NAME <biasing name>
-	<PARTICLE_TYPE>
-	GRID
-		Grid data
-*1	DETECTOR
-		Discrete detector data
-*1	DETECT_RHO
-		Detection surface data (cylindrical)
-*2	MESH
-		Uniform mesh data
-	END_MESH
-*2	MESH_VARIABLE
-		Nonuniform mesh data
-	END_MESH_VARIABLE
-	INTERPOLATION flag
-	INIPOND
-		Biasing type data
-	END_INIPOND
-	ALFA
-		Energy biasing data
-	TIME
-		Time biasing data
-#	STORE_IN_FILE <format>
-#	USE_FILE <format> filename
-	GRAPH
-		Display data
-END_VARIANCE_REDUCTION
+// Record particle lists
+STORAGE nb(storage)
+	...
+	storage_name
+		LIMIT_SIZE 1024
+		NEUTRON
+		Emax Emin
+		FRONTIER LIST nb(frontier)
+			vol11 vol12
+			vol21 vol22
+			...
+	...
+END_STORAGE
 
-// Parametros de la simulacion
+// Simulation parameters
 SIMULATION
 	BATCH nb(batches)
 	SIZE nb(particles per batch)
-	CONVERGENCE precision factor
 	
 	PARTICLE nb(types of particles) <TYPE_OF_PARTICLES>
-	ENERGY_INF <TYPE_OF_PARTICLES 1> E_inf(1)
-	ENERGY_SUP <TYPE_OF_PARTICLES 1> E_sup(1)
-	TIME_INF <TYPE_OF_PARTICLES 1> T_inf(1)
-	TIME_SUP <TYPE_OF_PARTICLES 1> T_sup(1)
-	...
-	ENERGY_INF <TYPE_OF_PARTICLES n> E_inf(n)
-	ENERGY_SUP <TYPE_OF_PARTICLES n> E_sup(n)
-	TIME_INF <TYPE_OF_PARTICLES n> T_inf(n)
-	TIME_SUP <TYPE_OF_PARTICLES n> T_sup(n)
 	
-	EDITION frequency
-	VOLUMIC_SCORES
-	PACKET_LENGTH nb(batches per packet)
-	KEEP_RESULT
-	XML_EXPORT
-		XML_NOCOMPLETE
-	RANDOM Additional data
-	
-#	SHIELDING
-#	CRITICALITY
+#   SHIELDING
+#   CRITICALITY
 		DISCARD nb(batches to be eliminated)
 		KIJ_MATRIX
-#	FIXED_SOURCES_CRITICALITY
-#	MULTIPLE
+#   FIXED_SOURCES_CRITICALITY
+#   MULTIPLE
 	
-	MONITORING 0
-	TRANSPORT_BIASING
-*		CROSS_SPLIT
-*		QUOTA_SAMPLING
-	COLLISION 1 E_inf(coll)
+	MONITORING 0 // Avoid initial monitoring batch
 	
-	BETA_EFFECTIVE
-	PROMPT_FISSION_ONLY
-	
-	PHOTO_NUCLEAR
-	
-	PHOTON_NEUTRON_RATIO Additional data
-	ELECTRON_INELASTIC_CUTOFF Ec
-	ELECTRON_BREMS_CUTOFF Ec
-	NO_ELECTRON_MULTIPLE_SCATTERING
-	ELECTRON_TOTAL_STOPPING_POWER
-	ELECTRON_PHOTON_BALANCE
-	NO_ANOMALOUS_SCATTERING_FACTOR
-	
-	ALL_COLLIDED_FLUX_PT_POINTS
+	// Optional parameters
+	...
+
 END_SIMULATION

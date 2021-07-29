@@ -3,13 +3,13 @@
 KSDIR="$(dirname $(dirname "$0"))"
 
 display_usage(){
-	echo -e "Uso: kstool templates dest [opciones]\n"
-	echo -e "Copia a dest las plantillas para utilizar KSource desde Python, o"
-	echo -e "interactuar con otros codigos.\n"
-	echo -e "Opciones:"
-	echo -e "\t--mcstas:  copiar plantillas para utilizar McStas."
-	echo -e "\t--tripoli: copiar plantillas para utilizar TRIPOLI-4."
-	echo -e "\t--all:     copiar todas las plantillas."
+	echo -e "Usage: kstool templates dest [options]\n"
+	echo -e "Copy to dest templates for KSource usage in Python, or for interacting with"
+	echo -e "Monte Carlo codes.\n"
+	echo -e "Options:"
+	echo -e "\t--mcstas:  copy templates for using McStas."
+	echo -e "\t--tripoli: copy templates for using TRIPOLI-4."
+	echo -e "\t--all:     copy all templates."
 }
 
 opt_mcstas=0
@@ -39,7 +39,7 @@ while (( "$#" )); do
 				DEST="$1"
 				shift 1
 			else
-				echo "Argumentos invalidos. Use -h o --help para ayuda."
+				echo "Invalid arguments. Use -h or --help for help."
 				exit 1
 			fi
 			;;
@@ -47,23 +47,23 @@ while (( "$#" )); do
 done
 
 if [[ "$DEST" == "" ]]; then
-	echo "No se especifico destino. Use -h o --help para ayuda."
+	echo "No destiny. Use -h or --help for help."
 	exit 1
 fi
 if [ ! -d "$DEST" ]; then
-	echo "Creado directorio $DEST"
+	echo "Created $DEST directory"
 	mkdir "$DEST"
 else
-	echo "Usando directorio existente $DEST"
+	echo "Using existing $DEST directory"
 fi
 
 cp $KSDIR/templates/*.ipynb "$DEST"
-echo "Plantillas para preproc/postproc en Python (Jupyter Notebook) copiadas."
+echo "Copied templates for preproc/postproc in Python (Jupyter Notebook)."
 if [[ opt_mcstas -eq 1 ]]; then
 	cp $KSDIR/templates/mcstas/* "$DEST"
-	echo "Plantillas para McStas copiadas."
+	echo "Copied templates for McStas."
 fi 
 if [[ opt_tripoli -eq 1 ]]; then
- 	cp $KSDIR/templates/tripoli/* "$DEST"
-	echo "Plantillas para TRIPOLI-4 copiadas."
+	cp $KSDIR/templates/tripoli/* "$DEST"
+	echo "Copied templates for TRIPOLI-4."
 fi
