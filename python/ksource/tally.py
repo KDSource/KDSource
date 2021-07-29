@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
-import os
 from PIL import Image as Im
 
-from .plists import convert2mcpl,savessv,appendssv
+from .plist import convert2mcpl,savessv,appendssv
 
 
 def read_spectrum(spectrum=None):

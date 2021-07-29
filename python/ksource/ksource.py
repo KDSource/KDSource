@@ -2,15 +2,15 @@
 
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as col
-import os
 from KDEpy import TreeKDE
 
-from .plists import PList
-from .metrics import Geometry
+from .plist import PList
+from .geom import Geometry
 
 np.set_printoptions(precision=3)
 

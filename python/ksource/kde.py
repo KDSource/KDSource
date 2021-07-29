@@ -3,8 +3,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-np.set_printoptions(precision=3)
-
 from sklearn.neighbors import NearestNeighbors
 from sklearn.model_selection import KFold
 from KDEpy import TreeKDE

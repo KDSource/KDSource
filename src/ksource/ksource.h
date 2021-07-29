@@ -6,9 +6,10 @@
 
 #include "mcpl.h"
 
-#include "aux.h"
-#include "metrics.h"
-#include "plists.h"
+#include "KSourceConfig.h"
+#include "utils.h"
+#include "geom.h"
+#include "plist.h"
 
 
 typedef struct KSource KSource;

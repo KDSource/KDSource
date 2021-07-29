@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
-import os
 
 
 # Conversion entre tipo de part (char) y pdgcode

@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .plists import PList
+from .plist import PList
 from .tally import T4Tally
 
 def read_bashoutput(bashoutput, mccode):

@@ -1,12 +1,3 @@
-*.sublime-workspace
-
-# Python aux files
-**/.ipynb_checkpoints
-**/__pycache__
-*.pyc
-**/dist/
-/*.egg-info
-
 # Compiled Object files
 *.slo
 *.lo

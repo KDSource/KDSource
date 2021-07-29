@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from xml.etree import ElementTree as ET
+import os, subprocess
 
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.spatial.transform as st
-import os, subprocess
 import mcpl
 
-from .aux import pt2pdg,pdg2pt
+from .utils import pt2pdg,pdg2pt
 
 
 def convert2mcpl(filename, readformat):
@@ -32,7 +32,7 @@ def convert2mcpl(filename, readformat):
 		raise Exception("Formato {} invalido".format(readformat))
 	print("Converting {} file to MCPL...".format(readformat))
 	filename_mcpl = filename.split(".")[0]+".mcpl"
-	result = subprocess.run(["ksource", readformat+"2mcpl", filename, filename_mcpl],
+	result = subprocess.run(["kstool", readformat+"2mcpl", filename, filename_mcpl],
 							stdout=subprocess.PIPE,
 							stderr=subprocess.PIPE,
 							check=True) # if result.returncode != 0: raise exception
@@ -56,7 +56,7 @@ def join2mcpl(filenames, readformat):
 	joinedname = ''.join(joinedname)
 	if len(joinedname) == 0:
 		joinedname = "joined.mcpl.gz"
-	subprocess.run(["ksource", "mcpltool", joinedname, *mcplnames],
+	subprocess.run(["kstool", "mcpltool", joinedname, *mcplnames],
 				   check=True) # if result.returncode != 0: raise exception
 	return joinedname
 

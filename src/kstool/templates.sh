@@ -1,9 +1,9 @@
 #!/bin/bash
 
-KS="$(dirname $(dirname "$0"))"
+KSDIR="$(dirname $(dirname "$0"))"
 
 display_usage(){
-	echo -e "Uso: ksource templates dest [opciones]\n"
+	echo -e "Uso: kstool templates dest [opciones]\n"
 	echo -e "Copia a dest las plantillas para utilizar KSource desde Python, o"
 	echo -e "interactuar con otros codigos.\n"
 	echo -e "Opciones:"
@@ -57,13 +57,13 @@ else
 	echo "Usando directorio existente $DEST"
 fi
 
-cp $KS/templates/*.ipynb "$DEST"
+cp $KSDIR/templates/*.ipynb "$DEST"
 echo "Plantillas para preproc/postproc en Python (Jupyter Notebook) copiadas."
 if [[ opt_mcstas -eq 1 ]]; then
-	cp $KS/templates/mcstas/* "$DEST"
+	cp $KSDIR/templates/mcstas/* "$DEST"
 	echo "Plantillas para McStas copiadas."
 fi 
 if [[ opt_tripoli -eq 1 ]]; then
- 	cp $KS/templates/tripoli/* "$DEST"
+ 	cp $KSDIR/templates/tripoli/* "$DEST"
 	echo "Plantillas para TRIPOLI-4 copiadas."
 fi
