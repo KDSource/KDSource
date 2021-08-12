@@ -49,7 +49,7 @@ class Metric:
     def jac(self, parts):
         """Jacobian of transformation."""
         return np.ones(len(parts))
-    def mean(self, parts=None, vecs=None):
+    def mean(self, parts=None, vecs=None, weights=None):
         """
         Mean of particle variables.
 
@@ -62,11 +62,13 @@ class Metric:
             Array of particle variables.
         vecs: array-like, optional
             Array of parametrized variables. If set, overrides parts.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(parts)
-        return self.inverse_transform(np.mean(vecs, axis=0))
-    def std(self, parts=None, vecs=None):
+        return self.inverse_transform(np.average(vecs, axis=0, weights=weights))
+    def std(self, parts=None, vecs=None, weights=None):
         """
         Standard deviation of particle variables.
 
@@ -79,11 +81,13 @@ class Metric:
             Array of particle variables.
         vecs: array-like, optional
             Array of parametrized variables. If set, overrides parts.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(parts)
-        mn = np.mean(vecs, axis=0)
-        return np.std(vecs-mn, axis=0)
+        mn = np.average(vecs, axis=0, weights=weights)
+        return np.sqrt(np.average((vecs-mn)**2, axis=0, weights=weights))
     def save(self, mtree):
         """Save Metric parameters into XML tree."""
         ET.SubElement(mtree, "dim").text = str(self.dim)
@@ -175,7 +179,7 @@ class Geometry (Metric):
         for metric in self.ms:
             jacs.append(metric.jac(parts[:,metric.partvars]))
         return np.prod(jacs, axis=1)
-    def mean(self, parts=None, vecs=None):
+    def mean(self, parts=None, vecs=None, weights=None):
         """
         Mean of particle variables.
 
@@ -188,6 +192,8 @@ class Geometry (Metric):
             Array of particle variables.
         vecs: array-like, optional
             Array of parametrized variables. If set, overrides parts.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(parts)
@@ -196,9 +202,9 @@ class Geometry (Metric):
         for metric in self.ms:
             start = end
             end = start + metric.dim
-            means.append(metric.mean(vecs=vecs[:,start:end]))
+            means.append(metric.mean(vecs=vecs[:,start:end], weights=weights))
         return np.concatenate(means)
-    def std(self, parts=None, vecs=None):
+    def std(self, parts=None, vecs=None, weights=None):
         """
         Standard deviation of particle variables.
 
@@ -211,6 +217,8 @@ class Geometry (Metric):
             Array of particle variables.
         vecs: array-like, optional
             Array of parametrized variables. If set, overrides parts.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(parts)
@@ -219,7 +227,7 @@ class Geometry (Metric):
         for metric in self.ms:
             start = end
             end = start + metric.dim
-            stds.append(metric.std(vecs=vecs[:,start:end]))
+            stds.append(metric.std(vecs=vecs[:,start:end], weights=weights))
         return np.concatenate(stds)
     def save(self, gtree):
         """Save Geometry parameters into XML tree."""
@@ -488,7 +496,7 @@ class Isotrop (Metric):
         direction vectors.
         """
         super().__init__([4,5,6], ["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
-    def mean(self, dirs=None, vecs=None):
+    def mean(self, dirs=None, vecs=None, weights=None):
         """
         Mean of directions.
 
@@ -501,14 +509,16 @@ class Isotrop (Metric):
             Array of directions.
         vecs: array-like, optional
             Array of parametrized directions. If set, overrides dirs.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(dirs)
-        mn = np.mean(vecs, axis=0)
+        mn = np.average(vecs, axis=0, weights=weights)
         mn_norm = np.linalg.norm(mn)
         if mn_norm == 0: mn_norm = 1
         return mn / mn_norm
-    def std(self, dirs=None, vecs=None):
+    def std(self, dirs=None, vecs=None, weights=None):
         """
         Standard deviation of directions.
 
@@ -521,11 +531,13 @@ class Isotrop (Metric):
             Array of directions.
         vecs: array-like, optional
             Array of parametrized directions. If set, overrides dirs.
+        weights: array-like, optional
+            Array of particle statistic weights.
         """
         if vecs is None:
             vecs = self.transform(dirs)
-        mn = self.mean(vecs=vecs)
-        std = np.std(vecs-mn)
+        mn = self.mean(vecs=vecs, weights=weights)
+        std = np.sqrt(np.mean(np.average((vecs-mn)**2, axis=0, weights=weights)))
         return np.array(3*[std])
     @staticmethod
     def load(mtree):

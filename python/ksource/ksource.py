@@ -188,7 +188,6 @@ class KSource:
             bwfilename = bwfile
         else: # Assume bwfile is file object
             bwfilename = bwfile.name
-        print("Parameters file: {}".format(xmlfilename))
         bw = self.kde.bw
         if adjust_N: # Adjust N_eff with Silverman factor
             dim = self.geom.dim
@@ -217,6 +216,7 @@ class KSource:
         xmlstr = minidom.parseString(xmlstr).toprettyxml()
         with open(xmlfilename, "w") as file:
             file.write(xmlstr)
+        print("Successfully saved parameters file {}".format(xmlfilename))
         return xmlfilename
 
     @staticmethod

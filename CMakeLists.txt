@@ -39,6 +39,7 @@ install(FILES "${SRC}/ksource/ksource.h"
               "${SRC}/ksource/plist.h"
               "${SRC}/ksource/geom.h"
               "${SRC}/ksource/utils.h"
+              "${CMAKE_CURRENT_BINARY_DIR}/KSourceConfig.h"
               DESTINATION include)
 
 install(PROGRAMS "${SRC}/kstool/kstool.sh" DESTINATION bin RENAME kstool)
