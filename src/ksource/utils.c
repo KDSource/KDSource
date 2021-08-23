@@ -62,7 +62,7 @@ double interp(double x, const double *xs, const double *ys, int N){
 	return ys[i] + (ys[i+1]-ys[i])*(x-xs[i])/(xs[i+1]-xs[i]);
 }
 
-// Dosimetric factors
+// Dosimetric factors [pSv cm2]
 
 #define N_n_ARN 15
 const double log_E_n_ARN[N_n_ARN] = {-1e3,-1.75e+01,-6.21e+00,-3.69e+00,-1.94e+00,-1.39e+00,-5.71e-01,1.82e-01,9.16e-01,1.03e+00,1.16e+00,1.61e+00,2.69e+00,2.94e+00,3.91e+00};

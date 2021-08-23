@@ -1,4 +1,4 @@
-\documentclass{article}
+\documentclass[11pt]{article}
 
 % Paquetes esenciales
 \usepackage[utf8]{inputenc}
@@ -9,9 +9,48 @@
 \usepackage{geometry}
 \usepackage{float}
 \usepackage[bookmarks]{hyperref}
-\usepackage[titletoc]{appendix}
+\usepackage[title, titletoc]{appendix}
 
 % Paquetes opcionales
+\usepackage{bookmark}
+\usepackage{scrextend}
+\bookmarksetup{numbered}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{listings}
+\makeatletter
+\long\def\lst@maketitle#1#2{%
+  \vskip\abovecaptionskip
+    \bfseries #1: #2\par
+  \vskip\belowcaptionskip}%
+\makeatother
+\lstset{%
+    backgroundcolor=\color{gray!30},
+    basicstyle=\ttfamily\small,
+    basewidth=0.51em,
+    tabsize=4,
+    breaklines=true,
+    showstringspaces=false,
+    commentstyle=\color{black!60},
+    stringstyle=\color{RedOrange},
+    keywordstyle=\color{Maroon},
+}
+\definecolor{darkblue}{rgb}{0,0,.3}
+\definecolor{darkgreen}{rgb}{0,.3,0}
+\lstdefinelanguage{XML}
+{
+    morestring=[s][\color{black}]{>}{<},
+    morestring=[b][\color{RedOrange}]",
+    identifierstyle=\color{Maroon},
+    keywordstyle=\color{darkgreen},
+    morekeywords={xmlns,version,type,units,order,nps,variable},
+}
+\lstdefinelanguage{Python2}
+{
+    language=Python,
+    morekeywords={as},
+    otherkeywords={-,=}
+}
+
 
 
 % Título
@@ -28,7 +67,7 @@
 
 \begin{abstract}
 
-KSource es una herramiente que asiste cálculos de blindajes por Monte Carlo con reducción de varianza. Procesa listas de partículas capturadas en posiciones intermedias, estima su distribución por el método \emph{Kernel Density Estimation}, y produce nuevas partículas respetando la densidad estimada. Esto permite producir más partículas que las presentes en la lista original, sin repeticiones.
+KSource es una herramiente que asiste cálculos de blindajes por Monte Carlo, implementado una técnica de reducción de varianza. Procesa listas de partículas correspondientes a fuentes superficiales capturadas en posiciones intermedias de una simulación, estima su distribución por el método \emph{Kernel Density Estimation}, y produce nuevas partículas respetando la densidad estimada. Esto permite producir más partículas que las presentes en la lista original, sin repeticiones, favoreciendo la propagación de la radiación hacia la región de interés. Además, posibilita el acople de distintos códigos de cálculo.
 
 \end{abstract}
 
@@ -36,13 +75,22 @@ KSource es una herramiente que asiste cálculos de blindajes por Monte Carlo con
 
 \input{2-desarrollo}
 
-\appendix
-
-\input{anexo}
+\begin{appendices}
+    \input{anexo}
+\end{appendices}
 
 \begin{thebibliography}{9}
 
-	\bibitem{cita} N. M. Apellido, ``Título del artículo'', \textit{Título Revista}, vol. 1, pp. 20-25, Mes Año
+    \bibitem{NP} B. E. Hansen, Lecture Notes on Nonparametrics, University of Wisconsin (2009), \url{https://www.ssc.wisc.edu/~bhansen/718/NonParametrics1.pdf}
+
+    \bibitem{KDEpy} KDEpy (2018), \url{https://kdepy.readthedocs.io/en/latest/}
+
+    \bibitem{MCPL} T. Kittelmann, et al., Monte Carlo Particle Lists: MCPL, Computer Physics Communications 218, 17-42 (2017), \url{https://doi.org/10.1016/j.cpc.2017.04.012.}
+
+    \bibitem{PDG} K. A. Olive, et al. (Particle Data Group), Chinese Physics C 38 (2014) 090001. doi:10.1088/1674-1137/38/9/090001.
+
+    \bibitem{AF} Bell, G. I. and S. Glasstone. 1970. Nuclear Reactor Theory, Van Nostrand Reinhold Co., New York.
+
 
 \end{thebibliography}
 

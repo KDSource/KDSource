@@ -11,12 +11,13 @@
 
 void display_usage(){
 	printf("Usage: kstool resample sourcefile [options]\n\n");
-	printf("Resample particles from source defined in sourcefile, and save them in a MCPL\n");
-	printf("file.\n\n");
+	printf("Resample particles from source defined in XML file sourcefile, and save them in\n");
+	printf("a MCPL file.\n\n");
 	printf("Options:\n");
 	printf("\t-o outfile: Name of MCPL file with new samples\n");
 	printf("\t            (default: \"resampled.mcpl\").\n");
 	printf("\t-n N:       Number of new samples (default: 1E5).\n");
+	printf("\t-h, --help: Display usage instructions.\n");
 
 }
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KS="$(dirname $(dirname $(which ksource)))" # KSource path
+KS="$(dirname $(dirname $(which kstool)))" # KSource path
 
 ##### Input #####
 

@@ -61,7 +61,6 @@ class KSource:
         J: float, optional
             The source total current, in [1/s]. If set, the density plots will
             have the correct units.
-
         """
         self.plist = plist
         self.geom = geom

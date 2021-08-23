@@ -18,7 +18,6 @@
 double rand_norm();
 
 double *traslv(double *vect, const double *trasl, int inverse);
-
 double *rotv(double *vect, const double *rotvec, int inverse);
 
 long pt2pdg(char pt);

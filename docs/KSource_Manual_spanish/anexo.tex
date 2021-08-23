@@ -1,7 +1,817 @@
-\section{Apéndice}
+%!TEX root = main.tex
+\section{Descripción del formato de archivo de parámetros XML}
 
-\subsection{Línea de comando}
+Un archivo de parámetros XML es el método por el cual se puede almacenar una fuente KDE en el disco. Usualmente dicho archivo es generado mediante la API en Python, luego de la optimización del ancho de banda. Este formato sirve además como método de comunicación entre los distintos componentes de KSource, ya que puede utilizarse para reconstruir una fuente tanto en Python como en C, y para aplicar re-muestreo por línea de comando.
 
-\subsection{API en Python}
+Como se muestra en el ejemplo del Listing \ref{lst:xmlfile}, un archivo de parámetros posee la siguiente información:
+\begin{itemize}
+	\item Corriente total de la fuente, en unidades $[1/s]$.
+	\item \verb|PList|: Lista de partículas.
+	\begin{itemize}
+		\item Tipo de partícula global.
+		\item Archivo MCPL con la lista de partículas.
+		\item Traslación (opcional).
+		\item Rotación (opcional).
+		\item Transformación $(x,y,z)\rightarrow (y,z,x)$ (opcional).
+	\end{itemize}
+	\item \verb|Geom|: Geometría y tratamiento de variables. El orden indica la cantidad de sub-métricas.
+	\begin{itemize}
+		\item Submétricas. Para cada una, además de su nombre, se indica:
+		\begin{itemize}
+			\item Dimensionalidad.
+			\item Parámetros (específicos para cada métrica).
+		\end{itemize}
+		\item Traslación (opcional).
+		\item Rotación (opcional).
+	\end{itemize}
+	\item Factores de escaleo para cada variable de parametrización.
+	\item Ancho de banda. Si es constante (\verb|variable="0"|) se indica su valor, mientras que si es adaptativo (\verb|variable="1"|) se indica el \emph{path} del archivo conteniendo la lista de valores. Dicho archivo debe poseer una secuencia de valores en formato binario de punto flotante de simple precisión (32 bits), sin separación, de la misma longitud que la lista de partículas en el archivo MCPL.
+\end{itemize}
 
-\subsection{API en C}
+\begin{lstlisting}[language=XML, label={lst:xmlfile}, caption=Ejemplo de archivo de parámetros XML.]
+<?xml version="1.0" ?>
+<KSource>
+	<J units="1/s">1.0</J>
+	<PList>
+		<pt>n</pt>
+		<mcplname>/path/to/mcplfile.mcpl.gz</mcplname>
+		<trasl>  0.   0. -10.</trasl>
+		<rot/>
+		<x2z>0</x2z>
+	</PList>
+	<Geom order="3">
+		<Lethargy>
+			<dim>1</dim>
+			<params nps="1">10.0</params>
+		</Lethargy>
+		<SurfXY>
+			<dim>2</dim>
+			<params nps="5">-50. 50. -50. 50. 0.</params>
+		</SurfXY>
+		<PolarMu>
+			<dim>2</dim>
+			<params nps="0"/>
+		</PolarMu>
+		<trasl>10.  0. 50.</trasl>
+		<rot>0.         3.14159265 0.        </rot>
+	</Geom>
+	<scaling>2.2339 14.1445 10.0147 0.2362 103.6779</scaling>
+	<BW variable="1">/path/to/bwfile</BW>
+</KSource>
+\end{lstlisting}
+
+
+
+
+\section{Documentación de aplicación \texttt{kstool}}
+\label{ap:CLI}
+
+La aplicación de linea de comando de KSource se accede a través del comando \verb|kstool|. Sus instrucciones de uso se pueden obtener mediante el argumento \verb|--help|, y se muestran en el Listing \ref{lst:kstool}.
+
+\begin{lstlisting}[label={lst:kstool}, caption=Instrucciones de uso del comando \texttt{kstool} (output de ``\texttt{kstool --help}'').]
+Usage: kstool [opciones]
+
+KSource is a Monte Carlo calculations assistance tool. It implements particles
+density estimation and sampling by means of Kernel Density Estimation method.
+
+Options:
+	resample:   Resample particles based on a ksource XML file.
+	templates:  Copy templates for Monte Carlo calculations.
+	[Any MCPL command]
+	-h, --help: Display usage instructions.
+\end{lstlisting}
+
+La opción \verb|resample| de \verb|kstool| permite generar nuevas muestras en base a un modelo KSource guardado en un archivo de parámetros XML. Sus instrucciones de uso se pueden obtener mediante el argumento \verb|--help|, y se muestran en el Listing \ref{lst:resample}.
+
+\begin{lstlisting}[label={lst:resample}, caption=Instrucciones de uso del comando \texttt{kstool resample} (output de ``\texttt{kstool resample --help}'').]
+Usage: kstool resample sourcefile [options]
+
+Resample particles from source defined in XML file sourcefile, and save them in
+a MCPL file.
+
+Options:
+	-o outfile: Name of MCPL file with new samples
+	            (default: \"resampled.mcpl\").
+	-n N:       Number of new samples (default: 1E5).
+	-h, --help: Display usage instructions.
+\end{lstlisting}
+
+La opción \verb|templates| de \verb|kstool| permite copiar los archivos plantilla (Jupyter Notebooks) de las operaciones más usuales con la API de Python al directorio de trabajo. Además, opcionalmente, permite copiar plantillas para ejecutar McStas o TRIPOLI-4 en acople con KSource. Sus instrucciones de uso se pueden obtener mediante el argumento \verb|--help|, y se muestran en el Listing \ref{lst:templates}.
+
+\begin{lstlisting}[label={lst:templates}, caption=Instrucciones de uso del comando \texttt{kstool templates} (output de ``\texttt{kstool templates --help}'').]
+Usage: kstool templates dest [options]
+
+Copy to dest templates for KSource usage in Python, or for interacting with
+Monte Carlo codes.
+
+Options:
+	--mcstas:   Copy templates for using McStas.
+	--tripoli:  Copy templates for using TRIPOLI-4.
+	--all:      Copy all templates.
+	-h, --help: Display usage instructions.
+\end{lstlisting}
+
+Por último, el comando \verb|kstool| permite acceder a cualquiera de las aplicaciones de línea de comando de MCPL, en su versión extendida incluida en el paquete KSource.
+
+
+
+\section{Documentación de API en Python}
+\label{ap:Python}
+
+La API en Python de KSource, denominada \verb|ksource|, se compone de los siguientes módulos:
+\begin{itemize}
+	\item \verb|ksource.py|: Módulo para el objeto \verb|KSource|, que representa una fuente KDE.
+	\item \verb|kde.py|: Módulo para métodos de selección de ancho de banda, para la librería \verb|KDEpy|.
+	\item \verb|plist.py|: Módulo para el objeto \verb|PList|, y operaciones sobre listas de partículas.
+	\item \verb|geom.py|: Módulo para el objeto \verb|Geometry|, la clase abstracta \verb|Metric|, y todas sus implementaciones heredadas.
+	\item \verb|stats.py|: Módulo para análisis estadístico de listas de partículas, mediante el objeto \verb|Stats|.
+	\item \verb|summary.py|: Módulo para colectar los principales resultados de simulaciones Monte Carlo, mediante el objeto \verb|Summary|.
+	\item \verb|tally.py|: Módulo para lectura, gráficos, y conversión a lista de partículas, de \emph{tallies} de TRIPOLI-4, mediante el objeto \verb|T4Tally|.
+	\item \verb|utils.py|: Utilidades generales.
+\end{itemize}
+
+Todas las funcionalidades de los módulos mencionados se encuentran presentes en el \emph{namespace} principal de la librería \verb|ksource|.
+
+
+\subsection{Ejemplo de uso}
+
+\begin{lstlisting}[language=Python2, label={lst:exa}, caption=Ejemplo básico de uso de API en Python.]
+import ksource as ks
+
+# Define particle list
+plist = ks.PList("surfsource", readformat="ssw")
+# Define geometry
+geom = ks.GeomFlat()
+# Create KSource
+s = ks.KSource(plist, geom, bw="mlcv")
+
+# Fit KSource
+s.fit(N=1E5)
+
+# Save in XML file
+s.save("source.xml")
+\end{lstlisting}
+
+En el Listing \ref{lst:exa} se muestra un ejemplo básico de uso. Las principales etapas son:
+\begin{itemize}
+	\item Creación de objeto \verb|KSource| en base a objetos \verb|PList| y \verb|Geometry|.
+	\item Ajuste de anchos de banda.
+	\item Gráficos de distribuciones.
+	\item Guardado de la fuente en archivo XML.
+\end{itemize}
+
+En los archivos plantilla (disponibles mediante ``\verb|kstool templates .|'') se muestran más ejemplos de uso de los distintos módulos de KSource.
+
+
+\subsection{Módulo \texttt{ksource}}
+
+Este módulo se centra en la clase \verb|KSource|, que modela una fuente de partículas KDE. Para su creación se debe contar previamente con objetos \verb|PList| y \verb|Geometry|. Mediante un modelo \verb|KSource| se puede aplicar el método KDE sobre una lista de partículas, optimizar el ancho de banda, generar gráficos de las distribuciones estimadas, y guardar el modelo en un archivo XML, para su posterior uso con la misma u otras APIs.
+
+El objeto \verb|KSource| sirve como \emph{wrapper} de un modelo KDE de la librería \verb|KDEpy|, el cual guarda en el parámetro \verb|kde|. Es posible modificar manualmente el ancho de banda modificando el parámetro \verb|bw| de dicho objeto. Además \verb|KSource| posee un parámetro \verb|scaling|, el cual contiene los factores de normalización para cada variable (ver \ref{subsec:kde}).
+
+En el Listing \ref{lst:exa} se muestra un ejemplo de uso básico del objeto KSource, mientras que en el Listing \ref{lst:exa-plot} se muestra el uso de las funciones de gráficos. Es posible realizar gráficos tanto 1D como 2D, y para cada uno de ellos existen 2 posibilidades:
+\begin{itemize}
+	\item Gráficos integrados: Se grafica la densidad en función de 1 ó 2 variables parametrizadas, integrando sobre las demás (en un rango finito o en todo su dominio). Este es el caso de \verb|plot_integr|, \verb|plot_E| y \verb|plot2D_integr|. Es el método de graficación recomendado. La función \verb|plot_E| grafica el espectro en función de la energía independientemente de la parametrización elegida. 
+	\item Gráficos puntuales: Se grafica la densidad conjunta en función de 1 ó 2 variables no parametrizadas. Este es el caso de \verb|plot_point| y \verb|plot2D_point|.
+\end{itemize}
+
+\begin{lstlisting}[language=Python2, label={lst:exa-plot}, caption=Ejemplo de gráficos de distribuciones estimadas.]
+# Energy plot
+EE = np.logspace(-9,1,50)
+fig,[scores,errs] = s.plot_E(EE)
+plt.show()
+
+# Theta plot
+tt = np.linspace(0,180,50)
+fig,[scores,errs] = s.plot_integr("theta", tt)
+plt.show()
+
+# XY plot of epithermal neutrons
+umin = 3  # Minimum lethargy
+umax = 16 # Maximum lethargy
+# Vector of min and max vals (parametrized)
+#      [u   , x     , y     , theta, phi]
+vec0 = [umin,-np.inf,-np.inf, 0    ,-180]
+vec1 = [umax, np.inf, np.inf, 180  , 180]
+xx = np.linspace(-10,10,30)
+yy = np.linspace(-10,10,30)
+s.plot2D_integr(["x,y"], [xx,yy], vec0=vec0, vec1=vec1)
+plt.show()
+
+# XY plot at fixed energy and angle
+# Vector of fixed values (non parametrized)
+#       [E   , x, y, z, dx, dy, dz]
+part0 = [1E-3, 0, 0, 0, 0 , 0 , 1 ]
+xx = np.linspace(-10,10,30)
+yy = np.linspace(-10,10,30)
+s.plot2D_point(["x,y"], [xx,yy], part0=part0)
+plt.show()
+\end{lstlisting}
+
+
+\subsection{Módulo \texttt{kde}}
+
+Este módulo contiene métodos de selección de ancho de banda que complementan la librería \verb|KDEpy|. Debido a que esta no admite anchos de banda multidimensionales, y gracias a la normalización de datos que aplica la clase \verb|KSource|, los métodos en este módulo asumen que las dispersiones de los datos en cada variable son unitarios, y obtienen anchos de banda unidimensionales. Si se admite, desde luego, ancho de banda adaptativo, es decir uno por cada partícula. Se incluyen 3 técnicas de optimización:
+\begin{itemize}
+	\item Regla de Silverman: Se obtiene el ancho de banda en función de $N_{eff}$ y $dim$ mediante el método \verb|bw_silv|.
+	\item K Vecinos Más Cercanos (KNN): Se obtiene un ancho de banda adaptativo como la distancia al K-ésimo vecino de cada partícula, mediante el método \verb|bw_knn|. El cálculo se realiza por \emph{batches}, y se debe especificar o bien la cantidad de vecinos por \emph{batch} o bien la cantidad estimada total. Si la cantidad resultante de vecinos por \emph{batch} no es entera se utiliza un factor de ajuste \emph{f}.
+	\item Validación Cruzada de Máxima Probabilidad (MLCV): Se evalúa el \emph{score} de log-probabilidad media con un esquema de validación cruzada, para cada valor en una grilla de anchos de banda. Se toma el ancho de banda que maximiza dicho \emph{score}. Es posible especificar tanto el ancho de banda semilla como la grilla de factores a utilizar para construir la grilla de anchos de banda. Se obtiene el ancho de banda óptimo con el método \verb|bw_mlcv|.
+\end{itemize}
+El método recomendado es la MLCV, utilizando una semilla proveniente de KNN, aunque también es el más costoso. De todos modos, el método más adecuado puede variar según el problema. Nótese que, si se pretende guardar la fuente KDE y utilizarla para muestrear nuevas partículas, el método KNN, y el MLCV que lo utilice como semilla, debe realizarse utilizando todas las partículas en la lista (argumento ``\verb|N=-1|'' en función \verb|fit|), pues de lo contrario habría más partículas que anchos de banda para el KDE adaptativo.
+
+Por último, el método \verb|optimize_bw| sirve como \emph{wrapper} de los distintos métodos de optimización, redirigiendo a a cada uno correspondientemente. Este método es llamado por la clase \verb|KSource| al momento del ajuste.
+
+
+\subsection{Módulo \texttt{plist}}
+
+Este módulo se centra en la clase \verb|PList|, la cual sirve como \emph{wrapper} de listas de partículas en formato MCPL. Su principal función es permitir acceder a las partículas almacenadas, convirtiéndolas a formato de \verb|numpy|. Además incluye la posibilidad de aplicar una traslación y una rotación a las partículas apenas luego de leerlas, lo cual es útil al cambiar de sistema de referencia entre simulaciones. En el Listing \ref{lst:plist} se muestra un ejemplo de uso.
+
+Es posible emplear de manera conjunta más de una lista de partículas, siempre y cuando tengan todas el mismo formato. Los formatos posibles son \verb|"mcpl"|, \verb|"ssw"| (MCNP), \verb|"phits"|, \verb|"ptrac"| (MCPN), \verb|"stock"| (TRIPOLI-4) y \verb|"ssv"| (ASCII).
+
+\begin{lstlisting}[language=Python2, label={lst:plist}, caption=Ejemplo de uso de \texttt{PList}.]
+file1 = "surfsource1"
+file2 = "surfsource2"
+trasl = [0, 0, -20]
+rot = [0, np.pi/2, 0]
+
+# Create PList
+pl = ks.PList([file1,file2], readformat='ssw', pt='n', trasl=trasl, rot=rot)
+
+# Get particles and weights
+parts,ws = pl.get(1E4)
+\end{lstlisting}
+
+Otras funcionalidad presentes en el módulo son:
+\begin{itemize}
+	\item \verb|convert2mcpl| y \verb|join2mcpl|: Permiten convertir listas de partículas de cualquier formato compatible con MCPL a MCPL. Internamente ejecutan los comandos de conversión de línea de comando.
+	\item \verb|savessv| y \verb|appendssv|: Permiten guardar \emph{arrays} de partículas en formato de \verb|numpy| en archivos ASCII SSV. Estos pueden luego ser convertidos a MCPL, por ejemplo mediante \verb|convert2mcpl|.
+\end{itemize}
+
+
+\subsection{Módulo \texttt{geom}}
+
+Este módulo se centra en las clases \verb|Geometry| y \verb|Metric|. La clase \verb|Geometry| representa un conjunto de tratamientos a las variables que definen una partícula. La misma se compone de un conjunto de métricas, además de una posición y rotación que definen la ubicación espacial de la fuente. Las métricas definen el tratamiento de cada conjunto de variables (energía, posición y dirección) a través de una transformación de parametrización.
+
+La clase \verb|Metric| es una clase abstracta, con las siguientes herencias implementadas:
+\begin{itemize}
+	\item \verb|Energy|: Tratamiento simple para la energía, sin transformación.
+	\item \verb|Lethargy|: Métrica de letargía, definida como $u = log(E_0/E)$.
+	\item \verb|Vol|: Tratamiento simple para posición, para fuentes volumétricas.
+	\item \verb|SurfXY|: Tratamiento simple para posición, para fuentes planas en XY.
+	\item \verb|Guide|: Tratamiento conjunto para posición y dirección, para fuentes con geometría de guía.
+	\item \verb|Isotrop|: Métrica simple para la dirección, basada en la distancia angular entre direcciones. 
+	\item \verb|Polar|: Métrica polar para la dirección, con ángulos $\theta$ (distancia angular al eje $z$) y $\phi$ (ángulo acimutal con respecto al eje $x$).
+	\item \verb|PolarMu|: Métrica polar, con $\mu=cos(\theta)$.
+\end{itemize}
+Además, se definieron las siguientes funciones para la creación rápida de las geometrías más usuales.
+\begin{itemize}
+	\item \verb|GeomFlat|: Fuente plana. Métricas: \verb|Lethargy|, \verb|SurfXY| y \verb|Polar|.
+	\item \verb|GeomGuide|: Fuente sobre espejos de guía. Métricas: \verb|Lethargy| y \verb|Guide|.
+	\item \verb|GeomActiv|: Fuente volumétrica. Métricas: \verb|Energy|, \verb|Vol| e \verb|Isotrop|.
+\end{itemize}
+
+En el Listing \ref{lst:geom} se muestra un ejemplo de uso de \verb|Geometry|.
+
+\begin{lstlisting}[language=Python2, label={lst:geom}, caption=Ejemplo de uso de \texttt{Geometry}.]
+# Metrics
+m_E = ks.Lethargy(E0=20)
+m_pos = ks.SurfXY(z=5)
+m_dir = ks.Polar()
+
+# Create Geometry
+trasl = [0,0,15]
+rot = [0,np.pi,0]
+geom = ks.Geometry([m_E,m_pos,m_dir], trasl=trasl, rot=rot)
+
+# Use Geometry
+vecs_param = geom.transform(parts)
+parts = geom.inverse_transform(vecs_param)
+mean = geom.mean(parts=parts, weights=ws)
+std = geom.std(parts=parts, weights=ws)
+\end{lstlisting}
+
+
+\subsection{Módulo \texttt{stats}}
+
+Este módulo se centra en la clase \verb|Stats|, la cual permite realizar un análisis de algunos indicadores estadísticos, y su relación con la cantidad de partículas. Sirve como complemento de las herramientas incluidas en la API de MCPL para tal fin, más precisamente las funciones \verb|collect_stats|, \verb|dump_stats| y \verb|plot_stats|.
+
+En el Listing \ref{lst:stats} se muestra un ejemplo de uso de la clase \verb|Stats|. La misma se inicializa con una lista de partículas obtenida de \verb|PList|, y permite graficar la variación de parámetros estadísticos con el número de partículas. A través del argumento \verb|steps| se regula la cantidad de subconjuntos, de tamaño creciente, para los cuales se evaluará el parámetro estadístico correspondiente. Por ejemplo, para \verb|steps=2| la evaluación se realizaría para la mitad de la lista de partículas, y para la lista completa. Los gráficos obtenidos permiten observar el grado de convergencia de los parámetros de interés para el número de partículas en la lista.
+
+\begin{lstlisting}[language=Python2, label={lst:stats}, caption=Ejemplo de uso de \texttt{Stats}.]
+stats = ks.Stats(parts, ws)
+
+N,I,err = stats.mean_weight(steps=100)
+plt.show()
+N,mn,err = stats.mean(var=1, steps=100)
+plt.show()
+N,std,err = stats.std(var=1, steps=100)
+plt.show()
+\end{lstlisting}
+
+
+\subsection{Módulo \texttt{summary}}
+
+Este módulo se centra en el objeto \verb|Summary|, y está especialmente pensado para simplificar la transcripción a una planilla de cálculo de los resultados principales en una simulación. Actualmente, los códigos soportados para esta funcionalidad son McStas y TRIPOLI-4.
+
+En el Listing \ref{lst:summary} se muestra un ejemplo de uso de \verb|Summary|. Además, se provee una plantilla para el mismo fin en el archivo \verb|postproc.ipynb|.
+
+\begin{lstlisting}[language=Python2, label={lst:summary}, caption=Ejemplo de uso de \texttt{Summary}.]
+mccode = "TRIPOLI"            # "McStas" or "TRIPOLI"
+folder = "outdir"             # Directory containing simulation outputs
+bashoutput = "bash.out"       # Bash output from simulation
+n_detectors = [tracks1]       # Neutron list detectors
+t4output = "simul.out"        # TRIPOLI output (only if mccode="TRIPOLI")
+tallies = ["activ-fe","dose"] # Tally names
+
+summary = ks.Summary(mccode,
+                     folder,
+                     bashoutput=bashoutput, 
+                     n_detectors=n_detectors, 
+                     t4output=t4output,
+                     tallies=tallies)
+
+summary.save("summary.txt")  # Saves inside summary.folder
+\end{lstlisting}
+
+
+\subsection{Módulo \texttt{tally}}
+
+Este módulo está destinado al procesamiento de \emph{tallies} volumétricos. Actualmente sólo está implementado para TRIPOLI-4, a través de la clase \verb|T4Tally|. El mismo tiene dos funciones principales:
+\begin{itemize}
+	\item Graficar mapas de dosis.
+	\item Convertir \emph{tallies} de activación a listas de partículas, para generar fuentes de activación.
+\end{itemize}
+
+En el Listing \ref{lst:tally} se muestra un ejemplo de uso de la clase \verb|T4Tally| para un \emph{tally} de activación. El tratamiento de \emph{tallies} de activación, y su uso para generación de fuentes KDE de fotones de decaimiento, se facilita a través del archivo plantilla \verb|preproc_tally.ipynb|. Por otra parte, el uso de \verb|T4Tally| para gráficos de mapas de dosis se muestra en \verb|doseplots.ipynb|.
+
+\begin{lstlisting}[language=Python2, label={lst:tally}, caption=Ejemplo de uso de \texttt{T4Tally}.]
+t4output = "simul.out" # Simulation output file
+tallyname = "activ-fe" # Tally name
+spectrum = "decay-fe"  # Energy decay spectrum
+
+tally = ks.T4Tally(t4output, tallyname, spectrum=spectrum)
+
+# Plot tally
+[fig, [scores,errs]] = tally.plot2D(['z', 'x'])
+
+# Save as particle list
+mcplname = tally.save_tracks("activsource.mcpl")
+\end{lstlisting}
+
+
+\subsection{Módulo \texttt{utils}}
+
+Este módulo posee utilidades auxiliares. Las mismas se describen a continuación:
+\begin{itemize}
+	\item Funciones de conversión entre formatos de tipo de partícula (\verb|pt2pdg| y \verb|pdg2pt|): Convierten entre el Código PDG de tipo de partícula \cite{PDG}, y la notación con caracteres (\verb|"n"|: neutrón, \verb|"p"|: fotón, \verb|"e"|: electrón).
+	\item Funciones de \emph{weighting} (\verb|H10|): Sirven para aplicar un peso a las partículas, y así dar más importancia a las que son de más interés para una aplicación en particular. Actualmente sólo está implementado el \emph{weighting} por factor dosimétrico.
+	\item Funciones de \emph{masking} (\verb|Box|): Sirven para restringir la región en el espacio de fases en el que pueden encontrarse las partículas, eliminando las que se encuentren por fuera. Sirve para focalizar el análisis u optimización en una región de interés. Actualmente sólo está implementado el \emph{masking} tipo hipercubo, es decir fijando un rango para cada variable.
+\end{itemize}
+
+
+
+\section{Documentación de API en C}
+\label{ap:C}
+
+La API en C consiste en la librería compartida \verb|ksource|, cuya interfaz de usuario está definida en cuatro archivos de cabeceras, los cuales se describen a continuación:
+\begin{itemize}
+	\item \verb|ksource.h|: Se definen las estructuras \verb|KSource|, que modela una fuente KDE, y \verb|MultiSource|, que modela un conjunto de \verb|KSource|'s, además de sus funciones de utilización.
+	\item \verb|plist.h|: Se define la estructura \verb|PList|, \emph{wrapper} de listas de partículas MCPL, y sus funciones de utilización.
+	\item \verb|geom.h|: Se definen las estructuras \verb|Geometry| y \verb|Metric|, que definen el tratamiento de variables, y sus funciones de utilización.
+	\item \verb|utils.h|: Utilidades generales.
+\end{itemize}
+
+Además, se incluye el archivo de cabecera \verb|KSourceConfig.h|, donde se define la versión de \verb|KSource| mediante las siguientes constantes:
+\begin{lstlisting}[language=C]
+#define KSource_VERSION_MAJOR 1
+#define KSource_VERSION_MINOR 0
+#define KSource_VERSION_PATCH 0
+\end{lstlisting}
+
+En el archivo \verb|ksource.h| se incluyen los archivos \verb|mcpl.h|, \verb|KSourceConfig.h|, \verb|plist.h|, \verb|geom.h| y \verb|utils.h|, por lo que sólo es necesario incluir \verb|ksource.h| para utilizar la librería \verb|ksource|. Para compilar un programa que utiliza \verb|ksource| se deben utilizar los siguientes comandos:
+\begin{lstlisting}[language=bash]
+KSOURCE=/path/to/ksourceinstall
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$KSOURCE/lib
+gcc example.c -lksource -lmcpl -lm -I$KSOURCE/include -L$KSOURCE/lib
+\end{lstlisting}
+Donde \verb|/path/to/ksourceinstall| es el \emph{path} al directorio donde se instaló el paquete \verb|KSource|.
+
+
+\subsection{Estructuras \texttt{KSource} y \texttt{MultiSource}}
+
+La estructura \verb|KSource| modela una fuente de partículas KDE. Usualmente se crea en base a un archivo de parámetros XML generado mediante la API en Python, aunque es posible crearla solamente mediante la API en C. La funcionalidad principal de esta estructura es el muestreo de partículas.
+
+La estructura \verb|MultiSource|, por su parte, modela un conjunto de fuentes \verb|KSource| superpuestas. En cada muestreo se elige aleatoriamente la fuente a emplear, respetando las intensidades relativas de las fuentes. Es posible implementar \emph{source biasing}, fijando las frecuencias de muestreo por separado las intensidades relativas, lo cual implica un ajuste en los pesos de las partículas nacientes.
+
+A continuación se describen las definiciones, estructuras de datos y funciones declaradas en el archivo \verb|ksource.h|.
+
+\begin{footnotesize}
+
+\begin{lstlisting}[language=C]
+#define MAX_RESAMPLES 1000
+#define NAME_MAX_LEN 256
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+\verb|MAX_RESAMPLES| define el máximo número de intentos al muestrear, es decir que si no se obtiene una partícula válida luego de \verb|MAX_RESAMPLES| intentos se termina la simulación. \verb|NAME_MAX_LEN| define la máxima longitud posible del nombre de un archivo a ser leído con el paquete \verb|KSource|. 
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+typedef double (*WeightFun)(const mcpl_particle_t* part);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Definición de función de \emph{weighting}. Puede utilizarse en algunas funcionalidades para aplicar un pesado o \emph{biasing} basado en los parámetros de las partículas.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+typedef struct KSource{
+	double J;       // Total current [1/s]
+	PList* plist;   // Particle list
+	Geometry* geom; // Geometry defining variable treatment
+} KSource;
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Estructura \verb|KSource|. Modela una fuente KDE, la cual se compone de una lista de partículas (\verb|PList|) y un tratamiento de variables (\verb|Geometry|). Incluye además el valor de corriente total, en unidades $[1/s]$. Dicho valor es utilizado para definir las intensidades relativas en fuentes múltiples \verb|MultiSource|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+KSource* KS_create(double J, PList* plist, Geometry* geom);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Crear estructura \verb|KSource| en base a estructuras \verb|PList| y \verb|Geometry| previamente creados. Debe definirse también un valor de corriente total (unidades $[1/s]$). Dicho valor es utilizado para definir las intensidades relativas en fuentes múltiples \verb|MultiSource|, por lo que puede fijarse en 1 si no se planea crear dicha estructura.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+KSource* KS_open(const char* xmlfilename);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Cargar fuente \verb|KSource| en base al archivo de parámetros XML de nombre \verb|xmlfilename|. El mismo usualmente es creado mediante la API en Python.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias, int loop);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Función principal para muestreo de partículas con una fuente \verb|KSource|. La partícula muestreada se guarda en \verb|part|. Incluye los siguientes argumentos para configurar el muestreo:
+\begin{itemize}
+	\item \verb|perturb|: Si es 0, las partículas se muestrean directo del archivo MCPL sin modificación. Sino, se aplica una perturbación con la distribución del \emph{kernel} y el ancho de banda correspondiente, de acuerdo a la técnica de muestreo con KDE.
+	\item \verb|w_crit|: Si es menor o igual a 0, se fija el peso estadístico de la partícula muestreada como $w=w_0$, siendo $w_0$ el peso de la partícula original en el archivo MCPL. Si es mayor a 0, se normaliza $w$ a 1, utilizando la siguiente técnica:
+	\begin{itemize}
+		\item Si $w_0<w_{crit}$: Se usa $w_0/w_{crit}$ como probabilidad de tomar la partícula, en lugar de descartarla y avanzar en la lista.
+		\item Si $w_0>w_{crit}$: Se usa $w_{crit}/w_0$ como probabilidad de avanzar en la lista luego del muestreo.
+	\end{itemize}
+	De este modo, en promedio se utilizará $w_0$ veces cada partícula en la lista. Se recomienda fijar \verb|w_crit| como el peso medio en la lista.
+	\item \verb|bias|: Función de \emph{weighting} para aplicar \emph{biasing} durante el muestreo. Será ignorada si \verb|w_crit<=0|.
+	\item \verb|loop|: Si es 0, se llama a \verb|exit(EXIT_SUCCESS)| al llegar al final de la lista, terminando la simulación. Sino, al llegar al final de la lista se vuelve al inicio.
+\end{itemize}
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int KS_sample(KSource* ks, mcpl_particle_t* part);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Función de muestreo simple de partículas con una fuente \verb|KSource|. Redirige a \verb|KS_sample2|, con los argumentos \verb|perturb=1|, \verb|w_crit=1|, \verb|bias=NULL| y \verb|loop=1|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+double KS_w_mean(KSource* ks, int N, WeightFun bias);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Computar peso medio de las partículas en la lista utilizada por la fuente \verb|ks|. Se utilizan \verb|N| partículas para el cómputo. Si se fija \verb|bias| distinto de \verb|NULL|, se incluye la función de \emph{weighting} \verb|bias|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+void KS_destroy(KSource* ks);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Destruir fuente \verb|KSource|, liberando toda la memoria asociada.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+typedef struct MultiSource{
+	int len;     // Number of sources
+	KSource** s; // Array of sources
+	double J;    // Total current [1/s]
+	double* ws;  // Frequency weights of sources
+	double* cdf; // cdf of sources weights
+} MultiSource;
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Estructura \verb|MultiSource|. Modela un conjunto de fuentes KDE superpuestas. Los valores en el \emph{array} \verb|ws| definen las frecuencias de muestreo de cada fuente, mientras que sus intensidades se obtienen del parámetro \verb|J| de cada fuente \verb|KSource|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+MultiSource* MS_create(int len, KSource** s, const double* ws);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Crear estructura \verb|MultiSource| en base a la cantidad de fuentes, el \emph{array} de estructuras \verb|KSource|, y las frecuencias de muestreo deseadas. Durante la creación se computa la corriente total \verb|J| y la función acumulativa de densidad \verb|cdf|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+MultiSource* MS_open(int len, const char** xmlfilenames, const double* ws);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Cargar un conjunto de fuentes \verb|KSource| de los archivos de parámetros XML definidos en \verb|xmlfilenames|, y construir estructura \verb|MultiSource|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int MS_sample2(MultiSource* ms, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias, int loop);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Función principal para muestreo de partículas con una fuente \verb|MultiSource|. Se elige aleatoriamente una fuente usando las frecuencias definidas en \verb|ms->ws|, y se le redirige el muestreo pasándole los mismos parámetros. Luego del muestreo se multiplica el peso de la partícula por el factor:
+\begin{equation}
+	f_{SB} = \frac{J_i / J_{tot}}{w_i / w_{tot}}
+\end{equation}
+Donde el subíndice $i$ representa la fuente elegida para el muestreo, y $tot$ la suma sobre todas las fuentes. De este modo se corrige la eventual discrepancia entre la intensidad relativa y la frecuencia relativa de muestreo, de acuerdo con la técnica de \emph{source biasing}.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int MS_sample(MultiSource* ms, mcpl_particle_t* part);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Función de muestreo simple de partículas con una fuente \verb|MultiSource|. Redirige a \verb|MS_sample2|, con los argumentos \verb|perturb=1|, \verb|w_crit=1|, \verb|bias=NULL| y \verb|loop=1|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+double MS_w_mean(MultiSource* ms, int N, WeightFun bias);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Computar peso medio de las partículas en las listas de todas las fuentes. Computa los pesos medios de cada fuente mediante la función \verb|KS_w_mean| con los mismos parámetros \verb|N| y \verb|bias|, y computa el peso medio global como el promedio pesado mediante los valores en \verb|ms->ws|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+void MS_destroy(MultiSource* ms);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Destruir fuente \verb|MultiSource|, liberando toda la memoria asociada.
+\end{addmargin}
+
+\end{footnotesize}
+
+
+\subsection{Estructura \texttt{PList}}
+
+La estructura \verb|PList| modela una lista de partículas, actuando como \emph{wrapper} de un archivo MCPL. Permite acceder a las partículas, e incluye la posibilidad de aplicarles una traslación y una rotación luego de la lectura.
+
+A continuación se presentan las estructuras y funciones declaradas en el archivo \verb|plist.h|.
+
+\begin{footnotesize}
+
+\begin{lstlisting}[language=C]
+typedef struct PList{
+	char pt;                     // Particle type ("n", "p", "e", ...)
+
+	char* filename;              // Name of MCPL file
+	mcpl_file_t file;            // MCPL file
+
+	double* trasl;               // PList translation
+	double* rot;                 // PList rotation
+	int x2z;                     // If true, apply permutation x,y,z -> y,z,x
+
+	const mcpl_particle_t* part; // Pointer to selected particle
+} PList;
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Definición de la estructura \verb|PList|. La misma tiene fijado el tipo de partícula según \verb|pt|. Incluye la estructura correspondiente para la lectura de un archivo MCPL, además de (opcionalmente), parámetros que definen una transformación espacial a aplicar luego de la lectura de partículas. El parámetro \verb|part| apunta a la ultima partícula leída, en todo momento.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Crear estructura \verb|PList|. Se debe definir el tipo de partícula (\verb|"n"| para neutrón, \verb|"p"| para fotón, \verb|"e"| para electrón) y el nombre del archivo MCPL. Opcionalmente se puede definir una traslación (\emph{array} 3D) y una rotación (\emph{array} 3D, formato eje-ángulo), o fijar en \verb|NULL| dichos argumentos en caso contrario. La rotación se aplica luego de la traslación. Si \verb|switch_x2z| es distinto de 0, luego de aplicar la rotación y traslación (de haberlas), se aplica la transformación $(x,y,z)\rightarrow (y,z,x)$.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int PList_get(const PList* plist, mcpl_particle_t* part);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Obtener partícula, aplicar transformaciones (de haberlas), y guardarla en \verb|part|. La partícula se obtiene de \verb|plist->part|, y no se modifica dicha variable luego de la lectura.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int PList_next(PList* plist, int loop);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Avanzar en la lista, actualizando la variable \verb|plist->part|, hasta la siguiente partícula válida. Se considera una partícula como válida si tiene peso estadístico mayor a cero.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+void PList_destroy(PList* plist);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Destruir estructura \verb|PList|, liberando toda la memoria asociada.
+\end{addmargin}
+
+\end{footnotesize}
+
+
+\subsection{Estructuras \texttt{Geometry} y \texttt{Metric}}
+
+La función principal de la estructura \verb|Geometry| es perturbar partículas siguiendo la distribución del \emph{kernel}. Lo logra redirigiendo dicha tarea a las métricas correspondientes a cada conjunto de variables, las cuales utilizan una función de perturbación específica para cada tipo de métrica. \verb|Geometry| también se encarga de administrar los anchos de banda y normalización de variables.
+
+A continuación se presentan las definiciones, estructuras y funciones declaradas en \verb|geom.h|.
+
+\begin{footnotesize}
+
+\begin{lstlisting}[language=C]
+typedef struct Metric Metric;
+
+typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part,
+	double bw);
+
+struct Metric{
+	int dim;            // Dimension
+	float* scaling;     // Variables scaling
+	PerturbFun perturb; // Perturbation function
+	int nps;            // Number of metric parameters
+	double* params;     // Metric parameters
+};
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Definición de la estructura \verb|Metric|, en conjunto con la definición de función de perturbación. La función principal de dicha estructura es perturbar un conjunto de variables, lo cual realiza llamando a la función disponible en \verb|perturb|, la cual a su vez utilizará, además del ancho de banda provisto como argumento, los escaleos de variables (\verb|scaling|) y los parámetros de la métrica (\verb|params|). El significado de dichos parámetros depende según el tipo de métrica, pudiendo representar tamaños de la fuente, valores mínimos, máximos o de referencia de variables, etc. Algunas métricas no poseen parámetros.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+Metric* Metric_create(int dim, const double* scaling, PerturbFun perturb, int nps, const double* params);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Crear estructura \verb|Metric|. Se debe proveer la dimensionalidad de la métrica (\verb|dim|), los factores de escaleo (\verb|scaling|), y la cantidad y valores de parámetros de la métrica (\verb|nps| y \verb|params|).
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+void Metric_destroy(Metric* metric);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Destruir estructura \verb|Metric|, liberando toda la memoria asociada.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+typedef struct Geometry{
+	int ord;          // Number of submetrics
+	Metric** ms;      // Submetrics
+	char* bwfilename; // Bandwidth file name
+	FILE* bwfile;     // Bandwidth file
+	double bw;        // Normalized bandwidth
+
+	double* trasl;    // Geometry translation
+	double* rot;      // Geometry rotation
+} Geometry;
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Definición de la estructura \verb|Geometry|. La misma contiene una cantidad \verb|ord| de métricas almacenadas en \verb|ms|. En el caso de que el ancho de banda sea adaptativo, \verb|Geometry| administra la lectura del archivo donde se almacenan sus valores. En cualquier caso el parámetro \verb|bw| contiene el ancho de banda actual. \verb|KSource| debe encargarse de que el ancho de banda presente en \verb|bw| siempre se corresponda con la partícula presente en el parámetro \verb|part| de la \verb|PList|. Los parámetros \verb|trasl| y \verb|rot| representan la ubicación y orientación espacial de la fuente.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilename,
+	const double* trasl, const double* rot);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Crear estructura \verb|Geometry|. Se debe indicar el orden \verb|ord| de la misma (cantidad de métricas), proveer la ubicación de las métricas previamente creadas (\verb|metrics|), y la posición y rotación de la fuente (\verb|trasl| y \verb|rot|). Para modelos con ancho de banda constante éste se debe proveer en el argumento \verb|bw| y se debe fijar \verb|bwfilename=NULL|, mientras que para ancho de banda adaptativo se debe indicar el archivo que contiene los anchos de banda (en formato binario de secuencia de puntos flotantes de simple precisión), y \verb|bw| es ignorado.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar partícula, siguiendo la distribución del \emph{kernel} (\emph{gaussiano}), y el ancho de banda presente en \verb|geom->bw|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Geom_next(Geometry* geom, int loop);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Avanzar una posición en la lista de anchos de banda, en el caso de ancho de banda adaptativo. Para ancho de banda constante esta función no realiza ninguna acción.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+void Geom_destroy(Geometry* geom);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Destruir estructura \verb|Geometry|, liberando toda la memoria asociada.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+#define E_MIN 1e-11
+#define E_MAX 20
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Valores mínimo y máximo de energía. Si luego de una perturbación se obtiene un valor de energía por fuera de este rango, se repite la perturbación.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar energía, con métrica simple de energía. En este caso \verb|bw| multiplicado por el elemento de \verb|scaling| correspondiente tiene unidades de energía (MeV).
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar energía, con métrica de letargía. En este caso \verb|bw| multiplicado por el elemento de \verb|scaling| correspondiente tiene unidades de letargía (adimensional).
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar posición en sus 3 dimensiones, con métrica simple de posición. En este caso \verb|bw| multiplicado por cada elemento de \verb|scaling| correspondiente tiene unidades de posición (cm).
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar posición en sus dimensiones \emph{x} e \emph{y}, con métrica simple de posición. En este caso \verb|bw| multiplicado por cada elemento de \verb|scaling| correspondiente tiene unidades de posición (cm).
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar posición y dirección, con métrica de guía neutrónica. En este caso \verb|bw| multiplicado por los dos primeros elementos de \verb|scaling| tiene unidades de posición (cm), mientras que para los últimos dos tiene unidades de ángulo (grados). La métrica en dirección es polar, relativo a la normal de cada espejo. Internamente se transforma a las variables de guía $z,t,\theta,\phi$, se perturba dichas variables, y se antitransforma.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar dirección, con métrica isotrópica. En este caso \verb|bw| multiplicado por el elemento de \verb|scaling| correspondiente tiene unidades de ángulo (grados). La perturbación sigue la denominada distribución de Von Mises-Fischer.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar dirección, con métrica polar relativa a $z$. En este caso \verb|bw| multiplicado por cada elemento de \verb|scaling| correspondiente tiene unidades de ángulo (grados). Internamente se transforma a $\theta,\phi$, se perturba dichas variables, y se antitransforma.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Perturbar dirección, con métrica polar relativa a $z$, utilizando $\mu=cos(\theta)$. En este caso \verb|bw| multiplicado por el primer elemento de \verb|scaling| tiene unidades de $\mu$ (adimensional), mientras que por el segundo elemento tiene unidades de ángulo (grados). Internamente se transforma a $\mu,\phi$, se perturba dichas variables, y se antitransforma.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+static const int _n_metrics = 8;
+static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "Guide", "Isotrop", "Polar", "PolarMu"};
+static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb};
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Variables estáticas conteniendo la cantidad, nombres y funciones de perturbación de las métricas implementadas.
+\end{addmargin}
+
+\end{footnotesize}
+
+
+\subsection{Utilidades generales}
+
+Además de las estructuras descritas previamente, se incluye un conjunto de utilidades generales para resolver problemas específicos. Esto incluye funciones matemáticas, conversión entre formatos de partícula y factores dosimétricos.
+
+A continuación se describen las funciones declaradas en \verb|utils.h|.
+
+\begin{footnotesize}
+
+\begin{lstlisting}[language=C]
+double rand_norm();
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Obtener valor aleatorio con distribución normal, centrada en cero y con dispersión unitaria. Internamente utiliza el método de Box-Muller.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+double *traslv(double *vect, const double *trasl, int inverse);
+double *rotv(double *vect, const double *rotvec, int inverse);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Trasladar y rotar vector tridimensional. Realiza la transformación \emph{in-place} sobre \verb|vect| y lo retorna. Si \verb|inverse| es distinto de 0 se aplica la transformación inversa. \verb|trasl| es el vector de traslación, mientras que \verb|rot| es el vector de rotación en formato ángulo-eje.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+long pt2pdg(char pt);
+char pdg2pt(long pdgcode);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Convertir de partícula en formato \emph{char} (\verb|"n"|: neutrón, \verb|"p"|: fotón, \verb|"e"|: electrón) a código PDG \cite{PDG}, y viceversa.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+double interp(double x, const double *xs, const double *ys, int N);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Función de interpolación. Los \emph{arrays} \verb|xs| e \verb|ys|, de longitud \verb|N|, poseen los valores a interpolar. Se devuelve el valor interpolado en la posición \verb|x|.
+\end{addmargin}
+
+\begin{lstlisting}[language=C]
+double H10_n_ARN(double E);
+double H10_p_ARN(double E);
+double H10_n_ICRP(double E);
+double H10_p_ICRP(double E);
+\end{lstlisting}
+\begin{addmargin}[0.5cm]{0cm}
+Factores dosimétricos en función de la energía, en unidades $[pSv\ cm^2]$. \verb|n| indica neutrón y \verb|p| indica fotón. \verb|ARN| y \verb|ICRP| indican la referencia para la tabla de interpolación que se utilizará. La interpolación se realiza en escala logarítmica.
+\end{addmargin}
+
+\end{footnotesize}

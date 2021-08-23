@@ -7,9 +7,10 @@ display_usage(){
 	echo -e "Copy to dest templates for KSource usage in Python, or for interacting with"
 	echo -e "Monte Carlo codes.\n"
 	echo -e "Options:"
-	echo -e "\t--mcstas:  copy templates for using McStas."
-	echo -e "\t--tripoli: copy templates for using TRIPOLI-4."
-	echo -e "\t--all:     copy all templates."
+	echo -e "\t--mcstas:   Copy templates for using McStas."
+	echo -e "\t--tripoli:  Copy templates for using TRIPOLI-4."
+	echo -e "\t--all:      Copy all templates."
+	echo -e "\t-h, --help: Display usage instructions."
 }
 
 opt_mcstas=0

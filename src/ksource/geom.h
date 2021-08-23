@@ -17,12 +17,6 @@
 #include "mcpl.h"
 
 
-#define MAX_RESAMPLES 1000
-#define E_MIN 1e-11
-#define E_MAX 20
-#define NAME_MAX_LEN 256
-
-
 typedef struct Metric Metric;
 
 typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part, double bw);
@@ -56,6 +50,9 @@ Geometry* Geom_copy(const Geometry* from);
 int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
 int Geom_next(Geometry* geom, int loop);
 void Geom_destroy(Geometry* geom);
+
+#define E_MIN 1e-11
+#define E_MAX 20
 
 int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
 int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw);

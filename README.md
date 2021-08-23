@@ -74,6 +74,6 @@ The KSource package consists in the following tools:
 	If you wish to have KSource tools available in your path, execute:
 
 	```bash
-	$ export PATH=/path/to/ksourceinstall/bin:$PATH
+	$ export PATH=$PATH:/path/to/ksourceinstall/bin
 	```
 	Or add this command to `~/.profile` (and update with `source ~/.profile`).

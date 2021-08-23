@@ -3,13 +3,14 @@
 KSDIR="$(dirname $(dirname "$0"))"
 
 display_usage(){
-	echo -e "Usage: kstool [opciones]\n"
+	echo -e "Usage: kstool [options]\n"
 	echo -e "KSource is a Monte Carlo calculations assistance tool. It implements particles"
 	echo -e "density estimation and sampling by means of Kernel Density Estimation method.\n"
 	echo -e "Options:"
-	echo -e "\tresample:  resample particles based on a ksource XML file."
-	echo -e "\ttemplates: copy templates for Monte Carlo calculations."
+	echo -e "\tresample:   Resample particles based on a ksource XML file."
+	echo -e "\ttemplates:  Copy templates for Monte Carlo calculations."
 	echo -e "\t[Any MCPL command]"
+	echo -e "\t-h, --help: Display usage instructions."
 }
 
 if [ $# -eq 0 ]; then 

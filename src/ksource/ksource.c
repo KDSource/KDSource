@@ -25,7 +25,7 @@ KSource* KS_create(double J, PList* plist, Geometry* geom){
 	return ks;
 }
 
-KSource* KS_open(const char* filename){
+KSource* KS_open(const char* xmlfilename){
 	xmlKeepBlanksDefault(0);
 
 	int i, j, n;
@@ -43,15 +43,15 @@ KSource* KS_open(const char* filename){
 	double bw=0;
 
 	// Read file
-	printf("Reading xmlfile %s...\n", filename);
-	xmlDocPtr doc = xmlReadFile(filename, NULL, 0);
+	printf("Reading xmlfile %s...\n", xmlfilename);
+	xmlDocPtr doc = xmlReadFile(xmlfilename, NULL, 0);
 	if(doc == NULL){
-		printf("Could not open file %s\n", filename);
+		printf("Could not open file %s\n", xmlfilename);
 		KS_error("Error in KS_open");
 	}
 	xmlNodePtr root = xmlDocGetRootElement(doc);
 	if(strcmp((char*)root->name, "KSource") != 0){
-		printf("Invalid format in source XML file %s\n", filename);
+		printf("Invalid format in source XML file %s\n", xmlfilename);
 		KS_error("Error in KS_open");
 	}
 	xmlNodePtr node = root->children; // Node: J
@@ -246,10 +246,10 @@ MultiSource* MS_create(int len, KSource** s, const double* ws){
 	return ms;
 }
 
-MultiSource* MS_open(int len, const char** filenames, const double* ws){
+MultiSource* MS_open(int len, const char** xmlfilenames, const double* ws){
 	KSource* s[len];
 	int i;
-	for(i=0; i<len; i++) s[i] = KS_open(filenames[i]);
+	for(i=0; i<len; i++) s[i] = KS_open(xmlfilenames[i]);
 	return MS_create(len, s, ws);
 }
 
@@ -271,8 +271,8 @@ int MS_sample(MultiSource* ms, mcpl_particle_t* part){
 double MS_w_mean(MultiSource* ms, int N, WeightFun bias){
 	double w_mean=0;
 	int i;
-	for(i=0; i<ms->len; i++) w_mean += KS_w_mean(ms->s[i], N, bias);
-	return w_mean / ms->len;
+	for(i=0; i<ms->len; i++) w_mean += ms->ws[i] * KS_w_mean(ms->s[i], N, bias);
+	return w_mean / ms->cdf[ms->len-1];
 }
 
 void MS_destroy(MultiSource* ms){

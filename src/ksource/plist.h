@@ -19,11 +19,6 @@
 #include "mcpl.h"
 
 
-#define MAX_SEARCH 1E5
-#define LINE_MAX_LEN 1024
-#define NAME_MAX_LEN 256
-
-
 typedef struct PList{
 	char pt;                     // Particle type ("n", "p", "e", ...)
 

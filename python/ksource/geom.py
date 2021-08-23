@@ -255,7 +255,7 @@ class Geometry (Metric):
         else: rot = None
         return Geometry(metrics, trasl=trasl, rot=rot)
 
-# Clases heredadas
+# Inherited Metrics
 
 class Energy (Metric):
     def __init__(self):
