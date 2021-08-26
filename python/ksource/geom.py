@@ -235,9 +235,9 @@ class Geometry (Metric):
         for metric in self.ms:
             mtree = ET.SubElement(gtree, metric.__class__.__name__)
             metric.save(mtree)
-        trasl = np.array_str(self.trasl)[2:-2] if self.trasl is not None else ""
+        trasl = np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
         ET.SubElement(gtree, "trasl").text = trasl
-        rot = np.array_str(self.rot.as_rotvec())[2:-2] if self.rot is not None else ""
+        rot = np.array_str(self.rot.as_rotvec())[1:-1] if self.rot is not None else ""
         ET.SubElement(gtree, "rot").text = rot
     @staticmethod
     def load(gtree):
@@ -610,7 +610,7 @@ _metrics = {
     "Guide":Guide,
     "Isotrop":Isotrop,
     "Polar":Polar,
-    "PolarMu":Polar
+    "PolarMu":PolarMu
 }
 
 # Aliases for usual geometries

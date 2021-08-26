@@ -43,13 +43,13 @@ def read_spectrum(spectrum=None):
                     Es.append(np.double(line[0])/1000.)
                     ws.append(np.double(line[2]))
                 except:
-                    pass
+                    pass  
+        if len(Es) == 0:
+            raise Exception("Empty decay spectrum.")
     Es = np.array(Es)
     ws = np.array(ws)
     if len(Es) != len(ws):
         raise Exception("Invalid decay spectrum format.")
-    if len(Es) == 0:
-        raise Exception("Empty decay spectrum.")
     return [Es, ws]
 
 class T4Tally:

@@ -300,9 +300,9 @@ class PList:
         """Save PList parameters into XML tree."""
         ET.SubElement(pltree, "pt").text = self.pt
         ET.SubElement(pltree, "mcplname").text = os.path.abspath(self.filename)
-        trasl = np.array_str(self.trasl)[2:-2] if self.trasl is not None else ""
+        trasl = np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
         ET.SubElement(pltree, "trasl").text = trasl
-        rot = np.array_str(self.rot.as_rotvec())[2:-2] if self.rot is not None else ""
+        rot = np.array_str(self.rot.as_rotvec())[1:-1] if self.rot is not None else ""
         ET.SubElement(pltree, "rot").text = rot
         ET.SubElement(pltree, "x2z").text = str(int(self.x2z))
 

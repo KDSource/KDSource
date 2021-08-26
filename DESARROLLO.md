@@ -51,7 +51,7 @@ $ cd ..
 Instalar API en Python:
 ```bash
 $ cd python
-$ pip install . [-e]
+$ pip install [-e] .
 $ cd ..
 ```
 

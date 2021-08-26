@@ -114,10 +114,17 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part){
 
 int Geom_next(Geometry* geom, int loop){
 	if(geom->bwfile){
-		if(fread(&geom->bw, sizeof(float), 1, geom->bwfile) == 1) return 0;
+		float temp;
+		if(fread(&temp, sizeof(float), 1, geom->bwfile) == 1){
+			geom->bw = temp;
+			return 0;
+		}
 		if(!loop) KS_end("Geom_next: End of BW file reached.");
 		rewind(geom->bwfile); // After 1st failed try, rewind
-		if(fread(&geom->bw, sizeof(float), 1, geom->bwfile) == 1) return 1;
+		if(fread(&temp, sizeof(float), 1, geom->bwfile) == 1){
+			geom->bw = temp;
+			return 1;
+		}
 		KS_error("Error in Geom_next: Could not read BW.");
 	}
 	return 0;
@@ -184,6 +191,7 @@ int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	int cont=0;
 	double x0=part->position[0], y0=part->position[1], x=x0, y=y0;
 	double xmin=metric->params[0], xmax=metric->params[1], ymin=metric->params[2], ymax=metric->params[3];
+	double z = metric->params[4];
 	x = x0 + bw*metric->scaling[0] * rand_norm();
 	while((x < xmin || x > xmax)  && cont++ < MAX_RESAMPLES){ // Keet x within range [xmin,xmax]
 		x = x0 + bw*metric->scaling[0] * rand_norm();
@@ -195,7 +203,7 @@ int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 		y = y0 + bw*metric->scaling[1] * rand_norm();
 	}
 	if(cont > MAX_RESAMPLES) printf("Warning in SurfXY_perturb: MAX_RESAMPLES reached (y0 = %lf).\n", y0);
-	part->position[0] = x; part->position[1] = y;
+	part->position[0] = x; part->position[1] = y; part->position[2] = z;
 	return 0;
 }
 int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
@@ -333,7 +341,7 @@ int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	mu0 = part->direction[2];
 	phi   = atan2(part->direction[1], part->direction[0]);
 	mu = mu0 + bw*metric->scaling[0] * rand_norm();
-	while(mu*mu0 < 0 && cont++ < MAX_RESAMPLES){ // Avoid perturbation to change propagation direction
+	while((mu*mu0 < 0 || fabs(mu) > 1) && cont++ < MAX_RESAMPLES){ // Avoid perturbation to change propagation direction
 		mu = mu0 + bw*metric->scaling[0] * rand_norm();
 	}
 	if(cont > MAX_RESAMPLES) printf("Warning in PolarMu_perturb: MAX_RESAMPLES reached (mu0 = %lf).\n", mu0);
