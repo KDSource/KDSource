@@ -260,6 +260,8 @@ class T4Tally:
                 Scale for y axis.
             fact: float
                 Factor to apply on all densities. Default: 1
+            label: string
+                Label for plot legend.
 
         Returns
         -------
@@ -273,8 +275,8 @@ class T4Tally:
         vrs = [0,1,2]
         vrs.remove(var)
         if cells is None: # Average over other variables
-            scores = np.mean(self.I, axis=vrs)
-            errs = np.sqrt(np.sum(self.err**2, axis=vrs)) / (self.err.shape[vrs[0]]*self.err.shape[vrs[1]])
+            scores = np.mean(self.I, axis=tuple(vrs))
+            errs = np.sqrt(np.sum(self.err**2, axis=tuple(vrs))) / (self.err.shape[vrs[0]]*self.err.shape[vrs[1]])
         else: # Plot over selected cells
             slc = cells.copy()
             slc.insert(var, slice(None))
@@ -289,12 +291,15 @@ class T4Tally:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
         #
-        if cells is None:
-            lbl = str(self.grids[vrs[0]][0])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][-1])
-            lbl += str(self.grids[vrs[1]][0])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][-1])
+        if "label" in kwargs: lbl = kwargs["label"]
         else:
-            lbl = str(self.grids[vrs[0]][cells[0]])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][cells[0]+1])
-            lbl += str(self.grids[vrs[1]][cells[1]])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][cells[1]+1])
+            if cells is None:
+                lbl = str(self.grids[vrs[0]][0])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][-1])
+                lbl += str(self.grids[vrs[1]][0])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][-1])
+            else:
+                lbl = str(self.grids[vrs[0]][cells[0]])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][cells[0]+1])
+                lbl += str(self.grids[vrs[1]][cells[1]])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][cells[1]+1])
+        grid = (self.grids[var][:-1] + self.grids[var][1:]) / 2
         plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
