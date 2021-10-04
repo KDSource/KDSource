@@ -26,8 +26,44 @@ varmap = {name:idx for idx,name in enumerate(varnames)}
 units = ["MeV", "cm", "cm", "cm", "", "", ""]
 
 
+def load(xmlfilename, N=-1):
+    """
+    Load KSource from XML parameters file.
+
+    After building the KSource object, a fit is performed to load the particle
+    list, leaving the KSource ready to be evaluated. The bandwidths given in the
+    XML file are not modified.
+
+    Parameters
+    ----------
+    xmlfilename: str
+        Name of XML parameters file
+    N: int
+        Number of particles to use for fitting. Default is -1, meaning that all
+        particles in the list will be used.
+
+    Returns
+    -------
+    ksource: KSource object
+    """
+    tree = ET.parse(xmlfilename)
+    root = tree.getroot()
+    J = np.double(root[0].text)
+    plist = PList.load(root[1])
+    geom = Geometry.load(root[2])
+    scaling = np.array(root[3].text.split(), dtype="float64")
+    bwel = root[4]
+    if bool(int(bwel.attrib["variable"])):
+        bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
+    else:
+        bw = np.double(bwel.text)
+    s = KSource(plist, geom, bw, scaling, J=1)
+    s.fit(N=N)
+    return s
+
+
 class KSource:
-    def __init__(self, plist, geom, bw="silv", scaling=None, J=1.0):
+    def __init__(self, plist, geom, bw="silv", J=1.0):
         """
         Object representing Kernel Density Estimation (KDE) sources.
         
@@ -52,12 +88,6 @@ class KSource:
             passed, it is the bandwidth for each particle. If a string is passed
             it is the bandwidth selection method. See bw_methods for available
             methods.
-        scaling: array-like, optional
-            Scaling to be applied to each variable. This means each particle
-            variable will be divided by the corresponding scaling element before
-            applying KDE. By default, no scaling is applied. Anyway, bandwidth
-            selection methods (if used), set scaling as the standard deviation
-            of each variable during fitting.
         J: float, optional
             The source total current, in [1/s]. If set, the density plots will
             have the correct units.
@@ -73,17 +103,11 @@ class KSource:
                 msg = "BW dimension must be < 2. Use scaling for anisotropic KDE."
                 raise ValueError(msg)
         self.kde = TreeKDE(bw=bw)
-        if scaling is not None:
-            scaling = np.array(scaling).ravel()
-            if len(scaling)!=1 and len(scaling)!=geom.dim:
-                raise ValueError("scaling len must be equal to geom dim.")
-        else:
-            scaling = np.ones(geom.dim)
-        self.scaling = scaling
+        self.scaling = None
         self.J = J
         self.fitted = False
 
-    def fit(self, N=-1, skip=0, **kwargs):
+    def fit(self, N=-1, skip=0, scaling=None, **kwargs):
         """
         Fit KDE model to particle list.
         
@@ -99,6 +123,11 @@ class KSource:
             particles with zero weight. -1 to use all particles.
         skip: int
             Number of particles to skip in the list before starting to read.
+        scaling: array-like, optional
+            Scaling to be applied to each variable. This means each particle
+            variable will be divided by the corresponding scaling element before
+            applying KDE. By default, the standard deviation of each variable is
+            used.
         **kwargs: optional
             Parameters to be passed to bandwidth selection method. Refer
             corresponding method for docs (see bw_methods for method names).
@@ -110,11 +139,12 @@ class KSource:
         print("Using {} particles for fit.".format(N))
         vecs = self.geom.transform(parts)
         self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
+        if scaling is None:
+            scaling = self.geom.std(vecs=vecs, weights=ws)
+        scaling[scaling == 0] = STD_DEFAULT
+        self.scaling = scaling
         if self.bw_method is not None:
             print("Calculating bw ... ")
-            scaling = self.geom.std(vecs=vecs)
-            scaling[scaling == 0] = STD_DEFAULT
-            self.scaling = scaling
             bw = optimize_bw(self.bw_method, vecs/self.scaling, ws, **kwargs)
             bw_opt = np.reshape(bw, (-1,1)) * self.scaling
             print("Done\nOptimal bw ({}) = {}".format(self.bw_method, bw_opt))
@@ -217,36 +247,6 @@ class KSource:
             file.write(xmlstr)
         print("Successfully saved parameters file {}".format(xmlfilename))
         return xmlfilename
-
-    @staticmethod
-    def load(xmlfilename):
-        """
-        Load KSource from XML parameters file.
-
-        Although bandwidths are loaded, fit method must be called before
-        evaluation, to load particles to KDE model.
-
-        Parameters
-        ----------
-        xmlfilename: str
-            Name of XML parameters file
-
-        Returns
-        -------
-        ksource: KSource object
-        """
-        tree = ET.parse(xmlfilename)
-        root = tree.getroot()
-        J = np.double(root[0].text)
-        plist = PList.load(root[1])
-        geom = Geometry.load(root[2])
-        scaling = np.array(root[3].text.split(), dtype="float64")
-        bwel = root[4]
-        if bool(int(bwel.attrib["variable"])):
-            bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
-        else:
-            bw = np.double(bwel.text)
-        return KSource(plist, geom, bw, scaling, J=1)
 
     # Plot methods
 
