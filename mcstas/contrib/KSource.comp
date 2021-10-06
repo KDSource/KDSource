@@ -77,8 +77,14 @@ TRACE
 	char pt;
 	mcpl_particle_t part;
 	double w, v;
+	int eof_reached;
 
-	KS_sample2(ksource, &part, use_kde, w_crit, NULL, loop);
+	eof_reached = KS_sample2(ksource, &part, use_kde, w_crit, NULL, 1);
+
+	if(eof_reached && !loop){
+	    printf("End of particle list reached. Finishing simulation\n");
+	    mcset_ncount(mcget_run_num()); ABSORB;
+	}
 
 	x = part.position[0]/100;
 	y = part.position[1]/100;

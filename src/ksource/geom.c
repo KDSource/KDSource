@@ -144,7 +144,7 @@ int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	int cont=0;
 	double E0 = part->ekin, E=E0;
 	E = E0 + bw*metric->scaling[0] * rand_norm();
-	while((E < E_MIN || E > E_MAX)  && cont++ < MAX_RESAMPLES){ // Keep E within range [E_MIN,E_MAX]
+	while(E < 0  && cont++ < MAX_RESAMPLES){ // Keep E > 0
 		E = E0 + bw*metric->scaling[0] * rand_norm();
 	}
 	if(cont > MAX_RESAMPLES) printf("Warning in E_perturb: MAX_RESAMPLES reached (E0 = %le).\n", E0);
@@ -152,14 +152,7 @@ int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	return 0;
 }
 int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	int cont=0;
-	double E0 = part->ekin, E=E0;
-	E = E0 * exp(bw*metric->scaling[0] * rand_norm());
-	while((E < E_MIN || E > E_MAX)  && cont++ < MAX_RESAMPLES){ // Keep E within range [E_MIN,E_MAX]
-		E = E0 * exp(bw*metric->scaling[0] * rand_norm());
-	}
-	if(cont > MAX_RESAMPLES) printf("Warning in Let_perturb: MAX_RESAMPLES reached (E0 = %le).\n", E0);
-	part->ekin = E;
+	part->ekin *= exp(bw*metric->scaling[0] * rand_norm());
 	return 0;
 }
 

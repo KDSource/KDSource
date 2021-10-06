@@ -51,6 +51,10 @@ $ cd python
 $ pip install [-e] .
 $ cd ..
 ```
+To have KSource command line tool in your path execute (or add to `~/.profile` and update with `source ~/.profile`):
+```bash
+$ export PATH=$PATH:/path/to/install/bin
+```
 
 ### Testing
 

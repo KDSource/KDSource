@@ -51,9 +51,6 @@ int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
 int Geom_next(Geometry* geom, int loop);
 void Geom_destroy(Geometry* geom);
 
-#define E_MIN 1e-11
-#define E_MAX 20
-
 int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
 int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
 
