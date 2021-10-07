@@ -38,13 +38,13 @@ double *rotv(double *vect, const double *rotvec, int inverse){
 }
 
 // Conversion between char pt and pdg code for particle type
-long pt2pdg(char pt){
+int pt2pdg(char pt){
 	if(pt == 'n') return 2112;
 	if(pt == 'p') return 22;
 	if(pt == 'e') return 11;
 	return 0;
 }
-char pdg2pt(long pdgcode){
+char pdg2pt(int pdgcode){
 	if(pdgcode == 2112) return 'n';
 	if(pdgcode == 22) return 'p';
 	if(pdgcode == 11) return 'e';

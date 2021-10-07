@@ -13,6 +13,7 @@ void KS_end(const char* msg);
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z){
 	PList* plist = (PList*)malloc(sizeof(PList));
 	plist->pt = pt;
+	plist->pdgcode = pt2pdg(pt);
 	mcpl_file_t file = mcpl_open_file(filename);
 	plist->filename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 	strcpy(plist->filename, filename);
@@ -83,7 +84,7 @@ int PList_next(PList* plist, int loop){
 			if(plist->part == NULL)
 				KS_error("Error in PList_next: Could not get particle");
 		}
-		if(plist->part->weight > 0) return ret;
+		if(plist->part->weight>0 && plist->part->pdgcode==plist->pdgcode) return ret;
 	}
 	KS_error("Error in PList_next: MAX_RESAMPLES reached.");
 	return 1;

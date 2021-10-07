@@ -21,6 +21,7 @@
 
 typedef struct PList{
 	char pt;                     // Particle type ("n", "p", "e", ...)
+	int pdgcode;                 // PDG code for particle type
 
 	char* filename;              // Name of MCPL file
 	mcpl_file_t file;            // MCPL file

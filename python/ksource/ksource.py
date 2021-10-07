@@ -133,9 +133,9 @@ class KSource:
             corresponding method for docs (see bw_methods for method names).
         """
         parts,ws = self.plist.get(N, skip)
-        if len(parts) == 0:
-            raise Exception("No particles for fitting.")
         N = len(parts)
+        if N == 0:
+            raise Exception("No particles for fitting.")
         print("Using {} particles for fit.".format(N))
         vecs = self.geom.transform(parts)
         self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
@@ -220,7 +220,9 @@ class KSource:
         bw = self.kde.bw
         if adjust_N: # Adjust N_eff with Silverman factor
             dim = self.geom.dim
-            bw *= bw_silv(dim, self.plist.N) / bw_silv(dim, len(self.kde.data))
+            if not self.plist.params_set:
+                self.plist.set_params()
+            bw *= bw_silv(dim, self.plist.N_eff) / bw_silv(dim, self.N_eff)
         # Build XML tree
         root = ET.Element("KSource")
         Jel = ET.SubElement(root, "J")

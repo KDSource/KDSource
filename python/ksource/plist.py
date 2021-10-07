@@ -59,7 +59,7 @@ def convert2mcpl(filename, readformat):
         return filename
     # Must convert
     if not readformat in ["ssw", "phits", "ptrac", "stock", "ssv"]:
-        raise Exception("Formato {} invalido".format(readformat))
+        raise Exception("Invalid {} format".format(readformat))
     print("Converting {} file to MCPL...".format(readformat))
     mcplname = filename.split(".")[0]+".mcpl"
     result = subprocess.run(["kstool", readformat+"2mcpl", filename, mcplname],
@@ -195,14 +195,14 @@ class PList:
         pt: str
             Particle type. See pt2pdg for available particle types.
         trasl: array-like, optional
-            Spatial traslation. Default is no traslation.
+            Spatial translation. Default is no translation.
         rot: numpy.ndarray or scipy.spatial.transform.Rotation, optional
             Spatial rotation. Can be a scipy Rotation object, or any array-like
             which can be used to generate a scipy Rotation object (rotation
             vector, quaternion or rotation matrix). Rotation is applied after
-            traslation.
+            translation.
         switch_x2z: bool
-            If true, the following permutation is applied after traslation and
+            If true, the following permutation is applied after translation and
             rotation:
                 (x, y, z) -> (y, z, x)
         set_params: bool
@@ -210,13 +210,13 @@ class PList:
             after construction.
         """
         if np.isscalar(filename):
-            self.filename = convert2mcpl(filename, readformat) # Convertir formato a MCPL
+            self.filename = convert2mcpl(filename, readformat) # Convert format to MCPL
         else:
-            self.filename = join2mcpl(filename, readformat) # Convertir formato a MCPL y unir archivos
+            self.filename = join2mcpl(filename, readformat) # Convert format to MCPL and join
         if trasl is not None:
             trasl = np.array(trasl).reshape(-1)
             if trasl.shape != (3,):
-                raise ValueError("trasl invalido")
+                raise ValueError("Invalid trasl")
         if rot is not None:
             if not isinstance(rot, st.Rotation):
                 rot = np.array(rot)
@@ -227,35 +227,40 @@ class PList:
                 elif rot.shape == (3,):
                     rot = st.Rotation.from_rotvec(rot)
                 else:
-                    raise ValueError("rot invalido")
+                    raise ValueError("Invalid rot")
         self.pt = pt
         self.trasl = trasl
         self.rot = rot
         self.x2z = switch_x2z
-        self.N = mcpl.MCPLFile(self.filename).nparticles
         self.params_set = False
         if set_params:
             self.set_params()
-        else:
-            self.I = self.p2 = 1.0
 
     def set_params(self):
         """Set parameters I (sum of weights) and p2 (sum of squared weights)."""
         pl = mcpl.MCPLFile(self.filename)
-        I = p2 = 0
+        I = p2 = N = 0
         for pb in pl.particle_blocks:
-            I += pb.weight.sum()
-            p2 += (pb.weight**2).sum()
-        print("I = {}\np2 = {}\nN = {}".format(I, p2, self.N))
+            mask = np.logical_and(pb.weight>0, pb.pdgcode==pt2pdg(self.pt))
+            ws = pb.weight[mask]
+            N += len(ws)
+            I += ws.sum()
+            p2 += (ws**2).sum()
+        if N == 0:
+            raise Exception("Empty particle list")
+        N_eff = I**2 / p2
+        print("I = {}\np2 = {}\nN = {}\nN_eff = {}".format(I, p2, N, N_eff))
         self.I = I
         self.p2 = p2
+        self.N = N
+        self.N_eff = N_eff
         self.params_set = True
 
     def get(self, N=-1, skip=0):
         """
         Get particles from MCPL file.
 
-        After loading particles, traslation, rotation and switch_x2z
+        After loading particles, translation, rotation and switch_x2z
         transformations will be applied (if any).
 
         Parameters
@@ -274,8 +279,7 @@ class PList:
             (N', 7), with columns ordered as in varnames list.
         """
         if N < 0:
-            if not self.params_set: self.set_params()
-            N = self.N
+            N = mcpl.MCPLFile(self.filename).nparticles
         pl = mcpl.MCPLFile(self.filename, blocklength=N)
         pl.skip_forward(skip)
         pb = pl.read_block()
@@ -286,12 +290,12 @@ class PList:
         mask = np.logical_and(ws>0, pb.pdgcode==pt2pdg(self.pt))
         parts = parts[mask]
         ws = ws[mask]
-        if self.trasl is not None: # Aplico traslacion
+        if self.trasl is not None: # Apply translation
             parts[:,1:4] += self.trasl
-        if self.rot is not None: # Aplico rotacion
+        if self.rot is not None: # Apply rotation
             parts[:,1:4] = self.rot.apply(parts[:,1:4])
             parts[:,4:7] = self.rot.apply(parts[:,4:7])
-        if self.x2z: # Aplico permutacion (x,y,z) -> (y,z,x)
+        if self.x2z: # Apply permutation (x,y,z) -> (y,z,x)
             ekin,x,y,z,ux,uy,uz = parts.T
             parts = np.array([ekin,y,z,x,uy,uz,ux]).T
         return parts,ws

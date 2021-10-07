@@ -200,6 +200,8 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 		}
 		part->weight = 1/bs;
 	}
+	if(ret==1 && ks->geom->bwfile)
+		printf("Warning: Particle list and bandwidths file have different size.\n");
 	if(perturb) Geom_perturb(ks->geom, part);
 	return ret;
 }

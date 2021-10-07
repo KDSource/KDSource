@@ -559,6 +559,7 @@ A continuación se presentan las estructuras y funciones declaradas en el archiv
 \begin{lstlisting}[language=C]
 typedef struct PList{
 	char pt;                     // Particle type ("n", "p", "e", ...)
+	int pdgcode;                 // PDG code for particle type
 
 	char* filename;              // Name of MCPL file
 	mcpl_file_t file;            // MCPL file
@@ -592,7 +593,7 @@ Obtener partícula, aplicar transformaciones (de haberlas), y guardarla en \verb
 int PList_next(PList* plist, int loop);
 \end{lstlisting}
 \begin{addmargin}[0.5cm]{0cm}
-Avanzar en la lista, actualizando la variable \verb|plist->part|, hasta la siguiente partícula válida. Se considera una partícula como válida si tiene peso estadístico mayor a cero.
+Avanzar en la lista, actualizando la variable \verb|plist->part|, hasta la siguiente partícula válida. Se considera una partícula como válida si tiene peso estadístico mayor a cero y su código PDG (tipo de partícula) coincide con el de la \verb|PList|.
 \end{addmargin}
 
 \begin{lstlisting}[language=C]
@@ -790,8 +791,8 @@ Trasladar y rotar vector tridimensional. Realiza la transformación \emph{in-pla
 \end{addmargin}
 
 \begin{lstlisting}[language=C]
-long pt2pdg(char pt);
-char pdg2pt(long pdgcode);
+int pt2pdg(char pt);
+char pdg2pt(int pdgcode);
 \end{lstlisting}
 \begin{addmargin}[0.5cm]{0cm}
 Convertir de partícula en formato \emph{char} (\verb|"n"|: neutrón, \verb|"p"|: fotón, \verb|"e"|: electrón) a código PDG \cite{PDG}, y viceversa.
