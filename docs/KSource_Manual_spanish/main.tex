@@ -13,6 +13,7 @@
 
 % Paquetes opcionales
 \usepackage{bookmark}
+\usepackage[nottoc]{tocbibind}
 \usepackage{scrextend}
 \bookmarksetup{numbered}
 \usepackage[dvipsnames]{xcolor}
@@ -75,23 +76,23 @@ KSource es una herramiente que asiste cálculos de blindajes por Monte Carlo, im
 
 \input{2-desarrollo}
 
-\begin{appendices}
-    \input{anexo}
-\end{appendices}
-
 \begin{thebibliography}{9}
 
-    \bibitem{NP} B. E. Hansen, Lecture Notes on Nonparametrics, University of Wisconsin (2009), \url{https://www.ssc.wisc.edu/~bhansen/718/NonParametrics1.pdf}
+    \bibitem{NP} B. E. Hansen, ``Lecture Notes on Nonparametrics'', University of Wisconsin (2009), \url{https://www.ssc.wisc.edu/~bhansen/718/NonParametrics1.pdf}
 
     \bibitem{KDEpy} KDEpy (2018), \url{https://kdepy.readthedocs.io/en/latest/}
 
-    \bibitem{MCPL} T. Kittelmann, et al., Monte Carlo Particle Lists: MCPL, Computer Physics Communications 218, 17-42 (2017), \url{https://doi.org/10.1016/j.cpc.2017.04.012.}
+    \bibitem{MCPL} T. Kittelmann, et al., ``Monte Carlo Particle Lists: MCPL'', \emph{Computer Physics Communications}, vol. 218, pp. 17-42 (2017), \url{https://doi.org/10.1016/j.cpc.2017.04.012.}
 
-    \bibitem{PDG} K. A. Olive, et al. (Particle Data Group), Chinese Physics C 38 (2014) 090001. doi:10.1088/1674-1137/38/9/090001.
+    \bibitem{PDG} K. A. Olive, et al. (Particle Data Group), Chinese Physics C 38 (2014) 090001. DOI:10.1088/1674-1137/38/9/090001.
 
-    \bibitem{AF} Bell, G. I. and S. Glasstone. 1970. Nuclear Reactor Theory, Van Nostrand Reinhold Co., New York.
+    \bibitem{AF} Bell, G. I. and S. Glasstone. ``Nuclear Reactor Theory'', Van Nostrand Reinhold Co., New York, (1970).
 
-
+    \bibitem{abs} R. Kolevatov, C. Schanzer, P. Böni, ``Neutron absorption in supermirror coatings: Effects on shielding'', \textit{Nuclear Instruments and Methods in Physics Research Section A: Accelerators, Spectrometers, Detectors and Associated Equipment}, vol. 922, pp. 98-107, (2019). DOI: \href{https://doi.org/10.1016/j.nima.2013.04.051}{10.3233/JNR-190123}.
 \end{thebibliography}
+
+\begin{appendices}
+    \input{anexo}
+\end{appendices}
 
 \end{document}
