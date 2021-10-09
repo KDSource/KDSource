@@ -6,8 +6,6 @@
 
 #include "ksource.h"
 
-#define N_DEFAULT 1E5
-
 
 void display_usage(){
 	printf("Usage: kstool resample sourcefile [options]\n\n");

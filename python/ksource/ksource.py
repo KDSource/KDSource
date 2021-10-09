@@ -30,17 +30,17 @@ def load(xmlfilename, N=-1):
     """
     Load KSource from XML parameters file.
 
-    After building the KSource object, a fit is performed to load the particle
-    list, leaving the KSource ready to be evaluated. The bandwidths given in the
-    XML file are not modified.
+    After building the KSource object, a fit is performed to load the
+    particle list, leaving the KSource ready to be evaluated. The bandwidths
+    given in the XML file are not modified.
 
     Parameters
     ----------
     xmlfilename: str
         Name of XML parameters file
     N: int
-        Number of particles to use for fitting. Default is -1, meaning that all
-        particles in the list will be used.
+        Number of particles to use for fitting. Default is -1, meaning that
+        all particles in the list will be used.
 
     Returns
     -------

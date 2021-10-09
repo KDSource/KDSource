@@ -53,8 +53,8 @@ class Metric:
         """
         Mean of particle variables.
 
-        Mean is computed in parametrized space, and transformed back to particle
-        variables.
+        Mean is computed in parametrized space, and transformed back to
+        particle variables.
 
         Parameters
         ----------
@@ -619,8 +619,8 @@ def GeomFlat(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0, E0=10, t
     """
     Build flat neutron source.
 
-    Energy metric is Lethargy, position metric is SurfXY, and direction metric
-    is Polar.
+    Energy metric is Lethargy, position metric is SurfXY, and direction 
+    metric is Polar.
 
     See Metric's and Geometry constructors for parameters docs.
     """

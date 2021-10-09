@@ -9,6 +9,7 @@ display_usage(){
 	echo -e "Options:"
 	echo -e "\tresample:   Resample particles based on a ksource XML file."
 	echo -e "\ttemplates:  Copy templates for Monte Carlo calculations."
+	echo -e "\tbeamtest:   Test source with simple beam calculation."
 	echo -e "\t[Any MCPL command]"
 	echo -e "\t-h, --help: Display usage instructions."
 }
@@ -26,6 +27,11 @@ case "$1" in
 		;;
 	"templates")
 		$KSDIR/bin/kstool-templates "${@:2}"
+		exit 0
+		;;
+	"beamtest")
+		export LD_LIBRARY_PATH=$KSDIR/lib
+		$KSDIR/bin/kstool-beamtest "${@:2}"
 		exit 0
 		;;
 	"-h"|"--help")

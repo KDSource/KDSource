@@ -45,8 +45,10 @@ install(FILES "${SRC}/ksource/ksource.h"
 install(PROGRAMS "${SRC}/kstool/kstool.sh" DESTINATION bin RENAME kstool)
 install(PROGRAMS "${SRC}/kstool/templates.sh" DESTINATION bin RENAME kstool-templates)
 add_executable(kstool-resample "${SRC}/kstool/resample.c")
+add_executable(kstool-beamtest "${SRC}/kstool/beamtest.c")
 target_link_libraries(kstool-resample PUBLIC ksource)
-install(TARGETS kstool-resample DESTINATION bin)
+target_link_libraries(kstool-beamtest PUBLIC ksource)
+install(TARGETS kstool-resample kstool-beamtest DESTINATION bin)
 
 add_subdirectory(tests)
 

@@ -17,7 +17,8 @@ def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
     ws: array-like, optional
         Array of particle weights.
     weightfun: function, optional
-        Weighting function. If set, ws will be multiplied by weightfun(vecs).
+        Weighting function. If set, ws will be multiplied by
+        weightfun(vecs).
     maskfun: function, optional
         Masking function. If set, vecs and ws will be replaced by
         vecs[maskfun(vecs)] and ws[maskfun(vecs)], respectively.
@@ -39,9 +40,9 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     """
     Compute statistical parameter over subsets of particle list.
 
-    A number of subsets of particle list are built, with linearly growing size
-    and the last one being the full particle list. For each subset the specified
-    statistic parameter is computed.
+    A number of subsets of particle list are built, with linearly growing
+    size and the last one being the full particle list. For each subset the
+    specified statistic parameter is computed.
 
     Parameters
     ---------
@@ -53,7 +54,8 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
         Function that computes the statistic parameter. Must have signature:
             param(vecs, ws) -> [param, err]
     fracmin: float, optional
-        Size of the first subset, as a fraction of the full particle list size.
+        Size of the first subset, as a fraction of the full particle list
+        size.
     steps: int, optional
         Number of subsets to build and compute statistic parameter.
     plot: bool, optional

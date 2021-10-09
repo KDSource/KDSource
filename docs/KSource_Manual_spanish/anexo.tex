@@ -77,6 +77,7 @@ density estimation and sampling by means of Kernel Density Estimation method.
 Options:
 	resample:   Resample particles based on a ksource XML file.
 	templates:  Copy templates for Monte Carlo calculations.
+	beamtest:   Test source with simple beam calculation.
 	[Any MCPL command]
 	-h, --help: Display usage instructions.
 \end{lstlisting}
@@ -109,6 +110,36 @@ Options:
 	--tripoli:  Copy templates for using TRIPOLI-4.
 	--all:      Copy all templates.
 	-h, --help: Display usage instructions.
+\end{lstlisting}
+
+La opción \verb|beamtest| permite evaluar la validez de la fuente KDE en un cálculo de haces, comparando su funcionamiento con la fuente de \emph{tracks} (muestreo directo de partículas de la lista). Su uso está orientado a fuentes planas de neutrones, y la comparación consiste en una simulación en la cual se propagan las partículas de fuente hasta un colimador rectangular, donde se mide la corriente. Dicha simulación se ejecuta dos veces, una con la fuente KDE y una muestreando las partículas directamente de la lista, y los resultados se almacenan en un documento de texto. Es posible configurar la posición y tamaño del colimador rectangular, para evaluar la concordancia entre ambas fuentes en distintos casos. Sus instrucciones de uso se pueden obtener mediante el argumento \verb|--help|, y se muestran en el Listing \ref{lst:beamtest}.
+
+\begin{lstlisting}[label={lst:beamtest}, caption=Instrucciones de uso del comando \texttt{kstool beamtest} (output de ``\texttt{kstool beamtest --help}'').]
+Usage: kstool beamtest sourcefile [options]
+
+Executes a simple simulation with source defined in XML file sourcefile, in
+which calculates the number of particles passing thru a rectangular collimator.
+The simulation is repeated using the particle list directly as source, to
+compare the results.
+
+Results are computed for 4 energy groups, and stored in a results file which
+can be imported from a spreadsheet.
+
+This tool is designed to be used with flat neutron sources with particles
+propagating towards z direction.
+
+Options:
+	-n N:           Number of source particles (default: 1E6).
+	-o results:     Name of file to store results.
+	-xwidth value:  Width of the collimator, in cm (default: 7).
+	-yheight value: Height of the collimator, in cm (default: 20).
+	-z value:       Position of the collimator along z axis, in cm
+	                (default: 500).
+	-xshift:        Horizontal shift of the center of the collimator,
+	                in cm (default: 0)
+	-yshift:        Vertical shift of the center of the collimator,
+	                in cm (default: 0)
+	-h, --help:     Display usage instructions.
 \end{lstlisting}
 
 Por último, el comando \verb|kstool| permite acceder a cualquiera de las aplicaciones de línea de comando de MCPL, en su versión extendida incluida en el paquete KSource.

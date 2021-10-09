@@ -92,9 +92,9 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
     """
     Computes cross-validation likelihood score.
 
-    Uses a K-Fold scheme to compute cross validation likelihood score, defined
-    as the mean log-density of KDE model constructed with train samples,
-    evaluated on test samples.
+    Uses a K-Fold scheme to compute cross validation likelihood score,
+    defined as the mean log-density of KDE model constructed with train
+    samples, evaluated on test samples.
 
     Parameters
     ----------
@@ -137,10 +137,10 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     """
     Maximum Likelihood Cross-Validation bandwidth.
 
-    Builds a grid of bandwidths, and computes the cross-validation likelihood
-    score for each. Chooses the bandwidth that maximizes the score, or raises
-    exception if maximum score is found in beginning or end of bandwidth grid.
-    Also plots the scores over the bandwidth grid.
+    Builds a grid of bandwidths, and computes the cross-validation
+    likelihood score for each. Chooses the bandwidth that maximizes the
+    score, or raises exception if maximum score is found in beginning or end
+    of bandwidth grid. Also plots the scores over the bandwidth grid.
 
     Bandwidths grid is computed with seed and grid, so that:
         bw_grid[i] = seed * grid[i]
@@ -204,7 +204,8 @@ def optimize_bw(bw_method, vecs, ws=None, weightfun=None, maskfun=None, **kwargs
     ws: array-like, optional
         Array of sample weights. By default all weights are 1.
     weightfun: function, optional
-        Weighting function. If set, ws will be multiplied by weightfun(vecs).
+        Weighting function. If set, ws will be multiplied by
+        weightfun(vecs).
     maskfun: function, optional
         Masking function. If set, vecs and ws will be replaced by
         vecs[maskfun(vecs)] and ws[maskfun(vecs)], respectively.

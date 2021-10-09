@@ -18,8 +18,9 @@ def convert2mcpl(filename, readformat):
     """
     Convert particle list with MCPL-compatible format to MCPL format.
 
-    If there is a file with same name as the file to convert, and MCPL format,
-    it will be assumed that particle list has already been converted.
+    If there is a file with same name as the file to convert, and MCPL
+    format, it will be assumed that particle list has already been
+    converted.
 
     Conversion is executed with subprocess.run, calling the corresponding
     conversion executable. For this to work, MCPL binaries must be in PATH.
@@ -34,8 +35,8 @@ def convert2mcpl(filename, readformat):
         - 'phits': PHITS particle list.
         - 'ptrac': MCNP text surface source.
         - 'stock': TRIPOLI-4 stored particles.
-        - 'ssv': Text file with space-separated values, with format resulting
-                 from 'mcpltool --text' command.
+        - 'ssv': Text file with space-separated values, with format
+                 resulting from 'mcpltool --text' command.
 
     Returns
     -------
@@ -78,15 +79,16 @@ def join2mcpl(filenames, readformat):
     Each file is converted to MCPL with convert2mcpl method, and then merged
     with mcpltool command.
 
-    Merged MCPL file name is constructed as the intersection of filenames, if
-    any, or set as 'merged.mcpl.gz' otherwise.
+    Merged MCPL file name is constructed as the intersection of filenames,
+    if any, or set as 'merged.mcpl.gz' otherwise.
 
     Parameters
     ----------
     filenames: list
         Names of files with particle lists to convert.
     readformat: str
-        Particle list format for all files. See convert2mcpl for valid formats.
+        Particle list format for all files. See convert2mcpl for valid
+        formats.
 
     Returns
     -------
@@ -118,8 +120,8 @@ def savessv(pt, parts, ws, outfile): # Equivalent to convert2ascii (in mcpl.py)
     """
     Save particle list to Space-Separated Values file.
 
-    This function is equivalent to convert2ascii from mcpl, and results in the
-    same format as 'mcpltool --text' command. Generated SSV file can be
+    This function is equivalent to convert2ascii from mcpl, and results in
+    the same format as 'mcpltool --text' command. Generated SSV file can be
     converted to MCPL format with convert2mcpl.
 
     Parameters
@@ -127,8 +129,8 @@ def savessv(pt, parts, ws, outfile): # Equivalent to convert2ascii (in mcpl.py)
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered as in
-        varnames list.
+        Array of particles. Must have shape (N, 7), with columns ordered as
+        in varnames list.
     ws: array-like
         Particle weights.
     outfile: str
@@ -152,16 +154,16 @@ def appendssv(pt, parts, ws, outfile):
     """
     Append particle list to Space-Separated Values file.
 
-    This function uses the same format as savessv, but appends particles without
-    writing a header.
+    This function uses the same format as savessv, but appends particles
+    without writing a header.
 
     Parameters
     ----------
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered as in
-        varnames list.
+        Array of particles. Must have shape (N, 7), with columns ordered as
+        in varnames list.
     ws: array-like
         Particle weights.
     outfile: str

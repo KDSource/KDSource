@@ -19,14 +19,15 @@ def read_spectrum(spectrum=None):
 
     Decay spectrum files can be downloaded from:
         https://www-nds.iaea.org/relnsd/vcharthtml/VChartHTML.html
-    Select nuclide, and in 'Decay Radiation' tab download Gamma table as CSV.
+    Select nuclide, and in 'Decay Radiation' tab download Gamma table as
+    CSV.
 
     Parameters
     ----------
     spectrum: str
-        Name of CSV file with decay spectrum. Energy and intensity values must
-        be in first and third column, respectively. If None, empty spectrum is
-        returned.
+        Name of CSV file with decay spectrum. Energy and intensity values
+        must be in first and third column, respectively. If None, empty
+        spectrum is returned.
 
     Returns
     -------

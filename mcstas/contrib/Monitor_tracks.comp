@@ -74,6 +74,8 @@ INITIALIZE
 
 TRACE
 %{
+    PROP_Z0;
+    
 	if(-xwidth/2<x && x<xwidth/2 && -yheight/2<y && y<yheight/2){
 		double v2 = (vx*vx + vy*vy + vz*vz);
 		double E = 1e-9 * VS2E * v2;
