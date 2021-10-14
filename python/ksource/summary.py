@@ -13,8 +13,8 @@ def read_bashoutput(bashoutput, mccode):
     """
     Process bash output of McStas or TRIPOLI-4 simulation.
 
-    Searches for number of produced particles (with KSource) and simulation
-    times.
+    Searches for number of produced particles (with KSource) and
+    simulation times.
 
     Parameters
     ----------
@@ -52,9 +52,10 @@ class Summary:
         """
         Object representing summary of MC simulation.
 
-        After a Monte Carlo simulation, this class helps collecting the results,
-        such as recorded particle lists or tallies, and simulation times. It
-        also computes integral magnitudes of said results.
+        After a Monte Carlo simulation, this class helps collecting the
+        results, such as recorded particle lists or tallies, and
+        simulation times. It also computes integral magnitudes of said
+        results.
 
         Parameters
         ----------
@@ -69,9 +70,11 @@ class Summary:
         p_detectors: list, optional
             Photon lists recorded.
         t4outup: str, optional
-            Name of TRIPOLI output file. Ignore if mccode is not TRIPOLI.
+            Name of TRIPOLI output file. Ignore if mccode is not
+            TRIPOLI.
         tallies: list, optional
-            Tally names recorded in TRIPOLI. Ignore if mccode is not TRIPOLI.
+            Tally names recorded in TRIPOLI. Ignore if mccode is not
+            TRIPOLI.
         """
         if any(mccode == mc for mc in ["McStas", "TRIPOLI"]):
             self.mccode = mccode
@@ -86,7 +89,7 @@ class Summary:
         self.initialized = False
     def compute(self):
         """
-        Load results in corresponding formats, and compute integral magnitudes.
+        Load results and compute integral magnitudes.
         """
         if self.bashoutput is not None:
             self.t_simul, self.I_source = read_bashoutput(self.folder+"/"+self.bashoutput, self.mccode)

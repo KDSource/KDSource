@@ -40,9 +40,9 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     """
     Compute statistical parameter over subsets of particle list.
 
-    A number of subsets of particle list are built, with linearly growing
-    size and the last one being the full particle list. For each subset the
-    specified statistic parameter is computed.
+    A number of subsets of particle list are built, with linearly
+    growing size and the last one being the full particle list. For each
+    subset the specified statistic parameter is computed.
 
     Parameters
     ---------
@@ -51,11 +51,12 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     ws: array-like, optional
         Array of particle weights.
     param: function
-        Function that computes the statistic parameter. Must have signature:
+        Function that computes the statistic parameter. Must have
+        signature:
             param(vecs, ws) -> [param, err]
     fracmin: float, optional
-        Size of the first subset, as a fraction of the full particle list
-        size.
+        Size of the first subset, as a fraction of the full particle
+        list size.
     steps: int, optional
         Number of subsets to build and compute statistic parameter.
     plot: bool, optional
@@ -106,14 +107,14 @@ class Stats:
         """
         Object for statistic analysis of particle list.
 
-        This class methods show the variation and convergence of some statistic
-        parameters as the number of particles in the list grows. This can be
-        used to determine whether the list size is enough or not, based on some
-        user-defined criterion.
+        This class methods show the variation and convergence of some
+        statistic parameters as the number of particles in the list
+        grows. This can be used to determine whether the list size is
+        enough or not, based on some user-defined criterion.
 
-        Weighting and masking functions allow using an importance function based
-        on particle parameters, and selecting a region of the phase-space to
-        analyze.
+        Weighting and masking functions allow using an importance
+        function based on particle parameters, and selecting a region of
+        the phase-space to analyze.
 
         Parameters
         ----------
@@ -142,8 +143,8 @@ class Stats:
         Parameters
         ----------
         fracmin: float, optional
-            Size of the first subset, as a fraction of the full particle list
-            size.
+            Size of the first subset, as a fraction of the full particle
+            list size.
         steps: int, optional
             Number of subsets to build and compute mean weight.
         plot: bool, optional
@@ -169,8 +170,8 @@ class Stats:
         varname: str, optional
             Selected variable name for display in plot.
         fracmin: float, optional
-            Size of the first subset, as a fraction of the full particle list
-            size.
+            Size of the first subset, as a fraction of the full particle
+            list size.
         steps: int, optional
             Number of subsets to build and compute variable mean.
         plot: bool, optional
@@ -199,17 +200,19 @@ class Stats:
         varname: str, optional
             Selected variable name for display in plot.
         fracmin: float, optional
-            Size of the first subset, as a fraction of the full particle list
-            size.
+            Size of the first subset, as a fraction of the full particle
+            list size.
         steps: int, optional
-            Number of subsets to build and compute variable standard deviation.
+            Number of subsets to build and compute variable standard
+            deviation.
         plot: bool, optional
             Whether plot variable standard deviation vs. subset size.
 
         Returns
         -------
         [Ns, params, errs]: list
-            Subsets sizes, variable standard deviation values, and errors.
+            Subsets sizes, variable standard deviation values, and
+            errors.
         """
         std_var = lambda vecs,ws: std(vecs,ws,var)
         Ns,params,errs = convergence(self.vecs, self.ws, std_var, fracmin=fracmin, steps=steps, plot=plot)

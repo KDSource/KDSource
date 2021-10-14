@@ -18,8 +18,8 @@ def bw_silv(dim, N_eff):
     """
     Silverman's Rule.
 
-    Estimates optimal bandwidth based on dimension and effective number of
-    samples.
+    Estimates optimal bandwidth based on dimension and effective number
+    of samples.
 
     Parameters
     ----------
@@ -50,11 +50,11 @@ def bw_knn(data, weights=None, K_eff=100, k=None, batch_size=10000):
     weights: array-like, optional
         Array of sample weights. By default all weights are 1.
     K_eff: float, optional
-        Effective k for all dataset. It is used to compute the k so that the
-        estimated number of neighbors in all dataset is K_eff.
+        Effective k for all dataset. It is used to compute the k so that
+        the estimated number of neighbors in all dataset is K_eff.
     k: int, optional
-        Number of neighbors within each batch. If set, overrides the value
-        estimated with K_eff.
+        Number of neighbors within each batch. If set, overrides the
+        value estimated with K_eff.
     batch_size: int, optional
         Batch size for KNN search.
 
@@ -99,8 +99,8 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
     Parameters
     ----------
     bw: float or array-like
-        Bandwidth of KDE model. Can be constant or adaptive (one for each
-        sample).
+        Bandwidth of KDE model. Can be constant or adaptive (one for
+        each sample).
     data: array-like
         Array of samples. Must have shape (obs, dim).
     weights: array-like, optional
@@ -139,8 +139,9 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
 
     Builds a grid of bandwidths, and computes the cross-validation
     likelihood score for each. Chooses the bandwidth that maximizes the
-    score, or raises exception if maximum score is found in beginning or end
-    of bandwidth grid. Also plots the scores over the bandwidth grid.
+    score, or raises exception if maximum score is found in beginning or
+    end of bandwidth grid. Also plots the scores over the bandwidth
+    grid.
 
     Bandwidths grid is computed with seed and grid, so that:
         bw_grid[i] = seed * grid[i]
@@ -156,7 +157,8 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     seed: float or array-like
         Seed bandwidth for computing bandwidth grid. Can be constant or
         adaptive. It is recommended to use the output of other bandwidth
-        selection method. By default it is computed with Silverman's Rule.
+        selection method. By default it is computed with Silverman's
+        Rule.
     grid: array-like
         Grid of factors for computing bandwidth grid. Default:
         numpy.logspace(-1, 1, 20)
@@ -198,7 +200,8 @@ def optimize_bw(bw_method, vecs, ws=None, weightfun=None, maskfun=None, **kwargs
     Parameters
     ----------
     bw_method: str
-        Bandwidth selection method. See bw_methods for available methods.
+        Bandwidth selection method. See bw_methods for available
+        methods.
     vecs: array-like
         Array of samples. Must have shape (obs, dim).
     ws: array-like, optional

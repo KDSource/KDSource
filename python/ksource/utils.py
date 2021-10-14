@@ -131,10 +131,10 @@ class Box:
         Returns
         -------
         mask: array-like
-            Array of bools with same len as vecs. Each element has the following
-            value:
-            - True: if the corresponding vecs element has all its variables
-                    above vec0 values and below vec1 values.
+            Array of bools with same len as vecs. Each element has the
+            following value:
+            - True: if the corresponding vecs element has all its
+                    variables above vec0 values and below vec1 values.
             - False: otherwise.
         """
         mask = np.ones(len(vecs), dtype=bool)

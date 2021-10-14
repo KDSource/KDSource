@@ -25,9 +25,9 @@ def read_spectrum(spectrum=None):
     Parameters
     ----------
     spectrum: str
-        Name of CSV file with decay spectrum. Energy and intensity values
-        must be in first and third column, respectively. If None, empty
-        spectrum is returned.
+        Name of CSV file with decay spectrum. Energy and intensity
+        values must be in first and third column, respectively. If None,
+        empty spectrum is returned.
 
     Returns
     -------
@@ -65,8 +65,8 @@ class T4Tally:
         Tally must have mesh of type EXTENDED_MESH, and FRAME CARTESIAN.
 
         This object has two main uses:
-            - Reading activation tallies and converting them to gamma lists,
-              which can then be used to generate KSource object.
+            - Reading activation tallies and converting them to gamma
+              lists, which can then be used to generate KSource object.
             - Reading and plotting dose maps.
 
         Parameters
@@ -79,11 +79,12 @@ class T4Tally:
             Name of file with decay spectrum. Needed only for converting
             activation tally to gamma list.
         geomplot: str, optional
-            Name of file with geometry graph, to add contour lines to plot.
-            This file must be generated with GRAPH command, on the same region
-            than the tally.
+            Name of file with geometry graph, to add contour lines to
+            plot. This file must be generated with GRAPH command, on the
+            same region than the tally.
         J: float, optional
-            Intensity of the source of the TRIPOLI-4 simulation, in [1/s].
+            Intensity of the source of the TRIPOLI-4 simulation, in
+            [1/s].
         """
         self.J = J
         self.folder = os.path.dirname(outputfile)
@@ -188,21 +189,22 @@ class T4Tally:
         """
         Save activation tally as gamma list.
 
-        For each tally cell, one gamma per decay energy is generated in its
-        center, with random direction. Each gamma weight is the product of the
-        cell tally value and the intensity of the energy value, normalized to
-        have mean weight of 1 (or close).
+        For each tally cell, one gamma per decay energy is generated in
+        its center, with random direction. Each gamma weight is the
+        product of the cell tally value and the intensity of the energy
+        value, normalized to have mean weight of 1 (or close).
 
         Parameters
         ----------
         filename: str
-            Name of the particle list to generate. Will have MCPL format, but
-            the .mcpl suffix is not needed.
+            Name of the particle list to generate. Will have MCPL
+            format, but the .mcpl suffix is not needed.
 
         Returns
         -------
         trackfile: str, optional
-            Name of generated MCPL file. By default the tally name is used.
+            Name of generated MCPL file. By default the tally name is
+            used.
         """
         if(len(self.Es) == 0):
             raise Exception("No decay spectrum.")
@@ -248,11 +250,11 @@ class T4Tally:
         Parameters
         ----------
         var: str or int
-            Variable to be plotted, or its index. Names and indices of variables
-            can be found in cls.varnames.
+            Variable to be plotted, or its index. Names and indices of
+            variables can be found in cls.varnames.
         cells: list or None
-            Indices of fixed cells for other variables. If None, tally is
-            averaged over other variables.
+            Indices of fixed cells for other variables. If None, tally
+            is averaged over other variables.
         **kwargs: optional
             Additional parameters for plotting options:
             xscale: 'linear' or 'log'
@@ -267,7 +269,8 @@ class T4Tally:
         Returns
         -------
         [fig, [scores, errs]]:
-            Figure object, and plotted tally values and statistic errors.
+            Figure object, and plotted tally values and statistic
+            errors.
         """
         if isinstance(var, str):
             var = self.varmap[var]
@@ -317,11 +320,11 @@ class T4Tally:
         Parameters
         ----------
         vrs: list
-            Variables to be plotted, or its indices. Names and indices of
-            variables can be found in cls.varnames.
+            Variables to be plotted, or its indices. Names and indices
+            of variables can be found in cls.varnames.
         cell: int or None
-            Index of fixed cell for other variable. If None, tally is averaged
-            over other variable.
+            Index of fixed cell for other variable. If None, tally is
+            averaged over other variable.
         geomplot: bool
             Whether to plot geometry contours.
         levelcurves: list or None
@@ -336,7 +339,8 @@ class T4Tally:
         Returns
         -------
         [fig, [scores, errs]]:
-            Figure object, and plotted tally values and statistic errors.
+            Figure object, and plotted tally values and statistic
+            errors.
         """
         if isinstance(vrs[0], str):
             vrs = [self.varmap[var] for var in vrs]

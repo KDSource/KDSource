@@ -31,16 +31,16 @@ def load(xmlfilename, N=-1):
     Load KSource from XML parameters file.
 
     After building the KSource object, a fit is performed to load the
-    particle list, leaving the KSource ready to be evaluated. The bandwidths
-    given in the XML file are not modified.
+    particle list, leaving the KSource ready to be evaluated. The
+    bandwidths given in the XML file are not modified.
 
     Parameters
     ----------
     xmlfilename: str
         Name of XML parameters file
     N: int
-        Number of particles to use for fitting. Default is -1, meaning that
-        all particles in the list will be used.
+        Number of particles to use for fitting. Default is -1, meaning
+        that all particles in the list will be used.
 
     Returns
     -------
@@ -67,30 +67,32 @@ class KSource:
         """
         Object representing Kernel Density Estimation (KDE) sources.
         
-        A KSource object is based on a particle list in MCPL format, wrapped in
-        a PList object. It also includes a Geometry object, which defines
-        variables (energy, position, direction) treatment. Having these basic
-        components, KSource can fit (optimize) a KDE model on the particle list,
-        creating a distributional source.
+        A KSource object is based on a particle list in MCPL format,
+        wrapped in a PList object. It also includes a Geometry object,
+        which defines variables (energy, position, direction) treatment.
+        Having these basic components, KSource can fit (optimize) a KDE
+        model on the particle list, creating a distributional source.
 
-        After optimization, analysis, plotting, etc., a KSource can be exported
-        in XML format, for later use in Python or other KSource tools.
+        After optimization, analysis, plotting, etc., a KSource can be
+        exported in XML format, for later use in Python or other KSource
+        tools.
 
         Parameters
         ----------
         plist: PList object
-            The PList wrapping the MCPL file containing the particle list.
+            The PList wrapping the MCPL file containing the particle
+            list.
         geom: Geometry object
             The Geometry defining particle variables treatment.
         bw: float, str or numpy.ndarray, optional
-            Bandwidth or bandwidth selection method for KDE. If a float is
-            passed, it is the bandwidth for all particles. If a numpy.ndarray is
-            passed, it is the bandwidth for each particle. If a string is passed
-            it is the bandwidth selection method. See bw_methods for available
-            methods.
+            Bandwidth or bandwidth selection method for KDE. If a float
+            is passed, it is the bandwidth for all particles. If a
+            numpy.ndarray is passed, it is the bandwidth for each
+            particle. If a string is passed it is the bandwidth
+            selection method. See bw_methods for available methods.
         J: float, optional
-            The source total current, in [1/s]. If set, the density plots will
-            have the correct units.
+            The source total current, in [1/s]. If set, the density
+            plots will have the correct units.
         """
         self.plist = plist
         self.geom = geom
@@ -111,26 +113,29 @@ class KSource:
         """
         Fit KDE model to particle list.
         
-        A number of particles are loaded from MCPL file to build the KDE model.
-        If the KSource object has a bandwidth selection method, it will be
-        applied to optimize the bandwidth.
+        A number of particles are loaded from MCPL file to build the KDE
+        model. If the KSource object has a bandwidth selection method,
+        it will be applied to optimize the bandwidth.
 
         Parameters
         ----------
         N: int
-            Number of particles to use for fitting. The real number of particles
-            used may be lower if end of particle list is reached or there are
-            particles with zero weight. -1 to use all particles.
+            Number of particles to use for fitting. The real number of
+            particles used may be lower if end of particle list is
+            reached or there are particles with zero weight. -1 to use
+            all particles.
         skip: int
-            Number of particles to skip in the list before starting to read.
+            Number of particles to skip in the list before starting to
+            read.
         scaling: array-like, optional
-            Scaling to be applied to each variable. This means each particle
-            variable will be divided by the corresponding scaling element before
-            applying KDE. By default, the standard deviation of each variable is
-            used.
+            Scaling to be applied to each variable. This means each
+            particle variable will be divided by the corresponding
+            scaling element before applying KDE. By default, the
+            standard deviation of each variable is used.
         **kwargs: optional
             Parameters to be passed to bandwidth selection method. Refer
-            corresponding method for docs (see bw_methods for method names).
+            corresponding method for docs (see bw_methods for method
+            names).
         """
         parts,ws = self.plist.get(N, skip)
         N = len(parts)
@@ -141,6 +146,7 @@ class KSource:
         self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
         if scaling is None:
             scaling = self.geom.std(vecs=vecs, weights=ws)
+        else: scaling = np.array(scaling)
         scaling[scaling == 0] = STD_DEFAULT
         self.scaling = scaling
         if self.bw_method is not None:
@@ -154,17 +160,17 @@ class KSource:
 
     def evaluate(self, parts):
         """
-        Evaluate estimated density and statistic error in a set of points.
+        Evaluate density and statistic error in a set of points.
 
-        Variables and scaling treatment is so that the evaluated density units
-        will be the inverse of the product of metrics volunits parameter, times
-        [s-1] (e.g.: [s-1 MeV-1 cm-2 sr-1]).
+        Variables and scaling treatment is so that the evaluated density
+        units will be the inverse of the product of metrics volunits
+        parameter, times [s-1] (e.g.: [s-1 MeV-1 cm-2 sr-1]).
 
         Parameters
         ----------
         parts: array-like
-            Array of particles where evaluate density. Must have shape (obs, 7),
-            with columns being [ekin, x, y, z, dx, dy, dz].
+            Array of particles where evaluate density. Must have shape
+            (obs, 7), with columns being [ekin, x, y, z, dx, dy, dz].
 
         Returns
         -------
@@ -192,16 +198,19 @@ class KSource:
             Name of XML parameters file. By default it is set as:
             [MCPL file name]_source.xml
         bwfile: str or file object
-            File name or file object to write bandwidths in binary float32
-            format, if a variable bandwidth is used. A file object with append
-            mode can be used to save several KSource's in same parameters file,
-            useful when particle list is so big it can't be loaded at once.
+            File name or file object to write bandwidths in binary
+            float32 format, if a variable bandwidth is used. A file
+            object with append mode can be used to save several
+            KSource's in same parameters file, useful when particle list
+            is so big it can't be loaded at once.
         adjust_N: bool
-            If True, before saving the following factor is applied on bandwidth:
+            If True, before saving the following factor is applied on
+            bandwidth:
             bw_silv(dim, N_tot) / bw_silv(dim, N)
-            where N_tot is the total number of particles in the MCPL file, and
-            N is the one passed to fit method. This way the bandwidth optimized
-            for a subset of the particle list can be adapted to the full list.
+            where N_tot is the total number of particles in the MCPL
+            file, and N is the one passed to fit method. This way the
+            bandwidth optimized for a subset of the particle list can be
+            adapted to the full list.
         
         Returns
         -------
@@ -256,20 +265,20 @@ class KSource:
         """
         1D plot of the full multivariate distribution.
 
-        The current densities plotted are evaluated with the evaluate method,
-        along a grid of particles, varying only one variable.
+        The current densities plotted are evaluated with the evaluate
+        method, along a grid of particles, varying only one variable.
 
         Parameters
         ----------
         var: int or str
-            Variable to be plotted, or its index. Names and indices of variables
-            can be found in varnames list.
+            Variable to be plotted, or its index. Names and indices of
+            variables can be found in varnames list.
         grid: array-like
             1D array with values of var variable.
         part0: array-like
-            Particle defining where to evaluate the rest of variables. Must have
-            shape (7,), with variables ordered as in varnames list. Value of var
-            variable will be ignored.
+            Particle defining where to evaluate the rest of variables.
+            Must have shape (7,), with variables ordered as in varnames
+            list. Value of var variable will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
             xscale: 'linear' or 'log'
@@ -318,22 +327,25 @@ class KSource:
         1D plot of the univariate distribution along one variable.
 
         Densities are integrated over the specified range of the other
-        variables, and evaluated on a newly created 1D KDE model. Units are the
-        inverse of the units of the parametrized chosen variable (see geometry
-        units parameter), times [s-1] (e.g.: [s-1 cm-1], [s-1 deg-1]).
+        variables, and evaluated on a newly created 1D KDE model. Units
+        are the inverse of the units of the parametrized chosen variable
+        (see geometry units parameter), times [s-1] (e.g.: [s-1 cm-1],
+        [s-1 deg-1]).
 
         Parameters
         ----------
         var: int or str
-            Variable to be plotted, or its index. Names and indices of variables
-            can be found in varnames parameter of geometry. Note that this is
-            a parametrized variable (e.g.: lethargy, theta, etc.).
+            Variable to be plotted, or its index. Names and indices of
+            variables can be found in varnames parameter of geometry.
+            Note that this is a parametrized variable (e.g.: lethargy,
+            theta, etc.).
         grid: array-like
             1D array with values of var variable.
         vec0: array-like
-            Lower limits of integration range for other variables. Must be of
-            shape (geom.dim,), with variables ordered as in varnames parameter
-            of the geometry. Value of var variable will be ignored.
+            Lower limits of integration range for other variables. Must
+            be of shape (geom.dim,), with variables ordered as in
+            varnames parameter of the geometry. Value of var variable
+            will be ignored.
         vec1: array-like
             Upper limits of integration range for other variables. Same
             considerations as for vec0.
@@ -401,18 +413,20 @@ class KSource:
         1D plot of the energy spectrum.
 
         Same as plot("ekin", grid_E), but applying jacobian of energy
-        parametrization (if any). When using Lethargy metric, plot method will
-        give plots with units [s-1] (lethargy is dimesionless), while this
-        method will produce the expected spectrum with units [s-1 MeV-1].
+        parametrization (if any). When using Lethargy metric, plot
+        method will give plots with units [s-1] (lethargy is
+        dimesionless), while this method will produce the expected
+        spectrum with units [s-1 MeV-1].
 
         Parameters
         ----------
         grid_E: array-like
             1D array with values of ekin.
         vec0: array-like
-            Lower limits of integration range for other variables. Must be of
-            shape (geom.dim,), with variables ordered as in varnames parameter
-            of the geometry. Value of energy variable will be ignored.
+            Lower limits of integration range for other variables. Must
+            be of shape (geom.dim,), with variables ordered as in
+            varnames parameter of the geometry. Value of energy variable
+            will be ignored.
         vec1: array-like
             Upper limits of integration range for other variables. Same
             considerations as for vec0.
@@ -475,20 +489,20 @@ class KSource:
         """
         2D plot of the full multivariate distribution.
 
-        The current densities plotted are evaluated with the evaluate method,
-        along a grid of particles, varying only two variable.
+        The current densities plotted are evaluated with the evaluate
+        method, along a grid of particles, varying only two variable.
 
         Parameters
         ----------
         vrs: list
-            List of the 2 variables to be plotted, or its indices. Names and
-            indices of variables can be found in varnames list.
+            List of the 2 variables to be plotted, or its indices. Names
+            and indices of variables can be found in varnames list.
         grids: list
             List of the 2 1D arrays with values of vrs variables.
         part0: array-like
-            Particle defining where to evaluate the rest of variables. Must have
-            shape (7,), with variables ordered as in varnames list. Value of vrs
-            variables will be ignored.
+            Particle defining where to evaluate the rest of variables.
+            Must have shape (7,), with variables ordered as in varnames
+            list. Value of vrs variables will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
             scale: 'linear' or 'log'
@@ -539,23 +553,25 @@ class KSource:
         2D plot of the bivariate distribution along two variables.
 
         Densities are integrated over the specified range of the other
-        variables, and evaluated on a newly created 2D KDE model. Units are the
-        inverse of the units of the parametrized chosen variables (see geometry
-        units parameter), times [s-1] (e.g.: [s-1 cm-2], [s-1 deg-2]).
+        variables, and evaluated on a newly created 2D KDE model. Units
+        are the inverse of the units of the parametrized chosen
+        variables (see geometry units parameter), times [s-1] (e.g.:
+        [s-1 cm-2], [s-1 deg-2]).
 
         Parameters
         ----------
         vrs: list
-            List of the 2 variables to be plotted, or its indices. Names and
-            indices of variables can be found in varnames parameter of geometry.
-            Note that these are parametrized variables (e.g.: lethargy, theta,
-            etc.).
+            List of the 2 variables to be plotted, or its indices. Names
+            and indices of variables can be found in varnames parameter
+            of geometry. Note that these are parametrized variables
+            (e.g.: lethargy, theta, etc.).
         grids: list
             1D array with values of vrs variable.
         vec0: array-like
-            Lower limits of integration range for other variables. Must be of
-            shape (geom.dim,), with variables ordered as in varnames parameter
-            of the geometry. Value of vrs variable will be ignored.
+            Lower limits of integration range for other variables. Must
+            be of shape (geom.dim,), with variables ordered as in
+            varnames parameter of the geometry. Value of vrs variable
+            will be ignored.
         vec1: array-like
             Upper limits of integration range for other variables. Same
             considerations as for vec0.

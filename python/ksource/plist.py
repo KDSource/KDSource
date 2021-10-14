@@ -22,8 +22,9 @@ def convert2mcpl(filename, readformat):
     format, it will be assumed that particle list has already been
     converted.
 
-    Conversion is executed with subprocess.run, calling the corresponding
-    conversion executable. For this to work, MCPL binaries must be in PATH.
+    Conversion is executed with subprocess.run, calling the
+    corresponding conversion executable. For this to work, KSource
+    binaries must be in PATH.
 
     Parameters
     ----------
@@ -76,11 +77,11 @@ def join2mcpl(filenames, readformat):
     """
     Merge particle lists with MCPL-compatible format into MCPL file.
 
-    Each file is converted to MCPL with convert2mcpl method, and then merged
-    with mcpltool command.
+    Each file is converted to MCPL with convert2mcpl method, and then
+    merged with mcpltool command.
 
-    Merged MCPL file name is constructed as the intersection of filenames,
-    if any, or set as 'merged.mcpl.gz' otherwise.
+    Merged MCPL file name is constructed as the intersection of
+    filenames, if any, or set as 'merged.mcpl.gz' otherwise.
 
     Parameters
     ----------
@@ -120,17 +121,17 @@ def savessv(pt, parts, ws, outfile): # Equivalent to convert2ascii (in mcpl.py)
     """
     Save particle list to Space-Separated Values file.
 
-    This function is equivalent to convert2ascii from mcpl, and results in
-    the same format as 'mcpltool --text' command. Generated SSV file can be
-    converted to MCPL format with convert2mcpl.
+    This function is equivalent to convert2ascii from mcpl, and results
+    in the same format as 'mcpltool --text' command. Generated SSV file
+    can be converted to MCPL format with convert2mcpl.
 
     Parameters
     ----------
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered as
-        in varnames list.
+        Array of particles. Must have shape (N, 7), with columns ordered
+        as in varnames list.
     ws: array-like
         Particle weights.
     outfile: str
@@ -162,8 +163,8 @@ def appendssv(pt, parts, ws, outfile):
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered as
-        in varnames list.
+        Array of particles. Must have shape (N, 7), with columns ordered
+        as in varnames list.
     ws: array-like
         Particle weights.
     outfile: str
@@ -182,9 +183,9 @@ class PList:
         """
         Object defining particle list. It is a wrapper for a MCPL file.
 
-        It also allows performing a spatial transformation right after reading
-        particles (during get method), which is useful for using particle lists
-        in simulations with different reference systems.
+        It also allows performing a spatial transformation right after
+        reading particles (during get method), which is useful for using
+        particle lists in simulations with different reference systems.
 
         Parameters
         ----------
@@ -199,17 +200,17 @@ class PList:
         trasl: array-like, optional
             Spatial translation. Default is no translation.
         rot: numpy.ndarray or scipy.spatial.transform.Rotation, optional
-            Spatial rotation. Can be a scipy Rotation object, or any array-like
-            which can be used to generate a scipy Rotation object (rotation
-            vector, quaternion or rotation matrix). Rotation is applied after
-            translation.
+            Spatial rotation. Can be a scipy Rotation object, or any
+            array-like which can be used to generate a scipy Rotation
+            object (rotation vector, quaternion or rotation matrix).
+            Rotation is applied after translation.
         switch_x2z: bool
-            If true, the following permutation is applied after translation and
-            rotation:
+            If true, the following permutation is applied after
+            translation and rotation:
                 (x, y, z) -> (y, z, x)
         set_params: bool
-            Whether to set I (sum of weights) and p2 (sum of squared weights)
-            after construction.
+            Whether to set I (sum of weights) and p2 (sum of squared
+            weights) after construction.
         """
         if np.isscalar(filename):
             self.filename = convert2mcpl(filename, readformat) # Convert format to MCPL
@@ -239,7 +240,15 @@ class PList:
             self.set_params()
 
     def set_params(self):
-        """Set parameters I (sum of weights) and p2 (sum of squared weights)."""
+        """
+        Set parameters particle list parameters.
+
+        The following parameters are set:
+            I: Sum of weights
+            p2: Sum of square weights
+            N: Total number of valid particles in list
+            N_eff = I^2/p2: Effective number of particles
+        """
         pl = mcpl.MCPLFile(self.filename)
         I = p2 = N = 0
         for pb in pl.particle_blocks:
@@ -268,17 +277,19 @@ class PList:
         Parameters
         ----------
         N: int
-            Number of particles to read. The real number N' of particles read
-            may be lower if end of particle list is reached or there are
-            particles with zero weight. -1 to read all particles.
+            Number of particles to read. The real number N' of particles
+            read may be lower if end of particle list is reached or
+            there are particles with zero weight. -1 to read all
+            particles.
         skip: int
-            Number of particles to skip in the list before starting to read.
+            Number of particles to skip in the list before starting to
+            read.
 
         Returns
         -------
         [parts,ws]: list
-            Array of particles and weights. Particles array will have shape
-            (N', 7), with columns ordered as in varnames list.
+            Array of particles and weights. Particles array will have
+            shape (N', 7), with columns ordered as in varnames list.
         """
         if N < 0:
             N = mcpl.MCPLFile(self.filename).nparticles

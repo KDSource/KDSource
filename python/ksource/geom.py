@@ -14,17 +14,17 @@ class Metric:
         """
         Abstract object defining metrics for a subset of variables.
 
-        The main function of a Metric is definig a transformation from a subset
-        of particle variables to certain parametrized variables, which can be
-        more suitable for applying KDE.
+        The main function of a Metric is definig a transformation from a
+        subset of particle variables to certain parametrized variables,
+        which can be more suitable for applying KDE.
 
         See _metrics for available metrics.
 
         Parameters
         ----------
         partvars: list of int
-            Indices of the particle variables to parametrize (see varnames
-            global list).
+            Indices of the particle variables to parametrize (see
+            varnames global list).
         varnames: list of str
             Names of parametrized variables.
         units: list of str
@@ -72,8 +72,8 @@ class Metric:
         """
         Standard deviation of particle variables.
 
-        Standard deviation is computed in parametrized space, and transformed
-        back to particle variables.
+        Standard deviation is computed in parametrized space, and
+        transformed back to particle variables.
 
         Parameters
         ----------
@@ -103,22 +103,24 @@ class Geometry (Metric):
         Object defining particle variables treatment (metrics).
 
         The main function of a Geometry is definig a transformation from
-        particle variables to certain parametrized variables, which can be more
-        suitable for applying KDE.
+        particle variables to certain parametrized variables, which can
+        be more suitable for applying KDE.
 
         Parameters
         ----------
         metrics: list
-            List of metrics for each subset of variables. They must cover all
-            particle variables (energy, position and direction).
+            List of metrics for each subset of variables. They must
+            cover all particle variables (energy, position and
+            direction).
         trasl: array-like, optional
             Spatial traslation for source. Default is no traslation.
         rot: numpy.ndarray or scipy.spatial.transform.Rotation, optional
-            Spatial rotation for source. Can be a scipy Rotation object, or any
-            array-like which can be used to generate a scipy Rotation object
-            (rotation vector, quaternion or rotation matrix). Rotation is
-            applied after traslation in transform, and before traslation in
-            inverse_transform. Default is no rotation.
+            Spatial rotation for source. Can be a scipy Rotation object,
+            or any array-like which can be used to generate a scipy
+            Rotation object (rotation vector, quaternion or rotation
+            matrix). Rotation is applied after traslation in transform,
+            and before traslation in inverse_transform. Default is no
+            rotation.
         """
         partvars = range(7)
         varnames = sum([metric.varnames for metric in metrics], [])
@@ -183,8 +185,8 @@ class Geometry (Metric):
         """
         Mean of particle variables.
 
-        Mean is computed in parametrized space, and transformed back to particle
-        variables.
+        Mean is computed in parametrized space, and transformed back to
+        particle variables.
 
         Parameters
         ----------
@@ -208,8 +210,8 @@ class Geometry (Metric):
         """
         Standard deviation of particle variables.
 
-        Standard deviation is computed in parametrized space, and transformed
-        back to particle variables.
+        Standard deviation is computed in parametrized space, and
+        transformed back to particle variables.
 
         Parameters
         ----------
@@ -276,7 +278,8 @@ class Lethargy (Metric):
         Parameters
         ----------
         E0: float
-            Reference energy. Typically, it is the highest energy in the system.
+            Reference energy. Typically, it is the highest energy in the
+            system.
         """
         super().__init__([0], ["u"], ["[let]"], "MeV")
         self.E0 = E0
@@ -308,10 +311,12 @@ class Vol (Metric):
     def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf,
         zmin=-np.inf, zmax=np.inf):
         """
-        Simple metric for position of volumetric source, with no transformation.
+        Simple metric for 3D position, with no transformation.
 
-        Each spatial variable (x, y, z) is delimited between a min and max
-        value. By default these are -infinity and infinity, respectively.
+        Each spatial variable (x, y, z) is delimited between a min and
+        max value. By default these are -infinity and infinity,
+        respectively. All positions in the particle list should be
+        inside these limits.
         """
         super().__init__([1,2,3], ["x","y","z"], ["cm","cm","cm"], "cm^3")
         self.xmin = xmin
@@ -339,10 +344,12 @@ class Vol (Metric):
 class SurfXY (Metric):
     def __init__(self, xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0):
         """
-        Simple metric for position of flat source, with no transformation.
+        Simple metric for 2D position, with no transformation.
 
-        Spatial variables x and y are delimited between a min and max value. By
-        default these are -infinity and infinity, respectively.
+        Spatial variables x and y are delimited between a min and max
+        value. By default these are -infinity and infinity,
+        respectively. All positions in the particle list should be
+        inside these limits.
 
         z has the fixed value given as argument.
         """
@@ -381,10 +388,11 @@ class Guide (Metric):
 
         Position is parametrized with following variables:
             z: distance along guide, following curvature (if any).
-            t: transversal direction along mirrors, starting at (x+,y-) corner,
-               towards (x+,y+) corner.
+            t: transversal direction along mirrors, starting at (x+,y-)
+               corner, towards (x+,y+) corner.
         Direction is parametrized with following variables:
-            theta: angle between particle direction and mirror normal, in [deg].
+            theta: angle between particle direction and mirror normal,
+                   in [deg].
             phi: azimuthal angle, starting from z direction, in [deg].
 
         Parameters
@@ -396,7 +404,8 @@ class Guide (Metric):
         zmax: float
             Guide length.
         rcurv: float
-            Curvature radius, defined as follows. Default is no curvature:
+            Curvature radius, defined as follows. Default is no
+            curvature.
                 rcurv > 0 for curvature towards negative x
                 rcurv < 0 for curvature towards negative x
                 rcurv = 0 or rcurv = infinity for no curvature
@@ -407,7 +416,7 @@ class Guide (Metric):
         self.zmax = zmax
         self.rcurv = rcurv
     def transform(self, posdirs):
-        """Transform position and direction to guide variables (z,t,theta,phi)."""
+        """Transform position and direction to guide variables."""
         xs,ys,zs,dxs,dys,dzs = posdirs.T
         if self.rcurv is not None:
             rs = np.sqrt((self.rcurv+xs)**2 + zs**2)
@@ -431,7 +440,7 @@ class Guide (Metric):
         thetas *= 180/np.pi; phis *= 180/np.pi
         return np.stack((zs,ts,thetas,phis), axis=1)
     def inverse_transform(self, posdirs):
-        """Transform guide variables (z,t,theta,phi) to position and direction."""
+        """Transform guide variables to position and direction."""
         zs,ts,thetas,phis = posdirs.T
         thetas *= np.pi/180; phis *= np.pi/180
         mask0 =                                                   (ts <   self.yheight)              # mirror x pos
@@ -488,20 +497,35 @@ class Guide (Metric):
         return Guide(*params)
 
 class Isotrop (Metric):
-    def __init__(self):
+    def __init__(self, keep_xdir=False, keep_ydir=False, keep_zdir=False):
         """
         Simple metric for direction, with no transformation.
 
-        Distance is measured as the euclidean distance between 3D unitary
-        direction vectors.
+        Distance is measured as the euclidean distance between 3D
+        unitary direction vectors.
+
+        Parameters
+        ----------
+        keep_xdir: bool
+            If True, when using the source for sampling new particles,
+            perturbation will not change dirx sign.
+        keep_ydir: bool
+            If True, when using the source for sampling new particles,
+            perturbation will not change diry sign.
+        keep_zdir: bool
+            If True, when using the source for sampling new particles,
+            perturbation will not change dirz sign.
         """
         super().__init__([4,5,6], ["dx","dy","dz"], ["[dir]","[dir]","[dir]"], "[dir]^3")
+        self.keep_xdir = keep_xdir
+        self.keep_ydir = keep_ydir
+        self.keep_zdir = keep_zdir
     def mean(self, dirs=None, vecs=None, weights=None):
         """
         Mean of directions.
 
-        Mean is computed as the euclidean mean of direction vectors, normalized
-        to 1.
+        Mean is computed as the euclidean mean of direction vectors,
+        normalized to 1.
 
         Parameters
         ----------
@@ -522,8 +546,9 @@ class Isotrop (Metric):
         """
         Standard deviation of directions.
 
-        Standard deviation is computed as the euclidean standard deviation of
-        direction vectors minus its mean (computed with mean method).
+        Standard deviation is computed as the euclidean standard
+        deviation of direction vectors minus its mean (computed with
+        mean method).
 
         Parameters
         ----------
@@ -539,10 +564,20 @@ class Isotrop (Metric):
         mn = self.mean(vecs=vecs, weights=weights)
         std = np.sqrt(np.mean(np.average((vecs-mn)**2, axis=0, weights=weights)))
         return np.array(3*[std])
+    def save(self, mtree):
+        """Save Guide parameters into XML tree."""
+        ET.SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = ET.SubElement(mtree, "params")
+        paramsel.set("nps", "3")
+        paramsel.text = "{:d} {:d} {:d}".format(self.keep_xdir, self.keep_ydir, self.keep_zdir)
     @staticmethod
     def load(mtree):
-        """Build Isotrop."""
-        return Isotrop()
+        """Load parameters from XML tree and build Isotrop."""
+        dim = int(mtree[0].text)
+        params = np.array(mtree[1].text.split(), dtype="float64")
+        if dim!=3 or len(params)!=3 or int(mtree[1].attrib["nps"])!=3:
+            raise Exception("Invalid metric tree.")
+        return Isotrop(*params)
 
 class Polar (Metric):
     def __init__(self):
@@ -615,16 +650,16 @@ _metrics = {
 
 # Aliases for usual geometries
 
-def GeomFlat(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0, E0=10, trasl=None, rot=None):
+def GeomFlat(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, z=0, E0=10, keep_zdir=True, trasl=None, rot=None):
     """
     Build flat neutron source.
 
     Energy metric is Lethargy, position metric is SurfXY, and direction 
-    metric is Polar.
+    metric is Isotrop.
 
     See Metric's and Geometry constructors for parameters docs.
     """
-    return Geometry([Lethargy(E0), SurfXY(xmin,xmax,ymin,ymax,z), Polar()], trasl=trasl, rot=rot)
+    return Geometry([Lethargy(E0), SurfXY(xmin,xmax,ymin,ymax,z), Isotrop(keep_zdir=keep_zdir)], trasl=trasl, rot=rot)
 
 def GeomGuide(xwidth, yheight, zmax=np.inf, rcurv=None, E0=10, trasl=None, rot=None):
     """
@@ -640,9 +675,9 @@ def GeomActiv(xmin=-np.inf, xmax=np.inf, ymin=-np.inf, ymax=np.inf, zmin=-np.inf
     """
     Build photon volumetric activation source.
 
-    Energy metric is Energy, position metric is Vol, and direction metric is
-    Polar.
+    Energy metric is Energy, position metric is Vol, and direction
+    metric is Isotrop.
 
     See Metric's and Geometry constructors for parameters docs.
     """
-    return Geometry([Energy(), Vol(xmin,xmax,ymin,ymax,zmin,zmax), Polar()], trasl=trasl, rot=rot)
+    return Geometry([Energy(), Vol(xmin,xmax,ymin,ymax,zmin,zmax), Isotrop()], trasl=trasl, rot=rot)
