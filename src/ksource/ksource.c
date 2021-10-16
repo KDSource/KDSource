@@ -173,6 +173,7 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 	int ret=0;
 	if(w_crit <= 0){
 		PList_get(ks->plist, part);
+		if(perturb) Geom_perturb(ks->geom, part);
 		ret += PList_next(ks->plist, loop);
 		ret += Geom_next(ks->geom, loop);
 	}
@@ -184,6 +185,7 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 			if(bias) bs = bias(part);
 			else bs = 1;
 			if(part->weight*bs > w_crit){ // If w*bs>w_crit, use w_crit/w*bs as prob of going forward in list
+				if(perturb) Geom_perturb(ks->geom, part);
 				if(rand() < w_crit/(part->weight*bs)*RAND_MAX){
 					ret += PList_next(ks->plist, loop);
 					ret += Geom_next(ks->geom, loop);
@@ -191,9 +193,14 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 				break;
 			}
 			else{ // If w*bs<w_crit, use w*bs/w_crit as prob of taking particle
+				int take = 0;
+				if(rand() < (part->weight*bs)/w_crit*RAND_MAX){
+					take = 1;
+					if(perturb) Geom_perturb(ks->geom, part);
+				}
 				ret += PList_next(ks->plist, loop);
 				ret += Geom_next(ks->geom, loop);
-				if(rand() < (part->weight*bs)/w_crit*RAND_MAX) break;
+				if(take) break;
 			}
 			if(resamples++ > MAX_RESAMPLES)
 				KS_error("Error in KS_sample: MAX_RESAMPLES reached.");
@@ -202,7 +209,6 @@ int KS_sample2(KSource* ks, mcpl_particle_t* part, int perturb, double w_crit, W
 	}
 	if(ret==1 && ks->geom->bwfile)
 		printf("Warning: Particle list and bandwidths file have different size.\n");
-	if(perturb) Geom_perturb(ks->geom, part);
 	return ret;
 }
 
