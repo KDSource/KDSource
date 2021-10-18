@@ -359,6 +359,10 @@ class KSource:
                 Factor to apply on all densities. Default: 1
             label: str
                 Line label in plot legend.
+            adjust_bw: str
+                If True, a Silverman factor will be applied to adjust
+                the bandwidth to the dimension and number of samples
+                used in plot. Default: False.
 
         Returns
         -------
@@ -372,6 +376,7 @@ class KSource:
         if not "xscale" in kwargs: kwargs["xscale"] = "linear"
         if not "yscale" in kwargs: kwargs["yscale"] = "log"
         if not "label" in kwargs: kwargs["label"] = "KDE"
+        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
         trues = np.ones(len(self.kde.data), dtype=bool)
         if vec0 is not None:
             mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
@@ -386,7 +391,9 @@ class KSource:
         ws = self.kde.weights[mask]
         N_eff = np.sum(ws)**2 / np.sum(ws**2)
         scaling = self.scaling[var]
-        bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
+        bw = self.kde.bw
+        if kwargs["adjust_bw"]:
+            bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         scores = 1/scaling * kde.evaluate(grid.reshape(-1,1)/scaling)
@@ -436,6 +443,10 @@ class KSource:
                 Factor to apply on all densities. Default: 1
             label: str
                 Line label in plot legend.
+            adjust_bw: str
+                If True, a Silverman factor will be applied to adjust
+                the bandwidth to the dimension and number of samples
+                used in plot. Default: False.
 
         Returns
         -------
@@ -445,6 +456,7 @@ class KSource:
         if self.fitted == False:
             raise Exception("Must fit before plotting.")
         if not "label" in kwargs: kwargs["label"] = "KDE"
+        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
         trues = np.ones(len(self.kde.data), dtype=bool)
         if vec0 is not None:
             mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
@@ -461,7 +473,9 @@ class KSource:
         ws = self.kde.weights[mask]
         N_eff = np.sum(ws)**2 / np.sum(ws**2)
         scaling = self.scaling[0]
-        bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
+        bw = self.kde.bw
+        if kwargs["adjust_bw"]:
+            bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         grid = self.geom.ms[0].transform(grid_E)
@@ -583,6 +597,10 @@ class KSource:
                 Factor to apply on all densities. Default: 1
             title: str
                 Plot title.
+            adjust_bw: str
+                If True, a Silverman factor will be applied to adjust
+                the bandwidth to the dimension and number of samples
+                used in plot. Default: False.
 
         Returns
         -------
@@ -595,6 +613,7 @@ class KSource:
         if isinstance(vrs[1], str): vrs[1] = self.geom.varmap[vrs[1]]
         if not "scale" in kwargs: kwargs["scale"] = "linear"
         if not "title" in kwargs: kwargs["title"] = "KDE"
+        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
         trues = np.array(len(self.kde.data)*[True])
         if vec0 is not None:
             mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
@@ -611,7 +630,9 @@ class KSource:
         ws = self.kde.weights[mask]
         N_eff = np.sum(ws)**2 / np.sum(ws**2)
         scaling = self.scaling[vrs]
-        bw = self.kde.bw * optimize_bw("silv", vecs, ws) / bw_silv(self.geom.dim, self.N_eff)
+        bw = self.kde.bw
+        if kwargs["adjust_bw"]:
+            bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
