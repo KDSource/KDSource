@@ -29,7 +29,7 @@
 #include "plist.h"
 
 
-#define MAX_RESAMPLES 1000
+#define MAX_RESAMPLES 1000000
 #define NAME_MAX_LEN 256
 
 

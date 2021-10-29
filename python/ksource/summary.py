@@ -112,7 +112,8 @@ class Summary:
         if self.t4output is not None:
             for tallyname in self.tallies:
                 tally = T4Tally(self.folder+"/"+self.t4output, tallyname)
-                self.tally_scores.append([self.I_source*np.sum(tally.I), self.I_source*np.sqrt(np.sum(tally.err**2))])
+                self.tally_scores.append([self.I_source*np.sum(tally.I)*tally.vcell,
+                                          self.I_source*np.sqrt(np.sum(tally.err**2))*tally.vcell])
         self.initialized = True
     def save(self, filename):
         """

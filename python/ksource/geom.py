@@ -391,8 +391,8 @@ class Guide (Metric):
             t: transversal direction along mirrors, starting at (x+,y-)
                corner, towards (x+,y+) corner.
         Direction is parametrized with following variables:
-            theta: angle between particle direction and mirror normal,
-                   in [deg].
+            mu: cosine of angle between particle direction and mirror
+                normal.
             phi: azimuthal angle, starting from z direction, in [deg].
 
         Parameters
@@ -427,66 +427,48 @@ class Guide (Metric):
         mask1 = np.logical_and((ys/self.yheight >  xs/self.xwidth), (ys/self.yheight > -xs/self.xwidth)) # mirror y pos
         mask2 = np.logical_and((ys/self.yheight < -xs/self.xwidth), (ys/self.yheight >  xs/self.xwidth)) # mirror x neg
         mask3 = np.logical_and((ys/self.yheight <  xs/self.xwidth), (ys/self.yheight < -xs/self.xwidth)) # mirror y neg
-        ts = np.zeros_like(xs)
+        ts = np.empty_like(xs)
         ts[mask0] = 0.5*self.yheight +                   ys[mask0]
         ts[mask1] = 1.0*self.yheight + 0.5*self.xwidth - xs[mask1]
         ts[mask2] = 1.5*self.yheight + 1.0*self.xwidth - ys[mask2]
         ts[mask3] = 2.0*self.yheight + 1.5*self.xwidth + xs[mask3]
-        thetas = np.zeros_like(dxs); phis = np.zeros_like(dxs)
-        thetas[mask0] = np.arccos( dxs[mask0]); phis[mask0] = np.arctan2(-dys[mask0], dzs[mask0])
-        thetas[mask1] = np.arccos( dys[mask1]); phis[mask1] = np.arctan2( dxs[mask1], dzs[mask1])
-        thetas[mask2] = np.arccos(-dxs[mask2]); phis[mask2] = np.arctan2( dys[mask2], dzs[mask2])
-        thetas[mask3] = np.arccos(-dys[mask3]); phis[mask3] = np.arctan2(-dxs[mask3], dzs[mask3])
-        thetas *= 180/np.pi; phis *= 180/np.pi
-        return np.stack((zs,ts,thetas,phis), axis=1)
+        mus = np.empty_like(dxs); phis = np.empty_like(dxs)
+        mus[mask0] =  dxs[mask0]; phis[mask0] = np.arctan2(-dys[mask0], dzs[mask0])
+        mus[mask1] =  dys[mask1]; phis[mask1] = np.arctan2( dxs[mask1], dzs[mask1])
+        mus[mask2] = -dxs[mask2]; phis[mask2] = np.arctan2( dys[mask2], dzs[mask2])
+        mus[mask3] = -dys[mask3]; phis[mask3] = np.arctan2(-dxs[mask3], dzs[mask3])
+        phis *= 180/np.pi
+        return np.stack((zs,ts,mus,phis), axis=1)
     def inverse_transform(self, posdirs):
         """Transform guide variables to position and direction."""
-        zs,ts,thetas,phis = posdirs.T
-        thetas *= np.pi/180; phis *= np.pi/180
+        zs,ts,mus,phis = posdirs.T
+        phis *= np.pi/180
         mask0 =                                                   (ts <   self.yheight)              # mirror x pos
         mask1 = np.logical_and((ts >   self.yheight)            , (ts <   self.yheight+self.xwidth)) # mirror y pos
         mask2 = np.logical_and((ts >   self.yheight+self.xwidth), (ts < 2*self.yheight+self.xwidth)) # mirror x neg
         mask3 =                (ts > 2*self.yheight+self.xwidth)                                     # mirror y neg
-        xs = np.zeros_like(ts); ys = np.zeros_like(ts)
+        xs = np.empty_like(ts); ys = np.empty_like(ts)
         xs[mask0] =  self.xwidth /2; ys[mask0] =  ts[mask0] - 0.5*self.yheight
         ys[mask1] =  self.yheight/2; xs[mask1] = -ts[mask1] + 1.0*self.yheight + 0.5*self.xwidth
         xs[mask2] = -self.xwidth /2; ys[mask2] = -ts[mask2] + 1.5*self.yheight + 1.0*self.xwidth
         ys[mask3] = -self.yheight/2; xs[mask3] =  ts[mask3] - 2.0*self.yheight - 1.5*self.xwidth
-        dxs = np.zeros_like(thetas); dys = np.zeros_like(thetas); dzs = np.zeros_like(thetas)
-        dxs[mask0] =  np.cos(thetas[mask0]); dzs[mask0] = np.sin(thetas[mask0])*np.cos(phis[mask0]); dys[mask0] = -np.sin(thetas[mask0])*np.sin(phis[mask0])
-        dys[mask1] =  np.cos(thetas[mask1]); dzs[mask1] = np.sin(thetas[mask1])*np.cos(phis[mask1]); dxs[mask1] =  np.sin(thetas[mask1])*np.sin(phis[mask1])
-        dxs[mask2] = -np.cos(thetas[mask2]); dzs[mask2] = np.sin(thetas[mask2])*np.cos(phis[mask2]); dys[mask2] =  np.sin(thetas[mask2])*np.sin(phis[mask2])
-        dys[mask3] = -np.cos(thetas[mask3]); dzs[mask3] = np.sin(thetas[mask3])*np.cos(phis[mask3]); dxs[mask3] = -np.sin(thetas[mask3])*np.sin(phis[mask3])
+        dxs = np.empty_like(mus); dys = np.empty_like(mus); dzs = np.empty_like(mus)
+        dxs[mask0] =  mus[mask0]; dzs[mask0] = np.sqrt(1-mus[mask0]**2)*np.cos(phis[mask0]); dys[mask0] = -np.sqrt(1-mus[mask0]**2)*np.sin(phis[mask0])
+        dys[mask1] =  mus[mask1]; dzs[mask1] = np.sqrt(1-mus[mask1]**2)*np.cos(phis[mask1]); dxs[mask1] =  np.sqrt(1-mus[mask1]**2)*np.sin(phis[mask1])
+        dxs[mask2] = -mus[mask2]; dzs[mask2] = np.sqrt(1-mus[mask2]**2)*np.cos(phis[mask2]); dys[mask2] =  np.sqrt(1-mus[mask2]**2)*np.sin(phis[mask2])
+        dys[mask3] = -mus[mask3]; dzs[mask3] = np.sqrt(1-mus[mask3]**2)*np.cos(phis[mask3]); dxs[mask3] = -np.sqrt(1-mus[mask3]**2)*np.sin(phis[mask3])
         if self.rcurv is not None:
             rs = (self.rcurv + xs) * np.sign(self.rcurv); angs = zs/self.rcurv
             xs = np.sign(self.rcurv) * rs * np.cos(zs/self.rcurv) - self.rcurv; zs = rs * np.sin(np.abs(zs/self.rcurv))
             dxs2 = dxs; dzs2 = dzs
             dxs = dxs2*np.cos(angs) - dzs2*np.sin(angs); dzs = dxs2*np.sin(angs) + dzs2*np.cos(angs)
         return np.stack((xs,ys,zs,dxs,dys,dzs), axis=1)
-    def jac(self, posdirs):
-        """Jacobian of guide transformation."""
-        xs,ys,zs,dxs,dys,dzs = posdirs.T
-        if self.rcurv is not None:
-            rs = np.sqrt((self.rcurv+xs)**2 + zs**2)
-            xs = np.sign(self.rcurv) * rs - self.rcurv; zs = np.abs(self.rcurv) * np.arcsin(zs / rs)
-            dxs2 = dxs; dzs2 = dzs; angs = zs/self.rcurv
-            dxs = dxs2*np.cos(angs) + dzs2*np.sin(angs); dzs = -dxs2*np.sin(angs) + dzs2*np.cos(angs)
-        mask0 = np.logical_and((ys/self.yheight > -xs/self.xwidth), (ys/self.yheight <  xs/self.xwidth)) # mirror x pos
-        mask1 = np.logical_and((ys/self.yheight >  xs/self.xwidth), (ys/self.yheight > -xs/self.xwidth)) # mirror y pos
-        mask2 = np.logical_and((ys/self.yheight < -xs/self.xwidth), (ys/self.yheight >  xs/self.xwidth)) # mirror x neg
-        mask3 = np.logical_and((ys/self.yheight <  xs/self.xwidth), (ys/self.yheight < -xs/self.xwidth)) # mirror y neg
-        thetas = np.zeros_like(dxs)
-        thetas[mask0] = np.arccos( dxs[mask0])
-        thetas[mask1] = np.arccos( dys[mask1])
-        thetas[mask2] = np.arccos(-dxs[mask2])
-        thetas[mask3] = np.arccos(-dys[mask3])
-        return (180/np.pi)**2 / np.sin(thetas)
     def save(self, mtree):
         """Save Guide parameters into XML tree."""
         ET.SubElement(mtree, "dim").text = str(self.dim)
         paramsel = ET.SubElement(mtree, "params")
         paramsel.set("nps", "4")
-        paramsel.text = "{} {} {} {}".format(self.xwidth, self.yheight, self.zmax, rcurv)
+        paramsel.text = "{} {} {} {}".format(self.xwidth, self.yheight, self.zmax, self.rcurv)
     @staticmethod
     def load(mtree):
         """Load parameters from XML tree and build Guide."""

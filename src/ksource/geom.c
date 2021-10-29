@@ -157,17 +157,17 @@ int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	part->position[0] += bw*metric->scaling[0] * rand_norm();
 	while((part->position[0] < xmin) || (part->position[0] > xmax)){
 		if(part->position[0] < xmin) part->position[0] += 2 * (xmin - part->position[0]);
-		if(part->position[0] > xmax) part->position[0] -= 2 * (part->position[0] - xmax);
+		else                         part->position[0] -= 2 * (part->position[0] - xmax);
 	}
 	part->position[1] += bw*metric->scaling[0] * rand_norm();
 	while((part->position[1] < ymin) || (part->position[1] > ymax)){
 		if(part->position[1] < ymin) part->position[1] += 2 * (ymin - part->position[1]);
-		if(part->position[1] > ymax) part->position[1] -= 2 * (part->position[1] - ymax);
+		else                         part->position[1] -= 2 * (part->position[1] - ymax);
 	}
 	part->position[2] += bw*metric->scaling[0] * rand_norm();
 	while((part->position[2] < zmin) || (part->position[2] > zmax)){
 		if(part->position[2] < zmin) part->position[2] += 2 * (zmin - part->position[2]);
-		if(part->position[2] > zmax) part->position[2] -= 2 * (part->position[2] - zmax);
+		else                         part->position[2] -= 2 * (part->position[2] - zmax);
 	}
 	return 0;
 }
@@ -177,12 +177,12 @@ int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	part->position[0] += bw*metric->scaling[0] * rand_norm();
 	while((part->position[0] < xmin) || (part->position[0] > xmax)){
 		if(part->position[0] < xmin) part->position[0] += 2 * (xmin - part->position[0]);
-		if(part->position[0] > xmax) part->position[0] -= 2 * (part->position[0] - xmax);
+		else                         part->position[0] -= 2 * (part->position[0] - xmax);
 	}
 	part->position[1] += bw*metric->scaling[0] * rand_norm();
 	while((part->position[1] < ymin) || (part->position[1] > ymax)){
 		if(part->position[1] < ymin) part->position[1] += 2 * (ymin - part->position[1]);
-		if(part->position[1] > ymax) part->position[1] -= 2 * (part->position[1] - ymax);
+		else                         part->position[1] -= 2 * (part->position[1] - ymax);
 	}
 	return 0;
 }
@@ -190,7 +190,7 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	double x=part->position[0], y=part->position[1], z=part->position[2];
 	double dx=part->direction[0], dy=part->direction[1], dz=part->direction[2], dx2, dz2;
 	double xwidth=metric->params[0], yheight=metric->params[1], zmax=metric->params[2], rcurv=metric->params[3];
-	double t, theta, theta2, phi;
+	double t, mu, mu2, phi;
 	int cont=0, mirror;
 	if(rcurv != 0){ // Transform to curved guide variables
 		double r = sqrt((rcurv+x)*(rcurv+x) + z*z);
@@ -198,65 +198,98 @@ int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 		dx2 = dx; dz2 = dz;
 		dx = dx2*cos(z/rcurv) + dz2*sin(z/rcurv); dz = -dx2*sin(z/rcurv) + dz2*cos(z/rcurv);
 	}
-	// Transform from (x,y,z,dx,dy,dz) to (z,t,theta,phi)
-	if((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth))      mirror=0; // mirror x pos
+	// Transform from (x,y,z,dx,dy,dz) to (z,t,mu,phi)
+	if     ((y/yheight > -x/xwidth) && (y/yheight <  x/xwidth)) mirror=0; // mirror x pos
 	else if((y/yheight >  x/xwidth) && (y/yheight > -x/xwidth)) mirror=1; // mirror y pos
 	else if((y/yheight < -x/xwidth) && (y/yheight >  x/xwidth)) mirror=2; // mirror x neg
 	else                                                        mirror=3; // mirror y neg
 	switch(mirror){
 		case 0:
 			t = 0.5*yheight + y;
-			theta = acos(dx); phi = atan2(-dy, dz);
+			mu = dx; phi = atan2(-dy, dz);
 			break;
 		case 1:
 			t = 1.0*yheight + 0.5*xwidth - x;
-			theta = acos(dy); phi = atan2(dx, dz);
+			mu = dy; phi = atan2(dx, dz);
 			break;
 		case 2:
 			t = 1.5*yheight + 1.0*xwidth - y;
-			theta = acos(-dx); phi = atan2(dy, dz);
+			mu = -dx; phi = atan2(dy, dz);
 			break;
 		case 3:
 			t = 2.0*yheight + 1.5*xwidth + x;
-			theta = acos(-dy); phi = atan2(-dx, dz);
+			mu = -dy; phi = atan2(-dx, dz);
 			break;
 	}
 	// Perturb
 	z += bw*metric->scaling[0] * rand_norm();
 	while((z < 0) || (z > zmax)){
-		if(z < 0)    z *= -1;
-		if(z > zmax) z -= 2 * (z - zmax);
+		if(z < 0) z *= -1;
+		else      z -= 2 * (z - zmax);
 	}
 	t += bw*metric->scaling[1] * rand_norm();
-	while(t < 0) t += 2*(xwidth+yheight);
-	while(t > 2*(xwidth+yheight)) t -= 2*(xwidth+yheight);
-	theta2 = theta + bw*metric->scaling[2]*M_PI/180 * rand_norm();
-	if(cos(theta2)*cos(theta) < 0) theta += 2 * (M_PI/2 - theta);
-	theta = theta2;
-	phi += bw*metric->scaling[3]*M_PI/180 * rand_norm();
 	switch(mirror){ // Avoid perturbation to change mirror
-		case 0: if(t<  0)              t=  0;              else if(t>  yheight)          t=  yheight;          break;
-		case 1: if(t<  yheight)        t=  yheight;        else if(t>  yheight+  xwidth) t=  yheight+  xwidth; break;
-		case 2: if(t<  yheight+xwidth) t=  yheight+xwidth; else if(t>2*yheight+  xwidth) t=2*yheight+  xwidth; break;
-		case 3: if(t<2*yheight+xwidth) t=2*yheight+xwidth; else if(t>2*yheight+2*xwidth) t=2*yheight+2*xwidth; break;
+		case 0:
+			while((t < 0) || (t > yheight)){
+				if(t < 0) t *= -1;              
+				else      t -= 2 * (t - yheight);          
+			}
+			break;
+		case 1:
+			while((t < yheight) || (t > yheight+xwidth)){
+				if(t < yheight) t += 2 * (yheight - t);        
+				else            t -= 2 * (t - (yheight+xwidth)); 
+			}
+			break;
+		case 2:
+			while((t < yheight+xwidth) || (t > 2*yheight+xwidth)){
+				if(t < yheight+xwidth) t += 2 * (yheight+xwidth - t); 
+				else                   t -= 2 * (t - (2*yheight+xwidth)); 
+			}
+			break;
+		case 3:
+			while((t < 2*yheight+xwidth) || (t > 2*yheight+2*xwidth)){
+				if(t < 2*yheight+xwidth) t += 2 * (2*yheight+xwidth - t); 
+				else                     t -= 2 * (t - (2*yheight+2*xwidth)); 
+			}
+			break;
 	}
+	if(isinf(metric->scaling[2])) mu = -1 + 2.*rand()/RAND_MAX;
+	else{
+		mu2 = mu + bw*metric->scaling[2] * rand_norm();
+		if(mu >= 0){
+			while((mu2 < 0) || (mu2 > 1)){
+				if(mu2 < 0) mu2 *= -1;
+				else        mu2 -= 2 * (mu2 - 1);
+			}
+		}
+		else{
+			while((mu2 < -1) || (mu2 > 0)){
+				if(mu2 < -1) mu2 += 2 * (-1 - mu2);
+				else         mu2 *= -1;
+			}
+		}
+		mu = mu2;
+	}
+	if(isinf(metric->scaling[3])) phi = 2.*M_PI*rand()/RAND_MAX;
+	else phi += bw*metric->scaling[3]*M_PI/180 * rand_norm();
 	// Antitransform from (z,t,theta_n,theta_t) to (x,y,z,dx,dy,dz)
 	switch(mirror){
 		case 0:
 			x =  xwidth/2; y =  t - 0.5*yheight;
-			dx = cos(theta); dz = sin(theta)*cos(phi); dy = -sin(theta)*sin(phi);
+			dx = mu; dz = sqrt(1-mu*mu)*cos(phi); dy = -sqrt(1-mu*mu)*sin(phi);
 			break;
 		case 1:
 			y =  yheight/2; x = -t + yheight + 0.5*xwidth;
-			dy = cos(theta); dz = sin(theta)*cos(phi); dx = sin(theta)*sin(phi);
+			dy = mu; dz = sqrt(1-mu*mu)*cos(phi); dx = sqrt(1-mu*mu)*sin(phi);
 			break;
 		case 2:
 			x = -xwidth/2; y = -t + 1.5*yheight + xwidth;
-			dx = -cos(theta); dz = sin(theta)*cos(phi); dy = sin(theta)*sin(phi);
+			dx = -mu; dz = sqrt(1-mu*mu)*cos(phi); dy = sqrt(1-mu*mu)*sin(phi);
 			break;
 		case 3:
 			y = -yheight/2; x =  t - 2*yheight - 1.5*xwidth;
-			dy = -cos(theta); dz = sin(theta)*cos(phi); dx = -sin(theta)*sin(phi);
+			dy = -mu; dz = sqrt(1-mu*mu)*cos(phi); dx = -sqrt(1-mu*mu)*sin(phi);
 			break;
 	}
 	if(rcurv != 0){ // Antitransform curved guide variables
@@ -288,7 +321,7 @@ void _vMF_perturb(double bw, double* dx, double* dy, double* dz){
 }
 
 int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
-	if(bw*metric->scaling[0] == INFINITY){ // Generate isotropic direction
+	if(isinf(bw*metric->scaling[0])){ // Generate isotropic direction
 		part->direction[2] = -1 + 2.*rand()/RAND_MAX;
 		double dxy = sqrt(1-part->direction[2]*part->direction[2]);
 		double phi = 2.*M_PI*rand()/RAND_MAX;
@@ -327,7 +360,7 @@ int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	mu = part->direction[2];
 	phi   = atan2(part->direction[1], part->direction[0]);
 	mu2 = mu + bw*metric->scaling[0] * rand_norm();
-	if(mu > 0){
+	if(mu >= 0){
 		while((mu2 < 0) || (mu2 > 1)){
 			if(mu2 < 0)  mu2 *= -1;
 			if(mu2 > 1)  mu2 -= 2 * (mu2 - 1);

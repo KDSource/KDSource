@@ -323,15 +323,15 @@ TRACE
 		if(save_gammas){
 			AbsFunc(q, V, par, &fa_Ni, &fa_Ti);
 			part_abs->weight = p * fa_Ni;
-			SaveGammas(file_abs, part_abs, Ng_Ni, Eg_Ni, Pg_Ni);
-			if(part_abs->weight > 0){
+			if((float)part_abs->weight > 0){
+				SaveGammas(file_abs, part_abs, Ng_Ni, Eg_Ni, Pg_Ni);
 				I_abs += part_abs->weight;
 				p2_abs += part_abs->weight*part_abs->weight;
 				N_abs++;
 			}
 			part_abs->weight = p * fa_Ti;
-			SaveGammas(file_abs, part_abs, Ng_Ti, Eg_Ti, Pg_Ti);
-			if(part_abs->weight > 0){
+			if((float)part_abs->weight > 0){
+				SaveGammas(file_abs, part_abs, Ng_Ti, Eg_Ti, Pg_Ti);
 				I_abs += part_abs->weight;
 				p2_abs += part_abs->weight*part_abs->weight;
 				N_abs++;
@@ -341,7 +341,7 @@ TRACE
 
 		// Record non reflected statistic weight and save
 		part_trans->weight = p*(1-R-fa_Ni-fa_Ti);
-		if(part_trans->weight > 0){
+		if((float)part_trans->weight > 0){
 			double dir2 = part_trans->direction[0]*part_trans->direction[0]+part_trans->direction[1]*part_trans->direction[1]+part_trans->direction[2]*part_trans->direction[2];
 			if(dir2 != 1){
 				double dir = sqrt(dir2);

@@ -110,6 +110,11 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
     modelKDE: NaiveKDE or TreeKDE, optional
         KDE model to be used for evaluating scores.
     """
+    if np.ndim(bw) == 1:
+        if len(bw) < len(data):
+            raise ValueError("If bw is array, must have same len as data")
+        print("Warning: bw longer than data.")
+
     folds = KFold(n_splits=n_splits)
     scores = []
     for train_idx, test_idx in folds.split(data):
@@ -119,8 +124,6 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
         else:
             weights_train = weights_test = None
         if np.ndim(bw) == 1:
-            if len(bw) != len(data):
-                raise ValueError("If bw is array, must have same len as data")
             bw_train = bw[train_idx]
         else:
             bw_train = bw

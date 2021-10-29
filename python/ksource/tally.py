@@ -91,7 +91,7 @@ class T4Tally:
         self.outputfile = outputfile
         self.tallyname = tallyname
         # Read decay spectrum
-        self.Es,self.Ews = read_spectrum(spectrum)
+        self.Es,self.E_ws = read_spectrum(spectrum)
         # Read geometry graph
         if geomplot is not None:
             geomplot = np.array(Im.open(geomplot).convert('L').crop((25,26,514,514)))
@@ -284,8 +284,8 @@ class T4Tally:
         else: # Plot over selected cells
             slc = cells.copy()
             slc.insert(var, slice(None))
-            scores = self.I[tuple(slc)]
-            errs = self.err[tuple(slc)]
+            scores = self.I[tuple(slc)].copy()
+            errs = self.err[tuple(slc)].copy()
         scores *= self.J
         errs *= self.J
         if np.sum(scores) == 0:
@@ -304,7 +304,7 @@ class T4Tally:
                 lbl = str(self.grids[vrs[0]][cells[0]])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][cells[0]+1])
                 lbl += str(self.grids[vrs[1]][cells[1]])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][cells[1]+1])
         grid = (self.grids[var][:-1] + self.grids[var][1:]) / 2
-        plt.errorbar(grid, scores, errs, fmt='-s', label=lbl)
+        plt.errorbar(grid, scores, errs, label=lbl)
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
         plt.xlabel(r"${}\ [{}]$".format(self.varnames[var], self.units[var]))
@@ -365,16 +365,14 @@ class T4Tally:
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        if vrs[0] > vrs[1]:
+        if vrs[0] < vrs[1]:
             scores = np.transpose(scores)
             errs = np.transpose(errs)
-        scores = np.rot90(scores)
-        errs = np.rot90(errs)
         #
         if kwargs["scale"] == "log": norm = col.LogNorm()
         else: norm = None
         extent = (self.grids[vrs[0]][0], self.grids[vrs[0]][-1], self.grids[vrs[1]][0], self.grids[vrs[1]][-1])
-        plt.imshow(scores, extent=extent, cmap="jet", norm=norm, aspect='auto')
+        plt.pcolormesh(self.grids[vrs[0]], self.grids[vrs[1]], scores, cmap="jet", norm=norm)
         plt.colorbar()
         title = "Tally"
         if cell is None:
