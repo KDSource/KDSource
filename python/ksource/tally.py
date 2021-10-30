@@ -219,19 +219,23 @@ class T4Tally:
         pos_ws = pos_ws[pos_ws>0]
         pos_ws /= pos_ws.mean()
         N = len(poss)
-        # Create particle list
-        parts = np.zeros((N, 7))
-        parts[:,1:4] = poss
-        np.random.shuffle(parts)
+        p = np.random.permutation(N)
+        poss = poss[p]
+        pos_ws = pos_ws[p]
+        celldims = [self.grids[0][1]-self.grids[0][0],
+                    self.grids[1][1]-self.grids[1][0],
+                    self.grids[2][1]-self.grids[2][0]]
         # Create energy list (cyclic)
         nloops = int(np.ceil(N/len(self.Es)) + 1)
         Es = np.tile(self.Es,nloops)
         E_ws = np.tile(self.E_ws,nloops)
         E_ws /= E_ws.mean()
         # Save in file
+        parts = np.empty((N, 7))
         savessv(pt, [], [], filename) # Create header
         for i in range(len(self.Es)):
             parts[:,0] = Es[i:i+N] # Energies
+            parts[:,1:4] = poss + celldims * (np.random.rand(N,3)-0.5) # Positions
             mus = -1 + 2*np.random.rand(N)
             dxys = np.sqrt(1-mus**2)
             phis = -np.pi + 2*np.pi*np.random.rand(N)

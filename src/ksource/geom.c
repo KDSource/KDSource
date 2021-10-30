@@ -159,12 +159,12 @@ int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 		if(part->position[0] < xmin) part->position[0] += 2 * (xmin - part->position[0]);
 		else                         part->position[0] -= 2 * (part->position[0] - xmax);
 	}
-	part->position[1] += bw*metric->scaling[0] * rand_norm();
+	part->position[1] += bw*metric->scaling[1] * rand_norm();
 	while((part->position[1] < ymin) || (part->position[1] > ymax)){
 		if(part->position[1] < ymin) part->position[1] += 2 * (ymin - part->position[1]);
 		else                         part->position[1] -= 2 * (part->position[1] - ymax);
 	}
-	part->position[2] += bw*metric->scaling[0] * rand_norm();
+	part->position[2] += bw*metric->scaling[2] * rand_norm();
 	while((part->position[2] < zmin) || (part->position[2] > zmax)){
 		if(part->position[2] < zmin) part->position[2] += 2 * (zmin - part->position[2]);
 		else                         part->position[2] -= 2 * (part->position[2] - zmax);
@@ -179,7 +179,7 @@ int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 		if(part->position[0] < xmin) part->position[0] += 2 * (xmin - part->position[0]);
 		else                         part->position[0] -= 2 * (part->position[0] - xmax);
 	}
-	part->position[1] += bw*metric->scaling[0] * rand_norm();
+	part->position[1] += bw*metric->scaling[1] * rand_norm();
 	while((part->position[1] < ymin) || (part->position[1] > ymax)){
 		if(part->position[1] < ymin) part->position[1] += 2 * (ymin - part->position[1]);
 		else                         part->position[1] -= 2 * (part->position[1] - ymax);
