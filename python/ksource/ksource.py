@@ -57,8 +57,8 @@ def load(xmlfilename, N=-1):
         bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
     else:
         bw = np.double(bwel.text)
-    s = KSource(plist, geom, bw, scaling, J=1)
-    s.fit(N=N)
+    s = KSource(plist, geom, bw, J=J)
+    s.fit(N=N, scaling=scaling)
     return s
 
 
@@ -311,7 +311,7 @@ class KSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
         
-        plt.errorbar(grid, scores, errs, fmt='-', label=kwargs["label"])
+        plt.errorbar(grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
         plt.xlabel(r"${}\ [{}]$".format(varnames[var], units[var]))
@@ -404,7 +404,7 @@ class KSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
         
-        plt.errorbar(grid, scores, errs, fmt='-', label=kwargs["label"])
+        plt.errorbar(grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
         plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[var], self.geom.units[var]))
@@ -488,7 +488,7 @@ class KSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
         
-        plt.errorbar(grid_E, scores, errs, fmt='-', label=kwargs["label"])
+        plt.errorbar(grid_E, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
         plt.xscale('log')
         plt.yscale('log')
         plt.xlabel(r"$E\ [MeV]$")
@@ -551,7 +551,7 @@ class KSource:
         yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
         if kwargs["scale"] == "log": norm = col.LogNorm()
         else: norm = None
-        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm)
+        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm, rasterized=True)
         plt.colorbar()
         title = kwargs["title"]
         title += "\n"+r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
@@ -648,7 +648,7 @@ class KSource:
         yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
         if kwargs["scale"] == "log": norm = col.LogNorm()
         else: norm = None
-        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm)
+        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm, rasterized=True)
         plt.colorbar()
         if self.geom.units[vrs[0]] == self.geom.units[vrs[1]]:
             units = self.geom.units[vrs[0]]+"^2"

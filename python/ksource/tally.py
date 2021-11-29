@@ -359,8 +359,8 @@ class T4Tally:
         else: # Plot over selected cell
             slc = 2 * [slice(None)]
             slc.insert(var, cell)
-            scores = self.I[tuple(slc)]
-            errs = self.err[tuple(slc)]
+            scores = self.I[tuple(slc)].copy()
+            errs = self.err[tuple(slc)].copy()
         scores *= self.J
         errs *= self.J
         if np.sum(scores) == 0:
@@ -376,7 +376,7 @@ class T4Tally:
         if kwargs["scale"] == "log": norm = col.LogNorm()
         else: norm = None
         extent = (self.grids[vrs[0]][0], self.grids[vrs[0]][-1], self.grids[vrs[1]][0], self.grids[vrs[1]][-1])
-        plt.pcolormesh(self.grids[vrs[0]], self.grids[vrs[1]], scores, cmap="jet", norm=norm)
+        plt.pcolormesh(self.grids[vrs[0]], self.grids[vrs[1]], scores, cmap="jet", norm=norm, rasterized=True)
         plt.colorbar()
         title = "Tally"
         if cell is None:
