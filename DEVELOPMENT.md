@@ -10,7 +10,7 @@ KSource/
 +-- KSourceConfig.h.in       : File to generate configurations header for C
 |                              library.
 +-- docs/                    : Documentation.
-+-- examples/                : Example of Python and command line APIs usage
+|   +-- examples/            : Example of Python and command line APIs usage
 |                              with particle sources generated with analytic
 |                              distributions.
 +-- mcpl/                    : Source code MCPL distribution 1.3.2 with added
@@ -75,4 +75,4 @@ $ cd ..
 
 ### Distribution
 
-???
+At the time, the only implemented distribution is cloning the GitHub repo.

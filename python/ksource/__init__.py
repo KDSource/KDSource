@@ -21,11 +21,13 @@ distribution.
 If you use KSource tools in your work, please add the following
 reference:
 
-    [TODO: Completar referencia]
+    O. I. Abbate, Desarrollo de herramientas computacionales para el
+    cálculo de blindajes, Master's thesis, Universidad Nacional de Cuyo,
+    2021.
 
 """
 
-__version__ = "1.0.0"
+__version__ = "0.1.0"
 __author__ = "inti-abbate"
 
 from .utils import *

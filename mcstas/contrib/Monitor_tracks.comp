@@ -64,7 +64,7 @@ INITIALIZE
 %{  
 	if(strlen(filename) == 0) strcat(strcpy(filename, NAME_CURRENT_COMP), "_tracks");
 	outfile = mcpl_create_outfile(filename);
-	mcpl_hdr_set_srcname(outfile,"McStas Guide_tracks");
+	mcpl_hdr_set_srcname(outfile,"McStas Monitor_tracks");
 	mcpl_enable_universal_pdgcode(outfile, pt2pdg(pt[0]));
 
 	part = mcpl_get_empty_particle(outfile);

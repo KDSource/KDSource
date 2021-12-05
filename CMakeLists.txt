@@ -11,7 +11,7 @@
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(KSource VERSION 1.0.0)
+project(KSource VERSION 0.1.0)
 configure_file(KSourceConfig.h.in KSourceConfig.h)
 
 enable_testing()

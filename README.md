@@ -1,79 +1,109 @@
 # KSource
 
-This is source version of KSource package for Monte Carlo radiation calculations.
+This is source version of KSource, a tool for Monte Carlo particle sources generation
+using Kernel Density Estimation.
 
-KSource gives Monte Carlo shielding calculation assistance tools. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
+KSource assists Monte Carlo beams and shielding calculations. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
 
-It process particle lists recorded as output of a simulation (e.g.: passing thru a window), to be used as input in another one. It estimates density distribution in energy, position and direction by means of Kernel Density Estimation (KDE) technique, allowing visualizing it as well as using it to produce new particles (artificial, but with the same estimated density). This allows to increase the number of source particles in the second simulation, improving its statistics (variance reduction).
+It processes particle lists recorded as output of a simulation (e.g.: passing thru a window), to be used as input in another one. It estimates density distribution in energy, position and direction by means of Kernel Density Estimation (KDE) technique, allowing visualizing it as well as using it to produce new particles (artificial, but with the same estimated density). This allows to increase the number of source particles in the second simulation, improving its statistics (variance reduction).
 
 KSource uses [`MCPL`](https://mctools.github.io/mcpl/) particle lists format. In its modified version included in this distribution, it allows working with the following Monte Carlo codes:
-*	MCNP
-*	PHITS
-*	McStas
-*	TRIPOLI-4
+* MCNP
+* PHITS
+* McStas
+* TRIPOLI-4
 
-In TRIPOLI y McStas it is possible "on-the-fly" sampling during simulations, while for the other formats it is necessary to record the source particle list before the simulation.
+In TRIPOLI-4 and McStas it is possible "on-the-fly" sampling during simulations, while for the other formats it is necessary to record the source particle list before the simulation.
 
 
 ## Contents:
 
 The KSource package consists in the following tools:
 
-*	Python API: Allows creating, optimizing, analyzing, plotting, and saving KDE sources. Optimización consists in automatic selection of bandwidth. Internally, it uses [`KDEpy`](https://kdepy.readthedocs.io/en/latest/) library for KDE.
+* Python API: Allows creating, optimizing, analyzing, plotting, and saving KDE sources. Optimización consists in automatic selection of bandwidth. Internally, it uses [`KDEpy`](https://kdepy.readthedocs.io/en/latest/) library for KDE.
 
-*	C API: Allows loading the sources saved with Python, and generating new synthetic samples. These follow the estimated distribution, and can be saved in a new MCPL file or be introduced directly in a simulation.
+* C API: Allows loading the sources saved with Python, and generating new synthetic samples. These follow the estimated distribution, and can be saved in a new MCPL file or be introduced directly in a simulation.
 
-*	Templates and communication files for Monte Carlo codes. Specific files are included for utilization of KSource tools in McStas y TRIPOLI-4 simulations.
+* Templates and communication files for Monte Carlo codes. Specific files are included for utilization of KSource tools in McStas y TRIPOLI-4 simulations.
 
-*	Command line API: Allows easily producing samples, based on sources saved with Python. Also allows to access templates and communication files, as well as MCPL applications.
+* Command line API: Allows easily producing samples, based on sources saved with Python. Also allows to access templates and communication files, as well as MCPL applications.
 
 
 
 ## Installation (Linux):
+
+The installation instructions assume this repo has been cloned to a local directory.
 	
-1.	Go to source directory:
+1. Go to source directory:
 
-	```bash
-	cd /path/to/ksourcesource
+   ```bash
+   $ cd /path/to/ksourcesource
+   ```
+
+   Where `/path/to/ksourcesource` is the folder where the source distribution of KSource was extracted.
+
+2. Install with `cmake`:
+
+   ```bash
+   $ mkdir build && cd build
+   $ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/ksourceinstall
+   $ make install
+   $ cd ..
 	```
+   Where `path/to/ksourceinstall` is the folder where you wish to install KSource internal files.
 
-	Where `/path/to/ksourcesource` is the folder where the source distribution of KSource was extracted.
+   It is required to have previously installed `libxml2`.
 
-2.	Install with `cmake`:
+3. Install Python API with `pip`:
 
-	```bash
-	$ mkdir build && cd build
-	$ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/ksourceinstall
-	$ make install
-	$ cd ..
-	```
-	Where `path/to/ksourceinstall` is the folder where you wish to install KSource internal files.
+   ```bash
+   $ cd python
+   $ pip install .
+   $ cd ..
+   ```
 
-	It is required to have previously installed `libxml2`.
+4. KSource is ready to be used in `/path/to/ksourceinstall`. For example, you can see the `kstool` command options with:
 
-3.	Install Python API with `pip`:
+   ```bash
+   $ /path/to/ksourceinstall/bin/kstool --help
+   ```
 
-	```bash
-	$ cd python
-	$ pip install .
-	$ cd ..
-	```
+   If you wish to have KSource tools available in your path, execute:
 
-	It is also possible to install Python API directly from PyPI with:
+   ```bash
+   $ export PATH=$PATH:/path/to/ksourceinstall/bin
+   ```
+   Or add this command to `~/.profile` (and update with `source ~/.profile`).
 
-	```bash
-	$ pip install ksource
-	```
 
-4.	KSource is ready to be used in `/path/to/ksourceinstall`. For example, you can see the `kstool` command options with:
+## Usage examples and templates
 
-	```bash
-	$ /path/to/ksourceinstall/bin/kstool --help
-	```
+Usage examples can be found in the [`docs/examples`](docs/examples) subdirectory. At the moment these are:
+* [`Verification.ipynb`](docs/examples/Verification.ipynb): Analytic example. KSource is used to generate a source from a particle list sampled from an known correlated distribution, and the generated particles distributions are compared with the analytical density.
 
-	If you wish to have KSource tools available in your path, execute:
+Moreover, templates for common usage of KSource in Monte Carlo simulations can be found in the [`templates`](templates) subdirectory, and can be copied to the working directory via the `kstool templates .` command. They are:
+* [`preproc_tracks.ipynb`](templates/preproc_tracks.ipynb): Template for the generation of a KDE source from a particle list registered with any of the [`MCPL`](https://mctools.github.io/mcpl/)-compatible Monte Carlo codes. The generated source can be used as input of any of said codes, generating an unlimited number of particles.
+* [`preproc_tally.ipynb`](templates/preproc_tally.ipynb): Template for the generation of a volumetric KDE source from a TRIPOLI-4 reaction tally (usually activation). The generated source can be used as input of any of the [`MCPL`](https://mctools.github.io/mcpl/)-compatible Monte Carlo codes, generating an unlimited number of particles.
+* [`postproc.ipynb`](templates/postproc.ipynb): Template for collecting integral results of simulations with McStas and/or TRIPOLI-4.
+* [`doseplots.ipynb`](templates/doseplots.ipynb): Template for plotting TRIPOLI-4 volume tallies (usually dose maps).
+* McStas templates:
+  * [`exe_McStas.sh`](templates/mcstas/exe_McStas.sh): Template for executing McStas with KSource.
+* TRIPOLI-4 templates:
+  * [`exe_Tripoli.sh`](templates/tripoli/exe_McStas.sh): Template for executing TRIPOLI-4 with KSource.
+  * [`KSource.c`](templates/tripoli/KSource.c): Template for using KSource as an external source.
+  * [`template.t4`](templates/tripoli/template.t4): Template for a TRIPOLI-4 input.
 
-	```bash
-	$ export PATH=$PATH:/path/to/ksourceinstall/bin
-	```
-	Or add this command to `~/.profile` (and update with `source ~/.profile`).
+
+## Issues and contributing
+
+If you are having trouble using the package, please let us know by creating a [Issue on GitHub](https://github.com/inti-abbate/KSource/issues) and we'll get back to you.
+
+Contributions are very welcome. To contribute, fork the project, create a branch and submit a Pull Request.
+
+
+## Reference
+
+Usage of the KSource package is allowed in the terms detailed in the LICENSE file. However, if you use it for your work, we
+would appreciate it if you would use the following reference:
+
+O. I. Abbate, Desarrollo de herramientas computacionales para el cálculo de blindajes, Master's thesis, Universidad Nacional de Cuyo, 2021.

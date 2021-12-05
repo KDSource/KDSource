@@ -113,7 +113,8 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
     if np.ndim(bw) == 1:
         if len(bw) < len(data):
             raise ValueError("If bw is array, must have same len as data")
-        print("Warning: bw longer than data.")
+        if len(bw) > len(data):
+            print("Warning: bw longer than data.")
 
     folds = KFold(n_splits=n_splits)
     scores = []
