@@ -1,7 +1,7 @@
 #!/bin/bash
 
-TRIPOLI4=/opt/TRIPOLI-4                     # TRIPOLI-4 path
-KS="$(dirname $(dirname $(which ksource)))" # KSource path
+TRIPOLI4=/opt/TRIPOLI-4                       # TRIPOLI-4 path
+KDS="$(dirname $(dirname $(which kdsource)))" # KDSource path
 
 ##### Input #####
 
@@ -19,8 +19,8 @@ cp $INPUT.t4 $EXT_SOURCE $DIR_OUT
 cd $DIR_OUT
 
 # Compile external source:
-export LD_LIBRARY_PATH=$(pwd):$KS/lib
-gcc $EXT_SOURCE -o source.so -lksource -lmcpl -lm -I$KS/include -L$KS/lib -shared -fPIC
+export LD_LIBRARY_PATH=$(pwd):$KDS/lib
+gcc $EXT_SOURCE -o source.so -lkdsource -lmcpl -lm -I$KDS/include -L$KDS/lib -shared -fPIC
 
 # Execute tripoli4
 T4EXE=$TRIPOLI4/CODE/bin/linux-intel-64/static_tripoli4

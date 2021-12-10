@@ -3,11 +3,11 @@
 The main files and directories in this source code distribution are described  as follows:
 
 ```
-KSource/
+KDSource/
 +-- README.md                : Usage instructions.
 +-- DEVELOPMENT.md           : Development instructions.
 +-- CMakeLists.txt           : Configuration file for installation with cmake.
-+-- KSourceConfig.h.in       : File to generate configurations header for C
++-- KDSourceConfig.h.in      : File to generate configurations header for C
 |                              library.
 +-- docs/                    : Documentation.
 |   +-- examples/            : Example of Python and command line APIs usage
@@ -17,19 +17,19 @@ KSource/
 |                              hooks for TRIPOLI-4, MCNP's PTRAC and SSV format.
 +-- mcstas/                   
 |   +-- contrib/             : McStas components for communication with MCPL and
-|                              KSource formats.
+|                              KDSource formats.
 +-- python/                  : Python API for creation and optimization of
-|   |                          KSource particle sources, and density estimation.
+|   |                          KDSource particle sources, and density estimation.
 |   +-- setup.py             : Configuration file for installation of Python API
 |   |                          with pip.
 |   +-- README.md            : Usage instructions for Python API.
 |   +-- MANIFEST.in          : Configuration file for including files to Python
 |   |                          distribution.
-|   +-- ksource/             : Source code of ksource package in Python.
+|   +-- kdsource/            : Source code of kdsource package in Python.
 +-- src/                     : Source code of C and command line APIs.
-|   +-- ksource/             : Source code (.h y .c) of C API.
-|   +-- kstool/              : Source code (.c y .sh) of command line API.
-+-- templates/               : Template files for KSource usage in Python and
+|   +-- kdsource/            : Source code (.h y .c) of C API.
+|   +-- kdtool/              : Source code (.c y .sh) of command line API.
++-- templates/               : Template files for KDSource usage in Python and
 |                              McStas and TRIPOLI-4 execution.
 +-- tests/                   : C API unit testing.
 ```
@@ -51,7 +51,7 @@ $ cd python
 $ pip install [-e] .
 $ cd ..
 ```
-To have KSource command line tool in your path execute (or add to `~/.profile` and update with `source ~/.profile`):
+To have KDSource command line tool in your path execute (or add to `~/.profile` and update with `source ~/.profile`):
 ```bash
 $ export PATH=$PATH:/path/to/install/bin
 ```

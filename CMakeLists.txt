@@ -1,7 +1,7 @@
 
 ##################################################################################
 #                                                                                #
-# CMake file to be used to install KSource distribution.                         #
+# CMake file to be used to install KDSource distribution.                        #
 #                                                                                #
 # See README.md file for installation instructions.                              #
 #                                                                                #
@@ -11,12 +11,12 @@
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(KSource VERSION 0.1.0)
-configure_file(KSourceConfig.h.in KSourceConfig.h)
+project(KDSource VERSION 0.1.0)
+configure_file(KDSourceConfig.h.in KDSourceConfig.h)
 
 enable_testing()
 
-set(INSTALL_PY OFF CACHE STRING "Whether to also install ksource and mcpl python files.")
+set(INSTALL_PY OFF CACHE STRING "Whether to also install kdsource and mcpl python files.")
 
 
 set(CMAKE_C_STANDARD 99)
@@ -28,32 +28,32 @@ find_package(LibXml2 REQUIRED)
 set(BUILD_WITHG4 OFF CACHE STRING "Whether to build Geant4 plugins if Geant4 is available.")
 add_subdirectory(mcpl)
 
-add_library(ksource SHARED "${SRC}/ksource/ksource.c"
-                           "${SRC}/ksource/plist.c"
-                           "${SRC}/ksource/geom.c"
-                           "${SRC}/ksource/utils.c")
-target_include_directories(ksource PUBLIC "${SRC}/ksource" "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(ksource PUBLIC m LibXml2::LibXml2 mcpl)
-install(TARGETS ksource DESTINATION lib)
-install(FILES "${SRC}/ksource/ksource.h"
-              "${SRC}/ksource/plist.h"
-              "${SRC}/ksource/geom.h"
-              "${SRC}/ksource/utils.h"
-              "${CMAKE_CURRENT_BINARY_DIR}/KSourceConfig.h"
+add_library(kdsource SHARED "${SRC}/kdsource/kdsource.c"
+                            "${SRC}/kdsource/plist.c"
+                            "${SRC}/kdsource/geom.c"
+                            "${SRC}/kdsource/utils.c")
+target_include_directories(kdsource PUBLIC "${SRC}/kdsource" "${CMAKE_CURRENT_BINARY_DIR}")
+target_link_libraries(kdsource PUBLIC m LibXml2::LibXml2 mcpl)
+install(TARGETS kdsource DESTINATION lib)
+install(FILES "${SRC}/kdsource/kdsource.h"
+              "${SRC}/kdsource/plist.h"
+              "${SRC}/kdsource/geom.h"
+              "${SRC}/kdsource/utils.h"
+              "${CMAKE_CURRENT_BINARY_DIR}/KDSourceConfig.h"
               DESTINATION include)
 
-install(PROGRAMS "${SRC}/kstool/kstool.sh" DESTINATION bin RENAME kstool)
-install(PROGRAMS "${SRC}/kstool/templates.sh" DESTINATION bin RENAME kstool-templates)
-add_executable(kstool-resample "${SRC}/kstool/resample.c")
-add_executable(kstool-beamtest "${SRC}/kstool/beamtest.c")
-target_link_libraries(kstool-resample PUBLIC ksource)
-target_link_libraries(kstool-beamtest PUBLIC ksource)
-install(TARGETS kstool-resample kstool-beamtest DESTINATION bin)
+install(PROGRAMS "${SRC}/kdtool/kdtool.sh" DESTINATION bin RENAME kdtool)
+install(PROGRAMS "${SRC}/kdtool/templates.sh" DESTINATION bin RENAME kdtool-templates)
+add_executable(kdtool-resample "${SRC}/kdtool/resample.c")
+add_executable(kdtool-beamtest "${SRC}/kdtool/beamtest.c")
+target_link_libraries(kdtool-resample PUBLIC kdsource)
+target_link_libraries(kdtool-beamtest PUBLIC kdsource)
+install(TARGETS kdtool-resample kdtool-beamtest DESTINATION bin)
 
 add_subdirectory(tests)
 
-install(DIRECTORY docs examples mcstas templates DESTINATION .)
+install(DIRECTORY docs mcstas templates DESTINATION .)
 
 if (INSTALL_PY)
-	install(DIRECTORY "python/ksource" DESTINATION python)
+	install(DIRECTORY "python/kdsource" DESTINATION python)
 endif()

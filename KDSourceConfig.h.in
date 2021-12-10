@@ -1,0 +1,5 @@
+// the configured options and settings for KDSource
+#define KDSource_VERSION_MAJOR @KDSource_VERSION_MAJOR@
+#define KDSource_VERSION_MINOR @KDSource_VERSION_MINOR@
+#define KDSource_VERSION_PATCH @KDSource_VERSION_PATCH@
+

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""KSource installer script using setuptools.
+"""KDSource installer script using setuptools.
 """
 
 import setuptools
@@ -13,26 +13,26 @@ with open(os.path.join(HERE, "README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 # Get version
-with open(os.path.join(HERE, "ksource/__init__.py"), encoding="utf-8") as file:
+with open(os.path.join(HERE, "kdsource/__init__.py"), encoding="utf-8") as file:
     VERSION = re.search(r"__version__ = \"(.*?)\"", file.read()).group(1)
 
 
 setuptools.setup(
-    name="ksource",
+    name="kdsource",
     version=VERSION,
     author="Osiris Inti Abbate",
     author_email="intiabbate@gmail.com",
-    description="Python API for KSource package",
+    description="Python API for KDSource package",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/inti-abbate/KSource",
+    url="https://github.com/inti-abbate/KDSource",
     project_urls={},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License ::",
         "Operating System :: OS Independent",
     ],
-    packages=["ksource"],
+    packages=["kdsource"],
     install_requires=[
         "numpy>=1.20.3,<2.0",
         "scipy>=1.6.3,<2.0",

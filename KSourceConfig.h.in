@@ -1,5 +1,0 @@
-// the configured options and settings for KSource
-#define KSource_VERSION_MAJOR @KSource_VERSION_MAJOR@
-#define KSource_VERSION_MINOR @KSource_VERSION_MINOR@
-#define KSource_VERSION_PATCH @KSource_VERSION_PATCH@
-

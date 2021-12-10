@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KS="$(dirname $(dirname $(which kstool)))" # KSource path
+KDS="$(dirname $(dirname $(which kdtool)))" # KDSource path
 
 ##### Input #####
 
@@ -18,9 +18,9 @@ cp $INPUT.instr $DIR_OUT
 cd $DIR_OUT
 
 # Execute McStas
-export LD_LIBRARY_PATH=$KS/lib
-mcstas $INPUT.instr -I$KS/mcstas/contrib -I$KS/include
-gcc $INPUT.c -o $INPUT.out -lksource -lmcpl -lm -I$KS/include -L$KS/lib
+export LD_LIBRARY_PATH=$KDS/lib
+mcstas $INPUT.instr -I$KDS/mcstas/contrib -I$KDS/include
+gcc $INPUT.c -o $INPUT.out -lkdsource -lmcpl -lm -I$KDS/include -L$KDS/lib
 ./$INPUT.out -n $N | tee bash.out
 
 cd ..
