@@ -5,13 +5,16 @@
 Eventually, all the content of this module should be merged into KDEpy.
 """
 
-import numpy as np
+from KDEpy import TreeKDE
+
+from joblib import Parallel, delayed
+
 import matplotlib.pyplot as plt
 
-from sklearn.neighbors import NearestNeighbors
+import numpy as np
+
 from sklearn.model_selection import KFold
-from KDEpy import TreeKDE
-from joblib import Parallel, delayed
+from sklearn.neighbors import NearestNeighbors
 
 
 def bw_silv(dim, N_eff):
@@ -34,7 +37,8 @@ def bw_silv(dim, N_eff):
     bw_opt: float
         Bandwidth resulting from Silverman's Rule.
     """
-    return (4/(2+dim))**(1/(4+dim)) * N_eff**(-1/(4+dim))
+    return (4 / (2 + dim)) ** (1 / (4 + dim)) * N_eff ** (-1 / (4 + dim))
+
 
 def bw_knn(data, weights=None, K_eff=100, k=None, batch_size=10000):
     """
@@ -63,30 +67,43 @@ def bw_knn(data, weights=None, K_eff=100, k=None, batch_size=10000):
     bw_opt: numpy.array
         Array of KNN bandwidths.
     """
-    N,dim = data.shape
+    N, dim = data.shape
     batches = int(max(1, np.round(N / batch_size)))
-    N_eff = N if weights is not None else np.sum(weights)**2 / np.sum(weights**2)
-    if k is None: # Compute k based on K_eff
+    N_eff = (
+        N
+        if weights is not None
+        else np.sum(weights) ** 2 / np.sum(weights ** 2)
+    )
+    if k is None:  # Compute k based on K_eff
         k_float = batch_size * K_eff / N_eff
         k = int(max(1, round(k_float)))
-        f_k = k_float / k # Correction factor for k
-    else: # k set by user
+        f_k = k_float / k  # Correction factor for k
+    else:  # k set by user
         f_k = 1.0
         K_eff = k * N_eff / batch_size
-    print("Using k = {} neighbors per batch (batch_size = {})".format(k, batch_size))
+    print(
+        "Using k = {} neighbors per batch (batch_size = {})".format(
+            k, batch_size
+        )
+    )
     print("Correction factor: f_k = k_float / k = {}".format(f_k))
     print("Effective total neighbors: K_eff = {}".format(K_eff))
     bw_knn = np.empty(len(data))
     idx = 0
-    for batch,batch_data in enumerate(np.array_split(data, batches)):
-        print("batch =", batch+1, "/", batches)
-        knn = NearestNeighbors(n_neighbors=k+1, n_jobs=-1) # Add 1 to count self point
+    for batch, batch_data in enumerate(np.array_split(data, batches)):
+        print("batch =", batch + 1, "/", batches)
+        knn = NearestNeighbors(
+            n_neighbors=k + 1, n_jobs=-1
+        )  # Add 1 to count self point
         knn.fit(batch_data)
-        ds,idxs = knn.kneighbors(batch_data)
-        bws = ds[:,-1] * (f_k)**(1/dim) # Select k-th column and apply correction factor
-        bw_knn[idx:idx+len(batch_data)] = bws
+        ds, idxs = knn.kneighbors(batch_data)
+        bws = ds[:, -1] * (f_k) ** (
+            1 / dim
+        )  # Select k-th column and apply correction factor
+        bw_knn[idx : idx + len(batch_data)] = bws
         idx += len(batch_data)
     return bw_knn
+
 
 def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
     """
@@ -137,6 +154,7 @@ def _kde_cv_score(bw, data, weights=None, n_splits=10, modelKDE=TreeKDE):
         scores.append(score)
     return np.mean(scores)
 
+
 def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     """
     Maximum Likelihood Cross-Validation bandwidth.
@@ -175,29 +193,41 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
         Optimal bandwidth, with same shape as seed.
     """
     if seed is None:
-        N_eff = len(data) if weights is None else np.sum(weights)**2/np.sum(weights**2)
+        N_eff = (
+            len(data)
+            if weights is None
+            else np.sum(weights) ** 2 / np.sum(weights ** 2)
+        )
         seed = bw_silv(np.shape(data)[1], N_eff)
     if grid is None:
         grid = np.logspace(-1, 1, 20)
-    bw_grid = np.reshape(grid, (-1,*np.ones(np.ndim(seed),dtype=int))) * seed
+    bw_grid = np.reshape(grid, (-1, *np.ones(np.ndim(seed), dtype=int))) * seed
     if n_splits > len(data):
         n_splits = len(data)
 
     cv_scores = Parallel(n_jobs=-1, verbose=10)(
-        delayed(_kde_cv_score)(bw, data, weights=weights, n_splits=n_splits) for bw in bw_grid)
+        delayed(_kde_cv_score)(bw, data, weights=weights, n_splits=n_splits)
+        for bw in bw_grid
+    )
     idx_best = np.argmax(cv_scores)
-    
+
     plt.plot(grid, cv_scores)
     plt.xlabel("Normalized bandwidth")
     plt.ylabel("Mean Test Score")
     plt.tight_layout()
-    if(show): plt.show()
-    if idx_best in (0, len(bw_grid)-1):
-        raise Exception("Maximum not found in bw range selected. Move grid and try again.")
+    if show:
+        plt.show()
+    if idx_best in (0, len(bw_grid) - 1):
+        raise Exception(
+            "Maximum not found in bw range selected. Move grid and try again."
+        )
     bw_mlcv = bw_grid[idx_best]
     return bw_mlcv
 
-def optimize_bw(bw_method, vecs, ws=None, weightfun=None, maskfun=None, **kwargs):
+
+def optimize_bw(
+    bw_method, vecs, ws=None, weightfun=None, maskfun=None, **kwargs
+):
     """
     Optimize bandwidth with given method.
 
@@ -227,30 +257,27 @@ def optimize_bw(bw_method, vecs, ws=None, weightfun=None, maskfun=None, **kwargs
     vecs = np.array(vecs)
     if ws is not None:
         ws = np.array(ws)
-        mask = (ws > 0)
+        mask = ws > 0
     else:
         mask = np.ones(len(vecs), dtype=bool)
-    if weightfun is not None: # Apply weightfun
+    if weightfun is not None:  # Apply weightfun
         ws = ws * weightfun(vecs)
-    if maskfun is not None: # Apply maskfun
+    if maskfun is not None:  # Apply maskfun
         mask = np.logical_and(mask, maskfun(vecs))
     vecs = vecs[mask]
     ws = ws[mask]
     #
-    if bw_method == 'silv': # Silverman's Rule
+    if bw_method == "silv":  # Silverman's Rule
         dim = np.shape(vecs)[1]
-        N_eff = len(vecs) if ws is None else np.sum(ws)**2/np.sum(ws**2)
+        N_eff = len(vecs) if ws is None else np.sum(ws) ** 2 / np.sum(ws ** 2)
         return bw_silv(dim, N_eff)
-    elif bw_method == 'knn': # K Nearest Neighbors method
+    elif bw_method == "knn":  # K Nearest Neighbors method
         return bw_knn(vecs, weights=ws, **kwargs)
-    elif bw_method == 'mlcv': # Maximum Likelihood Cross-Validation method
+    elif bw_method == "mlcv":  # Maximum Likelihood Cross-Validation method
         return bw_mlcv(vecs, weights=ws, **kwargs)
     else:
         keys = list(bw_methods.keys())
         raise Exception("Invalid bw_method. Available: {}".format(keys))
 
-bw_methods = {
-    "silv": bw_silv,
-    "knn": bw_knn,
-    "mlcv": bw_mlcv
-}
+
+bw_methods = {"silv": bw_silv, "knn": bw_knn, "mlcv": bw_mlcv}

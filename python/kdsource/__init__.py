@@ -8,7 +8,7 @@ project GitHub page:
 
     https://github.com/inti-abbate/KDSource
 
-A KDSource object is based on a particle list in MCPL format (see 
+A KDSource object is based on a particle list in MCPL format (see
 https://mctools.github.io/mcpl/), on which a Kernel Density Estimation
 (KDE) is applied, using KDEpy library (see
 https://github.com/tommyod/KDEpy).
@@ -30,13 +30,13 @@ reference:
 __version__ = "0.1.0"
 __author__ = "inti-abbate"
 
-from .utils import *
-from .kde import *
+# from .utils import *
+# from .kde import *
 
-from .geom import *
-from .plist import *
-from .kdsource import *
+# from .geom import *
+# from .plist import *
+# from .kdsource import *
 
-from .tally import *
-from .stats import *
-from .summary import *
+# from .tally import *
+# from .stats import *
+# from .summary import *

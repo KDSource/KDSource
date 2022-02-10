@@ -5,12 +5,14 @@
 
 import os
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as col
 from PIL import Image as Im
 
-from .plist import convert2mcpl,savessv,appendssv
+import matplotlib.colors as col
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+from .plist import appendssv, convert2mcpl, savessv
 
 
 def read_spectrum(spectrum=None):
@@ -40,11 +42,11 @@ def read_spectrum(spectrum=None):
         with open(spectrum, "r") as file:
             for line in file:
                 try:
-                    line = line.split(sep=',')
-                    Es.append(np.double(line[0])/1000.)
+                    line = line.split(sep=",")
+                    Es.append(np.double(line[0]) / 1000.0)
                     ws.append(np.double(line[2]))
                 except:
-                    pass  
+                    pass
         if len(Es) == 0:
             raise Exception("Empty decay spectrum.")
     Es = np.array(Es)
@@ -53,12 +55,15 @@ def read_spectrum(spectrum=None):
         raise Exception("Invalid decay spectrum format.")
     return [Es, ws]
 
-class T4Tally:
-    varnames = ["x","y","z"]
-    varmap = {name:idx for idx,name in enumerate(varnames)}
-    units = ["cm","cm","cm"]
 
-    def __init__(self, outputfile, tallyname, spectrum=None, geomplot=None, J=1.0):
+class T4Tally:
+    varnames = ["x", "y", "z"]
+    varmap = {name: idx for idx, name in enumerate(varnames)}
+    units = ["cm", "cm", "cm"]
+
+    def __init__(
+        self, outputfile, tallyname, spectrum=None, geomplot=None, J=1.0
+    ):
         """
         Object for reading TRIPOLI-4 3D tallies.
 
@@ -91,10 +96,12 @@ class T4Tally:
         self.outputfile = outputfile
         self.tallyname = tallyname
         # Read decay spectrum
-        self.Es,self.E_ws = read_spectrum(spectrum)
+        self.Es, self.E_ws = read_spectrum(spectrum)
         # Read geometry graph
         if geomplot is not None:
-            geomplot = np.array(Im.open(geomplot).convert('L').crop((25,26,514,514)))
+            geomplot = np.array(
+                Im.open(geomplot).convert("L").crop((25, 26, 514, 514))
+            )
         self.geomplot = geomplot
         # Read tallies
         with open(outputfile, "r") as file:
@@ -106,10 +113,16 @@ class T4Tally:
                 raise Exception("No SCORE block in outputfile.")
             # Search tally definition
             for line in file:
-                if tallyname+" " in line or tallyname+"\t" in line or tallyname+"\n" in line:
+                if (
+                    tallyname + " " in line
+                    or tallyname + "\t" in line
+                    or tallyname + "\n" in line
+                ):
                     break
                 if "END_SCORE" in line:
-                    raise Exception("Tally {} definition not found.".format(tallyname))
+                    raise Exception(
+                        "Tally {} definition not found.".format(tallyname)
+                    )
             # Search mesh
             for line in file:
                 if "EXTENDED_MESH" in line:
@@ -119,29 +132,37 @@ class T4Tally:
             # Read mesh parameters
             buf = []
             idx = line.split().index("EXTENDED_MESH")
-            buf.extend(line.split()[idx+1:]) # Accumulate data after EXTENDED_MESH
+            buf.extend(
+                line.split()[idx + 1 :]
+            )  # Accumulate data after EXTENDED_MESH
             for line in file:
                 if "FRAME" in line:
                     break
                 buf.extend(line.split())
             idx = line.split().index("FRAME")
-            buf.extend(line.split()[:idx]) # Accumulate data before FRAME
+            buf.extend(line.split()[:idx])  # Accumulate data before FRAME
             if len(buf) != 10:
                 raise Exception("Could not read EXTENDED_MESH.")
             mins = np.double(buf[1:4])
             maxs = np.double(buf[4:7])
             Ns = list(map(int, buf[7:10]))
-            grid1 = np.linspace(mins[0], maxs[0], Ns[0]+1)
-            grid2 = np.linspace(mins[1], maxs[1], Ns[1]+1)
-            grid3 = np.linspace(mins[2], maxs[2], Ns[2]+1)
+            grid1 = np.linspace(mins[0], maxs[0], Ns[0] + 1)
+            grid2 = np.linspace(mins[1], maxs[1], Ns[1] + 1)
+            grid3 = np.linspace(mins[2], maxs[2], Ns[2] + 1)
             self.grids = [grid1, grid2, grid3]
-            self.vcell = np.abs((grid1[1]-grid1[0])*(grid2[1]-grid2[0])*(grid3[1]-grid3[0]))
+            self.vcell = np.abs(
+                (grid1[1] - grid1[0])
+                * (grid2[1] - grid2[0])
+                * (grid3[1] - grid3[0])
+            )
             # Read coordinates
-            if not "FRAME CARTESIAN" in line:
+            if "FRAME CARTESIAN" not in line:
                 raise Exception("Tally must have FRAME CARTESIAN.")
             buf = []
             idx = line.split().index("CARTESIAN")
-            buf.extend(line.split()[idx+1:]) # Accumulate data after CARTESIAN
+            buf.extend(
+                line.split()[idx + 1 :]  # noqa 203
+            )  # Accumulate data after CARTESIAN
             for line in file:
                 found = False
                 for search in ["NAME", "END_SCORE", "//", "/*"]:
@@ -151,10 +172,14 @@ class T4Tally:
                             found = True
                         else:
                             idx2 = line.split().index(search)
-                            if idx2 < idx: idx = idx2
-                if found: break
+                            if idx2 < idx:
+                                idx = idx2
+                if found:
+                    break
                 buf.extend(line.split())
-            buf.extend(line.split()[:idx]) # Accumulate data before NAME or END_SCORE
+            buf.extend(
+                line.split()[:idx]
+            )  # Accumulate data before NAME or END_SCORE
             if len(buf) != 12:
                 raise Exception("Could not read FRAME CARTESIAN.")
             self.origin = np.double(buf[:3])
@@ -162,13 +187,15 @@ class T4Tally:
             self.dx2 = np.double(buf[6:9])
             self.dx3 = np.double(buf[9:12])
             # Search tally results
-            I = []
+            I_ = []
             err = []
             for line in file:
-                if "SCORE NAME : "+tallyname in line:
+                if "SCORE NAME : " + tallyname in line:
                     break
             else:
-                raise Exception("Tally {} results not found.".format(tallyname))
+                raise Exception(
+                    "Tally {} results not found.".format(tallyname)
+                )
             for line in file:
                 if "Energy range" in line:
                     break
@@ -176,13 +203,13 @@ class T4Tally:
                 line = line.split()
                 if len(line) == 0:
                     break
-                I.append(np.double(line[1]))
+                I_.append(np.double(line[1]))
                 err.append(np.double(line[2]))
-        if len(I) == np.prod(Ns):
+        if len(I_) == np.prod(Ns):
             print("Tally {} successfully read.".format(tallyname))
         else:
             print("Tally {} reading incomplete.".format(tallyname))
-        self.I = np.reshape(I, Ns) / self.vcell
+        self.I_ = np.reshape(I_, Ns) / self.vcell
         self.err = np.reshape(err, Ns) / self.vcell
 
     def save_tracks(self, filename=None):
@@ -206,42 +233,46 @@ class T4Tally:
             Name of generated MCPL file. By default the tally name is
             used.
         """
-        if(len(self.Es) == 0):
+        if len(self.Es) == 0:
             raise Exception("No decay spectrum.")
         pt = "p"
         if filename is None:
             filename = self.folder + "/" + self.tallyname + ".ssv"
         # Create position list
-        grids = [(grid[:-1]+grid[1:])/2 for grid in self.grids]
-        poss = np.reshape(np.meshgrid(*grids, indexing='ij'),(3,-1)).T
-        pos_ws = self.I.reshape(-1)
-        poss = poss[pos_ws>0]
-        pos_ws = pos_ws[pos_ws>0]
+        grids = [(grid[:-1] + grid[1:]) / 2 for grid in self.grids]
+        poss = np.reshape(np.meshgrid(*grids, indexing="ij"), (3, -1)).T
+        pos_ws = self.I_.reshape(-1)
+        poss = poss[pos_ws > 0]
+        pos_ws = pos_ws[pos_ws > 0]
         pos_ws /= pos_ws.mean()
         N = len(poss)
         p = np.random.permutation(N)
         poss = poss[p]
         pos_ws = pos_ws[p]
-        celldims = [self.grids[0][1]-self.grids[0][0],
-                    self.grids[1][1]-self.grids[1][0],
-                    self.grids[2][1]-self.grids[2][0]]
+        celldims = [
+            self.grids[0][1] - self.grids[0][0],
+            self.grids[1][1] - self.grids[1][0],
+            self.grids[2][1] - self.grids[2][0],
+        ]
         # Create energy list (cyclic)
-        nloops = int(np.ceil(N/len(self.Es)) + 1)
-        Es = np.tile(self.Es,nloops)
-        E_ws = np.tile(self.E_ws,nloops)
+        nloops = int(np.ceil(N / len(self.Es)) + 1)
+        Es = np.tile(self.Es, nloops)
+        E_ws = np.tile(self.E_ws, nloops)
         E_ws /= E_ws.mean()
         # Save in file
         parts = np.empty((N, 7))
-        savessv(pt, [], [], filename) # Create header
+        savessv(pt, [], [], filename)  # Create header
         for i in range(len(self.Es)):
-            parts[:,0] = Es[i:i+N] # Energies
-            parts[:,1:4] = poss + celldims * (np.random.rand(N,3)-0.5) # Positions
-            mus = -1 + 2*np.random.rand(N)
-            dxys = np.sqrt(1-mus**2)
-            phis = -np.pi + 2*np.pi*np.random.rand(N)
-            dirs = np.array([dxys*np.cos(phis), dxys*np.sin(phis), mus]).T
-            parts[:,4:7] = dirs # Random directions
-            ws = pos_ws*E_ws[i:i+N] # Weights
+            parts[:, 0] = Es[i : i + N]  # Energies # noqa: E203
+            parts[:, 1:4] = poss + celldims * (
+                np.random.rand(N, 3) - 0.5
+            )  # Positions
+            mus = -1 + 2 * np.random.rand(N)
+            dxys = np.sqrt(1 - mus ** 2)
+            phis = -np.pi + 2 * np.pi * np.random.rand(N)
+            dirs = np.array([dxys * np.cos(phis), dxys * np.sin(phis), mus]).T
+            parts[:, 4:7] = dirs  # Random directions
+            ws = pos_ws * E_ws[i : i + N]  # Weights # noqa: E203
             appendssv(pt, parts, ws, filename)
         mcplname = convert2mcpl(filename, "ssv")
         print("Particle list successfully saved in {}.".format(mcplname))
@@ -278,35 +309,64 @@ class T4Tally:
         """
         if isinstance(var, str):
             var = self.varmap[var]
-        if not "xscale" in kwargs: kwargs["xscale"] = "linear"
-        if not "yscale" in kwargs: kwargs["yscale"] = "log"
-        vrs = [0,1,2]
+        if "xscale" not in kwargs:
+            kwargs["xscale"] = "linear"
+        if "yscale" not in kwargs:
+            kwargs["yscale"] = "log"
+        vrs = [0, 1, 2]
         vrs.remove(var)
-        if cells is None: # Average over other variables
-            scores = np.mean(self.I, axis=tuple(vrs))
-            errs = np.sqrt(np.sum(self.err**2, axis=tuple(vrs))) / (self.err.shape[vrs[0]]*self.err.shape[vrs[1]])
-        else: # Plot over selected cells
+        if cells is None:  # Average over other variables
+            scores = np.mean(self.I_, axis=tuple(vrs))
+            errs = np.sqrt(np.sum(self.err ** 2, axis=tuple(vrs))) / (
+                self.err.shape[vrs[0]] * self.err.shape[vrs[1]]
+            )
+        else:  # Plot over selected cells
             slc = cells.copy()
             slc.insert(var, slice(None))
-            scores = self.I[tuple(slc)].copy()
+            scores = self.I_[tuple(slc)].copy()
             errs = self.err[tuple(slc)].copy()
         scores *= self.J
         errs *= self.J
         if np.sum(scores) == 0:
             print("Null tally in plot region.")
-            return [None, [scores,errs]]
+            return [None, [scores, errs]]
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
         #
-        if "label" in kwargs: lbl = kwargs["label"]
+        if "label" in kwargs:
+            lbl = kwargs["label"]
         else:
             if cells is None:
-                lbl = str(self.grids[vrs[0]][0])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][-1])
-                lbl += str(self.grids[vrs[1]][0])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][-1])
+                lbl = (
+                    str(self.grids[vrs[0]][0])
+                    + " <= "
+                    + self.varnames[vrs[0]]
+                    + " <= "
+                    + str(self.grids[vrs[0]][-1])
+                )
+                lbl += (
+                    str(self.grids[vrs[1]][0])
+                    + " <= "
+                    + self.varnames[vrs[1]]
+                    + " <= "
+                    + str(self.grids[vrs[1]][-1])
+                )
             else:
-                lbl = str(self.grids[vrs[0]][cells[0]])+" <= "+self.varnames[vrs[0]]+" <= "+str(self.grids[vrs[0]][cells[0]+1])
-                lbl += str(self.grids[vrs[1]][cells[1]])+" <= "+self.varnames[vrs[1]]+" <= "+str(self.grids[vrs[1]][cells[1]+1])
+                lbl = (
+                    str(self.grids[vrs[0]][cells[0]])
+                    + " <= "
+                    + self.varnames[vrs[0]]
+                    + " <= "
+                    + str(self.grids[vrs[0]][cells[0] + 1])
+                )
+                lbl += (
+                    str(self.grids[vrs[1]][cells[1]])
+                    + " <= "
+                    + self.varnames[vrs[1]]
+                    + " <= "
+                    + str(self.grids[vrs[1]][cells[1] + 1])
+                )
         grid = (self.grids[var][:-1] + self.grids[var][1:]) / 2
         plt.errorbar(grid, scores, errs, label=lbl)
         plt.xscale(kwargs["xscale"])
@@ -315,9 +375,11 @@ class T4Tally:
         plt.ylabel("Tally")
         plt.grid()
         plt.legend()
-        return [plt.gcf(), [scores,errs]]
+        return [plt.gcf(), [scores, errs]]
 
-    def plot2D(self, vrs, cell=None, geomplot=False, levelcurves=None, **kwargs):
+    def plot2D(
+        self, vrs, cell=None, geomplot=False, levelcurves=None, **kwargs
+    ):
         """
         2D plot of tally.
 
@@ -348,24 +410,27 @@ class T4Tally:
         """
         if isinstance(vrs[0], str):
             vrs = [self.varmap[var] for var in vrs]
-        if not "scale" in kwargs: kwargs["scale"] = "log"
-        var = [0,1,2]
+        if "scale" not in kwargs:
+            kwargs["scale"] = "log"
+        var = [0, 1, 2]
         var.remove(vrs[0])
         var.remove(vrs[1])
         var = var[0]
-        if cell is None: # Average var variable
-            scores = np.mean(self.I, axis=var)
-            errs = np.sqrt(np.sum(self.err**2, axis=var)) / self.err.shape[var]
-        else: # Plot over selected cell
+        if cell is None:  # Average var variable
+            scores = np.mean(self.I_, axis=var)
+            errs = (
+                np.sqrt(np.sum(self.err ** 2, axis=var)) / self.err.shape[var]
+            )
+        else:  # Plot over selected cell
             slc = 2 * [slice(None)]
             slc.insert(var, cell)
-            scores = self.I[tuple(slc)].copy()
+            scores = self.I_[tuple(slc)].copy()
             errs = self.err[tuple(slc)].copy()
         scores *= self.J
         errs *= self.J
         if np.sum(scores) == 0:
             print("Null tally in plot region.")
-            return [None, [scores,errs]]
+            return [None, [scores, errs]]
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
@@ -373,19 +438,51 @@ class T4Tally:
             scores = np.transpose(scores)
             errs = np.transpose(errs)
         #
-        if kwargs["scale"] == "log": norm = col.LogNorm()
-        else: norm = None
-        extent = (self.grids[vrs[0]][0], self.grids[vrs[0]][-1], self.grids[vrs[1]][0], self.grids[vrs[1]][-1])
-        plt.pcolormesh(self.grids[vrs[0]], self.grids[vrs[1]], scores, cmap="jet", norm=norm, rasterized=True)
+        if kwargs["scale"] == "log":
+            norm = col.LogNorm()
+        else:
+            norm = None
+        extent = (
+            self.grids[vrs[0]][0],
+            self.grids[vrs[0]][-1],
+            self.grids[vrs[1]][0],
+            self.grids[vrs[1]][-1],
+        )
+        plt.pcolormesh(
+            self.grids[vrs[0]],
+            self.grids[vrs[1]],
+            scores,
+            cmap="jet",
+            norm=norm,
+            rasterized=True,
+        )
         plt.colorbar()
         title = "Tally"
         if cell is None:
-            title += "\n"+str(self.grids[var][0])+" <= "+self.varnames[var]+" <= "+str(self.grids[var][-1])
+            title += (
+                "\n"
+                + str(self.grids[var][0])
+                + " <= "
+                + self.varnames[var]
+                + " <= "
+                + str(self.grids[var][-1])
+            )
         else:
-            title += "\n"+str(self.grids[var][cell])+" <= "+self.varnames[var]+" <= "+str(self.grids[var][cell+1])
+            title += (
+                "\n"
+                + str(self.grids[var][cell])
+                + " <= "
+                + self.varnames[var]
+                + " <= "
+                + str(self.grids[var][cell + 1])
+            )
         plt.title(title)
-        plt.xlabel(r"${}\ [{}]$".format(self.varnames[vrs[0]], self.units[vrs[0]]))
-        plt.ylabel(r"${}\ [{}]$".format(self.varnames[vrs[1]], self.units[vrs[1]]))
+        plt.xlabel(
+            r"${}\ [{}]$".format(self.varnames[vrs[0]], self.units[vrs[0]])
+        )
+        plt.ylabel(
+            r"${}\ [{}]$".format(self.varnames[vrs[1]], self.units[vrs[1]])
+        )
         plt.tight_layout()
         #
         if levelcurves is not None:
@@ -394,6 +491,12 @@ class T4Tally:
         if self.geomplot is not None and geomplot:
             ext = (extent[0], extent[1], extent[3], extent[2])
             for val in np.unique(self.geomplot):
-                plt.contour(self.geomplot==val, [0.5], colors='black', extent=ext, linewidths=0.25)
+                plt.contour(
+                    self.geomplot == val,
+                    [0.5],
+                    colors="black",
+                    extent=ext,
+                    linewidths=0.25,
+                )
         #
-        return [plt.gcf(), [scores,errs]]
+        return [plt.gcf(), [scores, errs]]

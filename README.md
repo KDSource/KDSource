@@ -1,4 +1,14 @@
-# KDSource
+<p align="center">
+<img src="img/kdsource_logo.png" alt="logo" height="100"/>
+</p>
+
+![KDSource](https://img.shields.io/badge/KDSource-0.1.0-brightgreen)
+[![Documentation Status](https://readthedocs.org/projects/kdsource/badge/?version=latest)](https://kdsource.readthedocs.io/en/latest/?badge=latest)
+[![License](https://img.shields.io/badge/License-GPL3-brightgreen.svg)](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3))
+![CMake](https://img.shields.io/badge/Cmake-3.0+-orange)
+[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
+
+
 
 This is source version of KDSource, a tool for Monte Carlo particle sources generation
 using Kernel Density Estimation.
