@@ -3,15 +3,17 @@
 """Module for PList object
 """
 
+import os
+import subprocess
 from xml.etree import ElementTree as ET
-import os, subprocess
 
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.spatial.transform as st
 import mcpl
 
-from .utils import pt2pdg,pdg2pt
+import numpy as np
+
+import scipy.spatial.transform as st
+
+from .utils import pt2pdg
 
 
 def convert2mcpl(filename, readformat):
@@ -49,29 +51,32 @@ def convert2mcpl(filename, readformat):
     if readformat == "mcpl":
         already_converted = True
     else:
-        filename_base = filename.split('.')[0]
-        if os.path.isfile(filename_base+".mcpl.gz"):
+        filename_base = filename.split(".")[0]
+        if os.path.isfile(filename_base + ".mcpl.gz"):
             already_converted = True
-            filename = filename_base+".mcpl.gz"
-        elif os.path.isfile(filename_base+".mcpl"):
+            filename = filename_base + ".mcpl.gz"
+        elif os.path.isfile(filename_base + ".mcpl"):
             already_converted = True
-            filename = filename_base+".mcpl"
+            filename = filename_base + ".mcpl"
     if already_converted:
         print("Using existing file {}".format(filename))
         return filename
     # Must convert
-    if not readformat in ["ssw", "phits", "ptrac", "stock", "ssv"]:
+    if readformat not in ["ssw", "phits", "ptrac", "stock", "ssv"]:
         raise Exception("Invalid {} format".format(readformat))
     print("Converting {} file to MCPL...".format(readformat))
-    mcplname = filename.split(".")[0]+".mcpl"
-    result = subprocess.run(["kdtool", readformat+"2mcpl", filename, mcplname],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            check=True) # if result.returncode != 0: raise exception
+    mcplname = filename.split(".")[0] + ".mcpl"
+    result = subprocess.run(
+        ["kdtool", readformat + "2mcpl", filename, mcplname],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )  # if result.returncode != 0: raise exception
     stdout = result.stdout.split()
-    mcplname = stdout[stdout.index(b'Created')+1].decode("utf-8")
+    mcplname = stdout[stdout.index(b"Created") + 1].decode("utf-8")
     print("Done. Created {}".format(mcplname))
     return mcplname
+
 
 def join2mcpl(filenames, readformat):
     """
@@ -105,19 +110,24 @@ def join2mcpl(filenames, readformat):
         return mcplnames[0]
     joinedname = []
     for chars in zip(*mcplnames):
-        if len(set(chars))==1:
+        if len(set(chars)) == 1:
             joinedname.append(set(chars).pop())
-    joinedname = ''.join(joinedname)
+    joinedname = "".join(joinedname)
     if len(joinedname) == 0:
         joinedname = "joined.mcpl.gz"
-    subprocess.run(["kdtool", "mcpltool", joinedname, *mcplnames],
-                   check=True) # if result.returncode != 0: raise exception
+    subprocess.run(
+        ["kdtool", "mcpltool", joinedname, *mcplnames], check=True
+    )  # if result.returncode != 0: raise exception
     print("Joined MCPL files into {}".format(joinedname))
     return joinedname
 
-ptmap = {'n':2112, 'p':22, 'e':11, 'e+':-11}
 
-def savessv(pt, parts, ws, outfile): # Equivalent to convert2ascii (in mcpl.py)
+ptmap = {"n": 2112, "p": 22, "e": 11, "e+": -11}
+
+
+def savessv(
+    pt, parts, ws, outfile
+):  # Equivalent to convert2ascii (in mcpl.py)
     """
     Save particle list to Space-Separated Values file.
 
@@ -138,18 +148,47 @@ def savessv(pt, parts, ws, outfile): # Equivalent to convert2ascii (in mcpl.py)
         Name of SSV file. If it exist, its content will be overwritten.
     """
     print("Writing particles into SSV file...")
-    with open(outfile,'w') as fout:
-        fout.write("#MCPL-ASCII\n#ASCII-FORMAT: v1\n#NPARTICLES: %i\n"%len(parts))
+    with open(outfile, "w") as fout:
+        fout.write(
+            "#MCPL-ASCII\n#ASCII-FORMAT: v1\n#NPARTICLES: %i\n" % len(parts)
+        )
         fout.write("#END-HEADER\n")
-        fout.write("index     pdgcode               ekin[MeV]                   x[cm]          "
-                   +"         y[cm]                   z[cm]                      ux                  "
-                   +"    uy                      uz                time[ms]                  weight  "
-                   +"                 pol-x                   pol-y                   pol-z  userflags\n")
+        fout.write(
+            "index     pdgcode               ekin[MeV]  \
+                x[cm]          "
+            + "         y[cm]                   z[cm]   \
+                ux                  "
+            + "    uy                      uz           \
+                time[ms]                  weight  "
+            + "                 pol-x                   \
+                pol-y                   pol-z  userflags\n"
+        )
         pdgcode = ptmap[pt]
-        fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
-        for idx,p in enumerate(parts):
-            fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
+        fmtstr = "%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g\
+            %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+        for idx, p in enumerate(parts):
+            fout.write(
+                fmtstr
+                % (
+                    idx,
+                    pdgcode,
+                    p[0],
+                    p[1],
+                    p[2],
+                    p[3],
+                    p[4],
+                    p[5],
+                    p[6],
+                    0,
+                    ws[idx],
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
     print("Done. All particles written into {}".format(outfile))
+
 
 def appendssv(pt, parts, ws, outfile):
     """
@@ -171,15 +210,45 @@ def appendssv(pt, parts, ws, outfile):
         Name of SSV file. If it exist, its content will be overwritten.
     """
     print("Appending particles into SSV file...")
-    with open(outfile,'a') as fout:
+    with open(outfile, "a") as fout:
         pdgcode = ptmap[pt]
-        fmtstr="%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
-        for idx,p in enumerate(parts):
-            fout.write(fmtstr%(idx,pdgcode,p[0],p[1],p[2],p[3],p[4],p[5],p[6],0,ws[idx],0,0,0,0))
+        fmtstr = "%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g \
+            %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+        for idx, p in enumerate(parts):
+            fout.write(
+                fmtstr
+                % (
+                    idx,
+                    pdgcode,
+                    p[0],
+                    p[1],
+                    p[2],
+                    p[3],
+                    p[4],
+                    p[5],
+                    p[6],
+                    0,
+                    ws[idx],
+                    0,
+                    0,
+                    0,
+                    0,
+                )
+            )
     print("Done. All particles appended into {}".format(outfile))
 
+
 class PList:
-    def __init__(self, filename, readformat="mcpl", pt='n', trasl=None, rot=None, switch_x2z=False, set_params=True):
+    def __init__(
+        self,
+        filename,
+        readformat="mcpl",
+        pt="n",
+        trasl=None,
+        rot=None,
+        switch_x2z=False,
+        set_params=True,
+    ):
         """
         Object defining particle list. It is a wrapper for a MCPL file.
 
@@ -213,9 +282,13 @@ class PList:
             weights) after construction.
         """
         if np.isscalar(filename):
-            self.filename = convert2mcpl(filename, readformat) # Convert format to MCPL
+            self.filename = convert2mcpl(
+                filename, readformat
+            )  # Convert format to MCPL
         else:
-            self.filename = join2mcpl(filename, readformat) # Convert format to MCPL and join
+            self.filename = join2mcpl(
+                filename, readformat
+            )  # Convert format to MCPL and join
         if trasl is not None:
             trasl = np.array(trasl).reshape(-1)
             if trasl.shape != (3,):
@@ -225,7 +298,7 @@ class PList:
                 rot = np.array(rot)
                 if rot.shape == (4,):
                     rot = st.Rotation.from_quat(rot)
-                elif rot.shape == (3,3):
+                elif rot.shape == (3, 3):
                     rot = st.Rotation.from_matrix(rot)
                 elif rot.shape == (3,):
                     rot = st.Rotation.from_rotvec(rot)
@@ -244,24 +317,28 @@ class PList:
         Set parameters particle list parameters.
 
         The following parameters are set:
-            I: Sum of weights
+            sum_seights: Sum of weights
             p2: Sum of square weights
             N: Total number of valid particles in list
             N_eff = I^2/p2: Effective number of particles
         """
         pl = mcpl.MCPLFile(self.filename)
-        I = p2 = N = 0
+        sum_weights = p2 = N = 0
         for pb in pl.particle_blocks:
-            mask = np.logical_and(pb.weight>0, pb.pdgcode==pt2pdg(self.pt))
+            mask = np.logical_and(pb.weight > 0, pb.pdgcode == pt2pdg(self.pt))
             ws = pb.weight[mask]
             N += len(ws)
-            I += ws.sum()
-            p2 += (ws**2).sum()
+            sum_weights += ws.sum()
+            p2 += (ws ** 2).sum()
         if N == 0:
             raise Exception("Empty particle list")
-        N_eff = I**2 / p2
-        print("I = {}\np2 = {}\nN = {}\nN_eff = {}".format(I, p2, N, N_eff))
-        self.I = I
+        N_eff = sum_weights ** 2 / p2
+        print(
+            "sum_weights = {}\np2 = {}\nN = {}\nN_eff = {}".format(
+                sum_weights, p2, N, N_eff
+            )
+        )
+        self.sum_weights = sum_weights
         self.p2 = p2
         self.N = N
         self.N_eff = N_eff
@@ -297,29 +374,37 @@ class PList:
         pl.skip_forward(skip)
         pb = pl.read_block()
         if pb is None:
-            return np.zeros(0),np.zeros((0,7))
-        parts = np.stack((pb.ekin,pb.x,pb.y,pb.z,pb.ux,pb.uy,pb.uz), axis=1)
+            return np.zeros(0), np.zeros((0, 7))
+        parts = np.stack(
+            (pb.ekin, pb.x, pb.y, pb.z, pb.ux, pb.uy, pb.uz), axis=1
+        )
         ws = pb.weight
-        mask = np.logical_and(ws>0, pb.pdgcode==pt2pdg(self.pt))
+        mask = np.logical_and(ws > 0, pb.pdgcode == pt2pdg(self.pt))
         parts = parts[mask]
         ws = ws[mask]
-        if self.trasl is not None: # Apply translation
-            parts[:,1:4] += self.trasl
-        if self.rot is not None: # Apply rotation
-            parts[:,1:4] = self.rot.apply(parts[:,1:4])
-            parts[:,4:7] = self.rot.apply(parts[:,4:7])
-        if self.x2z: # Apply permutation (x,y,z) -> (y,z,x)
-            ekin,x,y,z,ux,uy,uz = parts.T
-            parts = np.array([ekin,y,z,x,uy,uz,ux]).T
-        return parts,ws
+        if self.trasl is not None:  # Apply translation
+            parts[:, 1:4] += self.trasl
+        if self.rot is not None:  # Apply rotation
+            parts[:, 1:4] = self.rot.apply(parts[:, 1:4])
+            parts[:, 4:7] = self.rot.apply(parts[:, 4:7])
+        if self.x2z:  # Apply permutation (x,y,z) -> (y,z,x)
+            ekin, x, y, z, ux, uy, uz = parts.T
+            parts = np.array([ekin, y, z, x, uy, uz, ux]).T
+        return parts, ws
 
     def save(self, pltree):
         """Save PList parameters into XML tree."""
         ET.SubElement(pltree, "pt").text = self.pt
         ET.SubElement(pltree, "mcplname").text = os.path.abspath(self.filename)
-        trasl = np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
+        trasl = (
+            np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
+        )
         ET.SubElement(pltree, "trasl").text = trasl
-        rot = np.array_str(self.rot.as_rotvec())[1:-1] if self.rot is not None else ""
+        rot = (
+            np.array_str(self.rot.as_rotvec())[1:-1]
+            if self.rot is not None
+            else ""
+        )
         ET.SubElement(pltree, "rot").text = rot
         ET.SubElement(pltree, "x2z").text = str(int(self.x2z))
 
@@ -328,9 +413,15 @@ class PList:
         """Load parameters from XML tree and build PList."""
         pt = pltree[0].text
         filename = pltree[1].text
-        if pltree[2].text: trasl = np.array(pltree[2].text.split(), dtype="float64")
-        else: trasl = None
-        if pltree[3].text: rot = np.array(pltree[3].text.split(), dtype="float64")
-        else: rot = None
+        if pltree[2].text:
+            trasl = np.array(pltree[2].text.split(), dtype="float64")
+        else:
+            trasl = None
+        if pltree[3].text:
+            rot = np.array(pltree[3].text.split(), dtype="float64")
+        else:
+            rot = None
         switch_x2z = bool(int(pltree[4].text))
-        return PList(filename, pt=pt, trasl=trasl, rot=rot, switch_x2z=switch_x2z)
+        return PList(
+            filename, pt=pt, trasl=trasl, rot=rot, switch_x2z=switch_x2z
+        )

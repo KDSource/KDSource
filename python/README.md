@@ -1,4 +1,9 @@
-# KDSource
+<p align="center">
+<img src="../img/kdsource_logo.png" alt="logo" height="100"/>
+</p>
+
+[![Python 3.6](https://img.shields.io/badge/python-3.6%2B-blue)](https://www.python.org/downloads/release/python-360/)
+[![License](https://img.shields.io/badge/License-GPL3-blue.svg)](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3))
 
 This is the Python API of [KDSource package](https://github.com/inti-abbate/KDSource) for Monte Carlo radiation calculations.
 

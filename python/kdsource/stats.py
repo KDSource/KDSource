@@ -3,8 +3,10 @@
 """Module for statistic analysis
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+
+import numpy as np
+
 
 def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
     """
@@ -30,11 +32,12 @@ def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
         functions.
     """
     if weightfun is not None:
-        ws = ws*weightfun(vecs)
-    mask = (ws > 0)
+        ws = ws * weightfun(vecs)
+    mask = ws > 0
     if maskfun is not None:
         mask = np.logical_and(mask, maskfun(vecs))
-    return [vecs[mask,:], ws[mask]]
+    return [vecs[mask, :], ws[mask]]
+
 
 def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     """
@@ -69,38 +72,51 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     """
     Nmax = len(ws)
     Nmin = int(fracmin * Nmax)
-    Ns = np.rint(np.linspace(Nmin, Nmax, num=steps+1)).astype(int)
-    Ns = Ns[Ns>0]
+    Ns = np.rint(np.linspace(Nmin, Nmax, num=steps + 1)).astype(int)
+    Ns = Ns[Ns > 0]
     params = []
     errs = []
     for N in Ns:
-        param_err = param(vecs[:N],ws[:N])
+        param_err = param(vecs[:N], ws[:N])
         params.append(param_err[0])
         errs.append(param_err[1])
     params = np.array(params)
     errs = np.array(errs)
-    if Ns[0]!=Ns[-1] and plot:
-        plt.plot(Ns, params, 'o-')
-        plt.fill_between(Ns, params-errs, params+errs, color='blue', alpha=0.3)
+    if Ns[0] != Ns[-1] and plot:
+        plt.plot(Ns, params, "o-")
+        plt.fill_between(
+            Ns, params - errs, params + errs, color="blue", alpha=0.3
+        )
         plt.xlabel("Number of particles")
     return [Ns, params, errs]
 
+
 def mean_weight(vecs, ws):
     """Compute mean weight and its statistic error."""
-    return [ws.mean(), ws.std()/np.sqrt(len(ws))]
+    return [ws.mean(), ws.std() / np.sqrt(len(ws))]
+
+
 def mean(vecs, ws, var):
     """Compute mean particle and its statistic error."""
-    mean = np.average(vecs[:,var], weights=ws)
-    err = np.sqrt(np.average((vecs[:,var]-mean)**2, weights=ws)/np.sum(ws))
+    mean = np.average(vecs[:, var], weights=ws)
+    err = np.sqrt(
+        np.average((vecs[:, var] - mean) ** 2, weights=ws) / np.sum(ws)
+    )
     return [mean, err]
+
+
 def std(vecs, ws, var):
     """Compute particles standard deviation and its statistic error."""
-    mean = np.average(vecs[:,var], weights=ws)
-    s2 = np.average((vecs[:,var]-mean)**2, weights=ws)
+    mean = np.average(vecs[:, var], weights=ws)
+    s2 = np.average((vecs[:, var] - mean) ** 2, weights=ws)
     std = np.sqrt(s2)
-    varerr = np.sqrt(np.average(((vecs[:,var]-mean)**2-s2)**2, weights=ws)/np.sum(ws))
+    varerr = np.sqrt(
+        np.average(((vecs[:, var] - mean) ** 2 - s2) ** 2, weights=ws)
+        / np.sum(ws)
+    )
     stderr = varerr * 0.5 / std
     return [std, stderr]
+
 
 class Stats:
     def __init__(self, vecs, ws, weightfun=None, maskfun=None):
@@ -136,6 +152,7 @@ class Stats:
             raise Exception("Empty particle list.")
         self.dim = vecs.shape[1]
         self.N = len(ws)
+
     def mean_weight(self, fracmin=0.1, steps=10, plot=True):
         """
         Compute convergence of mean weight.
@@ -155,10 +172,18 @@ class Stats:
         [Ns, params, errs]: list
             Subsets sizes, mean weight values, and errors.
         """
-        Ns,params,errs = convergence(self.vecs, self.ws, mean_weight, fracmin=fracmin, steps=steps, plot=plot)
-        if(plot):
+        Ns, params, errs = convergence(
+            self.vecs,
+            self.ws,
+            mean_weight,
+            fracmin=fracmin,
+            steps=steps,
+            plot=plot,
+        )
+        if plot:
             plt.ylabel("Mean weight")
         return [Ns, params, errs]
+
     def mean(self, var, varname=None, fracmin=0.1, steps=10, plot=True):
         """
         Compute convergence of a variable mean.
@@ -182,13 +207,20 @@ class Stats:
         [Ns, params, errs]: list
             Subsets sizes, variable mean values, and errors.
         """
-        mean_var = lambda vecs,ws: mean(vecs,ws,var)
-        Ns,params,errs = convergence(self.vecs, self.ws, mean_var, fracmin=fracmin, steps=steps, plot=plot)
-        if(plot):
+        Ns, params, errs = convergence(
+            self.vecs,
+            self.ws,
+            lambda vecs, ws: mean(vecs, ws, var),
+            fracmin=fracmin,
+            steps=steps,
+            plot=plot,
+        )
+        if plot:
             if varname is None:
-                varname = "v%d"%var
+                varname = "v%d" % var
             plt.ylabel("{} mean".format(varname))
         return [Ns, params, errs]
+
     def std(self, var, varname=None, fracmin=0.1, steps=10, plot=True):
         """
         Compute convergence of a variable standard deviation.
@@ -214,10 +246,17 @@ class Stats:
             Subsets sizes, variable standard deviation values, and
             errors.
         """
-        std_var = lambda vecs,ws: std(vecs,ws,var)
-        Ns,params,errs = convergence(self.vecs, self.ws, std_var, fracmin=fracmin, steps=steps, plot=plot)
-        if(plot):
+
+        Ns, params, errs = convergence(
+            self.vecs,
+            self.ws,
+            lambda vecs, ws: std(vecs, ws, var),
+            fracmin=fracmin,
+            steps=steps,
+            plot=plot,
+        )
+        if plot:
             if varname is None:
-                varname = "v%d"%var
+                varname = "v%d" % var
             plt.ylabel("{} standard deviation".format(varname))
         return [Ns, params, errs]

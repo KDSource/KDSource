@@ -1,11 +1,18 @@
 *.sublime-workspace
+build
+mcpl
+.vscode
 
 # Python aux files
 **/.ipynb_checkpoints
 **/__pycache__
 *.pyc
 **/dist/
-/*.egg-info
+python/*.egg-info
+python/build
+python/.tox
+python/python/*
+
 
 # Compiled Object files
 *.slo
@@ -41,3 +48,8 @@
 *~
 \#*\#
 .\#*
+mcpl
+.vscode/settings.json
+docs/examples/samples.ssv
+docs/examples/Verification.ipynb
+docs/examples/Verification.ipynb

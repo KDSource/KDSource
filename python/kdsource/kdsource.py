@@ -3,36 +3,38 @@
 """Module for KDSource object
 """
 
-from xml.etree import ElementTree as ET
-from xml.dom import minidom
 import os
+from xml.dom import minidom
+from xml.etree import ElementTree as ET
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as col
 from KDEpy import TreeKDE
 
-from .plist import PList
+import matplotlib.colors as col
+import matplotlib.pyplot as plt
+
+import numpy as np
+
 from .geom import Geometry
+from .kde import bw_silv
+from .kde import optimize_bw
+from .plist import PList
 
-from .kde import optimize_bw,bw_silv
 
-R_gaussian = 1 / (2*np.sqrt(np.pi)) # Roughness of gaussian kernel
+R_gaussian = 1 / (2 * np.sqrt(np.pi))  # Roughness of gaussian kernel
 
 STD_DEFAULT = 1
 
 varnames = ["ekin", "x", "y", "z", "dx", "dy", "dz"]
-varmap = {name:idx for idx,name in enumerate(varnames)}
+varmap = {name: idx for idx, name in enumerate(varnames)}
 units = ["MeV", "cm", "cm", "cm", "", "", ""]
 
 
 def load(xmlfilename, N=-1):
     """
-    Load KDSource from XML parameters file.
-
-    After building the KDSource object, a fit is performed to load the
-    particle list, leaving the KDSource ready to be evaluated. The
-    bandwidths given in the XML file are not modified.
+    Load KDSource from XML parameters file. After building the KDSource object,
+    a fit is performed to load the particle list,
+    leaving the KDSource ready to be evaluated. The bandwidths
+    given in the XML file are not modified.
 
     Parameters
     ----------
@@ -66,7 +68,7 @@ class KDSource:
     def __init__(self, plist, geom, bw="silv", J=1.0):
         """
         Object representing Kernel Density Estimation (KDE) sources.
-        
+
         A KDSource object is based on a particle list in MCPL format,
         wrapped in a PList object. It also includes a Geometry object,
         which defines variables (energy, position, direction) treatment.
@@ -102,7 +104,8 @@ class KDSource:
             bw = 1.0
         elif isinstance(bw, np.ndarray):
             if np.ndim(bw) >= 2:
-                msg = "BW dimension must be < 2. Use scaling for anisotropic KDE."
+                msg = "BW dimension must be < 2. \
+                    Use scaling for anisotropic KDE."
                 raise ValueError(msg)
         self.kde = TreeKDE(bw=bw)
         self.scaling = None
@@ -112,7 +115,7 @@ class KDSource:
     def fit(self, N=-1, skip=0, scaling=None, **kwargs):
         """
         Fit KDE model to particle list.
-        
+
         A number of particles are loaded from MCPL file to build the KDE
         model. If the KDSource object has a bandwidth selection method,
         it will be applied to optimize the bandwidth.
@@ -137,25 +140,26 @@ class KDSource:
             corresponding method for docs (see bw_methods for method
             names).
         """
-        parts,ws = self.plist.get(N, skip)
+        parts, ws = self.plist.get(N, skip)
         N = len(parts)
         if N == 0:
             raise Exception("No particles for fitting.")
         print("Using {} particles for fit.".format(N))
         vecs = self.geom.transform(parts)
-        self.N_eff = np.sum(ws)**2 / np.sum(ws**2)
+        self.N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
         if scaling is None:
             scaling = self.geom.std(vecs=vecs, weights=ws)
-        else: scaling = np.array(scaling)
+        else:
+            scaling = np.array(scaling)
         scaling[scaling == 0] = STD_DEFAULT
         self.scaling = scaling
         if self.bw_method is not None:
             print("Calculating bw ... ")
-            bw = optimize_bw(self.bw_method, vecs/self.scaling, ws, **kwargs)
-            bw_opt = np.reshape(bw, (-1,1)) * self.scaling
+            bw = optimize_bw(self.bw_method, vecs / self.scaling, ws, **kwargs)
+            bw_opt = np.reshape(bw, (-1, 1)) * self.scaling
             print("Done\nOptimal bw ({}) = {}".format(self.bw_method, bw_opt))
             self.kde = TreeKDE(bw=bw)
-        self.kde.fit(vecs/self.scaling, weights=ws)
+        self.kde.fit(vecs / self.scaling, weights=ws)
         self.fitted = True
 
     def evaluate(self, parts):
@@ -177,13 +181,18 @@ class KDSource:
         [evals, errs]: list of arrays
             Array of evaluated densities and estimated statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before evaluating.")
         vecs = self.geom.transform(parts)
         jacs = self.geom.jac(parts)
-        evals = 1/np.prod(self.scaling) * self.kde.evaluate(vecs/self.scaling)
-        errs = np.sqrt(evals * R_gaussian**self.geom.dim /
-            (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling)))
+        evals = (
+            1 / np.prod(self.scaling) * self.kde.evaluate(vecs / self.scaling)
+        )
+        errs = np.sqrt(
+            evals
+            * R_gaussian ** self.geom.dim
+            / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling))
+        )
         evals *= self.J * jacs
         errs *= self.J * jacs
         return [evals, errs]
@@ -211,7 +220,7 @@ class KDSource:
             file, and N is the one passed to fit method. This way the
             bandwidth optimized for a subset of the particle list can be
             adapted to the full list.
-        
+
         Returns
         -------
         xmlfilename: str
@@ -219,15 +228,15 @@ class KDSource:
         """
         # Process arguments
         if xmlfilename is None:
-            xmlfilename = self.plist.filename.split('.')[0]+"_source.xml"
+            xmlfilename = self.plist.filename.split(".")[0] + "_source.xml"
         if bwfile is None:
-            bwfile = bwfilename = self.plist.filename.split('.')[0]+"_bws"
+            bwfile = bwfilename = self.plist.filename.split(".")[0] + "_bws"
         elif isinstance(bwfile, str):
             bwfilename = bwfile
-        else: # Assume bwfile is file object
+        else:  # Assume bwfile is file object
             bwfilename = bwfile.name
         bw = self.kde.bw
-        if adjust_N: # Adjust N_eff with Silverman factor
+        if adjust_N:  # Adjust N_eff with Silverman factor
             dim = self.geom.dim
             if not self.plist.params_set:
                 self.plist.set_params()
@@ -235,7 +244,7 @@ class KDSource:
         # Build XML tree
         root = ET.Element("KDSource")
         Jel = ET.SubElement(root, "J")
-        Jel.set('units', '1/s')
+        Jel.set("units", "1/s")
         Jel.text = str(self.J)
         pltree = ET.SubElement(root, "PList")
         self.plist.save(pltree)
@@ -243,16 +252,16 @@ class KDSource:
         self.geom.save(gtree)
         ET.SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
         bwel = ET.SubElement(root, "BW")
-        if np.isscalar(bw): # Constant bandwidth
-            bwel.set('variable', '0')
+        if np.isscalar(bw):  # Constant bandwidth
+            bwel.set("variable", "0")
             bwel.text = str(bw)
-        else: # Variable bandwidth
-            bwel.set('variable', '1')
+        else:  # Variable bandwidth
+            bwel.set("variable", "1")
             bw.astype("float32").tofile(bwfile, format="float32")
             print("Bandwidth file: {}".format(bwfilename))
             bwel.text = os.path.abspath(bwfilename)
         # Write XML file
-        xmlstr = ET.tostring(root, encoding='utf8', method='xml')
+        xmlstr = ET.tostring(root, encoding="utf8", method="xml")
         xmlstr = minidom.parseString(xmlstr).toprettyxml()
         with open(xmlfilename, "w") as file:
             file.write(xmlstr)
@@ -295,32 +304,41 @@ class KDSource:
         [fig, [scores, errs]]:
             Figure object, and evaluated densities and statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before plotting.")
         if isinstance(var, str):
             var = varmap[var]
-        if not "xscale" in kwargs: kwargs["xscale"] = "linear"
-        if not "yscale" in kwargs: kwargs["yscale"] = "log"
-        if not "label" in kwargs: kwargs["label"] = "KDE"
+        if "xscale" not in kwargs:
+            kwargs["xscale"] = "linear"
+        if "yscale" not in kwargs:
+            kwargs["yscale"] = "log"
+        if "label" not in kwargs:
+            kwargs["label"] = "KDE"
         parts = np.zeros((len(grid), 7))
-        parts[:,var] = grid
+        parts[:, var] = grid
         part0[var] = 0
         parts += part0
-        scores,errs = self.evaluate(parts)
+        scores, errs = self.evaluate(parts)
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        
-        plt.errorbar(grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
+
+        plt.errorbar(
+            grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
+        )
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
         plt.xlabel(r"${}\ [{}]$".format(varnames[var], units[var]))
-        plt.ylabel(r"$J\ \left[ \frac{{{}}}{{{} s}} \right]$".format(self.plist.pt, self.geom.volunits))
+        plt.ylabel(
+            r"$J\ \left[ \frac{{{}}}{{{} s}} \right]$".format(
+                self.plist.pt, self.geom.volunits
+            )
+        )
         plt.grid()
         plt.legend()
         plt.tight_layout()
-        
-        return [plt.gcf(), [scores,errs]]
+
+        return [plt.gcf(), [scores, errs]]
 
     def plot_integr(self, var, grid, vec0=None, vec1=None, **kwargs):
         """
@@ -369,51 +387,67 @@ class KDSource:
         [fig, [scores, errs]]:
             Figure object, and evaluated densities and statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before plotting.")
         if isinstance(var, str):
             var = self.geom.varmap[var]
-        if not "xscale" in kwargs: kwargs["xscale"] = "linear"
-        if not "yscale" in kwargs: kwargs["yscale"] = "log"
-        if not "label" in kwargs: kwargs["label"] = "KDE"
-        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
+        if "xscale" not in kwargs:
+            kwargs["xscale"] = "linear"
+        if "yscale" not in kwargs:
+            kwargs["yscale"] = "log"
+        if "label" not in kwargs:
+            kwargs["label"] = "KDE"
+        if "adjust_bw" not in kwargs:
+            kwargs["adjust_bw"] = False
         trues = np.ones(len(self.kde.data), dtype=bool)
         if vec0 is not None:
-            mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
+            mask1 = np.logical_and.reduce(
+                vec0 / self.scaling <= self.kde.data, axis=1
+            )
         else:
             mask1 = trues
         if vec1 is not None:
-            mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
+            mask2 = np.logical_and.reduce(
+                self.kde.data <= vec1 / self.scaling, axis=1
+            )
         else:
             mask2 = trues
         mask = np.logical_and(mask1, mask2)
-        vecs = self.kde.data[:,var][mask].reshape(-1,1)
+        vecs = self.kde.data[:, var][mask].reshape(-1, 1)
         ws = self.kde.weights[mask]
-        N_eff = np.sum(ws)**2 / np.sum(ws**2)
+        N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
         scaling = self.scaling[var]
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
-        scores = 1/scaling * kde.evaluate(grid.reshape(-1,1)/scaling)
+        scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
         errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
-        scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
-        errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
+        scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
+        errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        
-        plt.errorbar(grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
+
+        plt.errorbar(
+            grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
+        )
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
-        plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[var], self.geom.units[var]))
-        plt.ylabel(r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt, self.geom.units[var]))
+        plt.xlabel(
+            r"${}\ [{}]$".format(self.geom.varnames[var], self.geom.units[var])
+        )
+        plt.ylabel(
+            r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(
+                self.plist.pt, self.geom.units[var]
+            )
+        )
         plt.grid()
         plt.legend()
         plt.tight_layout()
-        
-        return [plt.gcf(), [scores,errs]]
+
+        return [plt.gcf(), [scores, errs]]
 
     def plot_E(self, grid_E, vec0=None, vec1=None, **kwargs):
         """
@@ -453,25 +487,31 @@ class KDSource:
         [fig, [scores, errs]]:
             Figure object, and evaluated densities and statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before plotting.")
-        if not "label" in kwargs: kwargs["label"] = "KDE"
-        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
+        if "label" not in kwargs:
+            kwargs["label"] = "KDE"
+        if "adjust_bw" not in kwargs:
+            kwargs["adjust_bw"] = False
         trues = np.ones(len(self.kde.data), dtype=bool)
         if vec0 is not None:
-            mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
+            mask1 = np.logical_and.reduce(
+                vec0 / self.scaling <= self.kde.data, axis=1
+            )
         else:
             mask1 = trues
         if vec1 is not None:
-            mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
+            mask2 = np.logical_and.reduce(
+                self.kde.data <= vec1 / self.scaling, axis=1
+            )
         else:
             mask2 = trues
         mask = np.logical_and(mask1, mask2)
         if np.sum(mask) == 0:
             raise Exception("No particles in [vec0,vec1] range.")
-        vecs = self.kde.data[:,0][mask].reshape(-1,1)
+        vecs = self.kde.data[:, 0][mask].reshape(-1, 1)
         ws = self.kde.weights[mask]
-        N_eff = np.sum(ws)**2 / np.sum(ws**2)
+        N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
         scaling = self.scaling[0]
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
@@ -480,24 +520,28 @@ class KDSource:
         kde.fit(vecs, weights=ws)
         grid = self.geom.ms[0].transform(grid_E)
         jacs = self.geom.ms[0].jac(grid_E)
-        scores = 1/scaling * kde.evaluate(grid.reshape(-1,1)/scaling)
+        scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
         errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
-        scores *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
-        errs *= self.J * np.sum(ws)/np.sum(self.kde.weights) * jacs
+        scores *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
+        errs *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        
-        plt.errorbar(grid_E, scores, errs, label=kwargs["label"], capsize=1, linewidth=1)
-        plt.xscale('log')
-        plt.yscale('log')
+
+        plt.errorbar(
+            grid_E, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
+        )
+        plt.xscale("log")
+        plt.yscale("log")
         plt.xlabel(r"$E\ [MeV]$")
-        plt.ylabel(r"$J\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt))
+        plt.ylabel(
+            r"$J\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt)
+        )
         plt.grid()
         plt.legend()
         plt.tight_layout()
-        
-        return [plt.gcf(), [scores,errs]]
+
+        return [plt.gcf(), [scores, errs]]
 
     def plot2D_point(self, vrs, grids, part0, **kwargs):
         """
@@ -531,36 +575,55 @@ class KDSource:
         [fig, [scores, errs]]:
             Figure object, and evaluated densities and statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before plotting.")
-        if isinstance(vrs[0], str): vrs[0] = self.geom.varmap[vrs[0]]
-        if isinstance(vrs[1], str): vrs[1] = self.geom.varmap[vrs[1]]
-        if not "scale" in kwargs: kwargs["scale"] = "linear"
-        if not "title" in kwargs: kwargs["title"] = "KDE"
-        parts = np.zeros((len(grids[0])*len(grids[1]), 7))
-        parts[:,vrs] = np.reshape(np.meshgrid(*grids), (2,-1)).T
+        if isinstance(vrs[0], str):
+            vrs[0] = self.geom.varmap[vrs[0]]
+        if isinstance(vrs[1], str):
+            vrs[1] = self.geom.varmap[vrs[1]]
+        if "scale" not in kwargs:
+            kwargs["scale"] = "linear"
+        if "title" not in kwargs:
+            kwargs["title"] = "KDE"
+        parts = np.zeros((len(grids[0]) * len(grids[1]), 7))
+        parts[:, vrs] = np.reshape(np.meshgrid(*grids), (2, -1)).T
         part0 = np.array(part0)
         part0[vrs] = 0
         parts += part0
-        scores,errs = self.J * self.evaluate(parts)
+        scores, errs = self.J * self.evaluate(parts)
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        
-        xx = np.concatenate((grids[0][:1], (grids[0][1:]+grids[0][:-1])/2, grids[0][-1:]))
-        yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
-        if kwargs["scale"] == "log": norm = col.LogNorm()
-        else: norm = None
-        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm, rasterized=True)
+
+        xx = np.concatenate(
+            (grids[0][:1], (grids[0][1:] + grids[0][:-1]) / 2, grids[0][-1:])
+        )
+        yy = np.concatenate(
+            (grids[1][:1], (grids[1][1:] + grids[1][:-1]) / 2, grids[1][-1:])
+        )
+        if kwargs["scale"] == "log":
+            norm = col.LogNorm()
+        else:
+            norm = None
+        plt.pcolormesh(
+            xx,
+            yy,
+            scores.reshape(len(grids[1]), len(grids[0])),
+            cmap="jet",
+            norm=norm,
+            rasterized=True,
+        )
         plt.colorbar()
         title = kwargs["title"]
-        title += "\n"+r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,self.geom.volunits)
+        title += "\n" + r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(
+            self.plist.pt, self.geom.volunits
+        )
         plt.title(title)
         plt.xlabel(r"${}\ [{}]$".format(varnames[vrs[0]], units[vrs[0]]))
         plt.ylabel(r"${}\ [{}]$".format(varnames[vrs[1]], units[vrs[1]]))
         plt.tight_layout()
-        
-        return [plt.gcf(), [scores,errs]]
+
+        return [plt.gcf(), [scores, errs]]
 
     def plot2D_integr(self, vrs, grids, vec0=None, vec1=None, **kwargs):
         """
@@ -607,58 +670,92 @@ class KDSource:
         [fig, [scores, errs]]:
             Figure object, and evaluated densities and statistic errors.
         """
-        if self.fitted == False:
+        if self.fitted is False:
             raise Exception("Must fit before plotting.")
-        if isinstance(vrs[0], str): vrs[0] = self.geom.varmap[vrs[0]]
-        if isinstance(vrs[1], str): vrs[1] = self.geom.varmap[vrs[1]]
-        if not "scale" in kwargs: kwargs["scale"] = "linear"
-        if not "title" in kwargs: kwargs["title"] = "KDE"
-        if not "adjust_bw" in kwargs: kwargs["adjust_bw"] = False
-        trues = np.array(len(self.kde.data)*[True])
+        if isinstance(vrs[0], str):
+            vrs[0] = self.geom.varmap[vrs[0]]
+        if isinstance(vrs[1], str):
+            vrs[1] = self.geom.varmap[vrs[1]]
+        if "scale" not in kwargs:
+            kwargs["scale"] = "linear"
+        if "title" not in kwargs:
+            kwargs["title"] = "KDE"
+        if "adjust_bw" not in kwargs:
+            kwargs["adjust_bw"] = False
+        trues = np.array(len(self.kde.data) * [True])
         if vec0 is not None:
-            mask1 = np.logical_and.reduce(vec0/self.scaling <= self.kde.data, axis=1)
+            mask1 = np.logical_and.reduce(
+                vec0 / self.scaling <= self.kde.data, axis=1
+            )
         else:
             mask1 = trues
         if vec1 is not None:
-            mask2 = np.logical_and.reduce(self.kde.data <= vec1/self.scaling, axis=1)
+            mask2 = np.logical_and.reduce(
+                self.kde.data <= vec1 / self.scaling, axis=1
+            )
         else:
             mask2 = trues
         mask = np.logical_and(mask1, mask2)
         if np.sum(mask) == 0:
             raise Exception("No particles in [vec0,vec1] range.")
-        vecs = self.kde.data[:,vrs][mask]
+        vecs = self.kde.data[:, vrs][mask]
         ws = self.kde.weights[mask]
-        N_eff = np.sum(ws)**2 / np.sum(ws**2)
+        N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
         scaling = self.scaling[vrs]
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
-        grid = np.reshape(np.meshgrid(*grids),(2,-1)).T
-        scores = 1/np.prod(scaling) * kde.evaluate(grid/scaling)
-        errs = np.sqrt(scores * R_gaussian**2 / (N_eff * np.mean(bw) * np.prod(scaling)))
-        scores *= self.J * np.sum(ws)/np.sum(self.kde.weights)
-        errs *= self.J * np.sum(ws)/np.sum(self.kde.weights)
+        grid = np.reshape(np.meshgrid(*grids), (2, -1)).T
+        scores = 1 / np.prod(scaling) * kde.evaluate(grid / scaling)
+        errs = np.sqrt(
+            scores * R_gaussian ** 2 / (N_eff * np.mean(bw) * np.prod(scaling))
+        )
+        scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
+        errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         if "fact" in kwargs:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
-        
-        xx = np.concatenate((grids[0][:1], (grids[0][1:]+grids[0][:-1])/2, grids[0][-1:]))
-        yy = np.concatenate((grids[1][:1], (grids[1][1:]+grids[1][:-1])/2, grids[1][-1:]))
-        if kwargs["scale"] == "log": norm = col.LogNorm()
-        else: norm = None
-        plt.pcolormesh(xx, yy, scores.reshape(len(grids[1]), len(grids[0])), cmap="jet", norm=norm, rasterized=True)
+
+        xx = np.concatenate(
+            (grids[0][:1], (grids[0][1:] + grids[0][:-1]) / 2, grids[0][-1:])
+        )
+        yy = np.concatenate(
+            (grids[1][:1], (grids[1][1:] + grids[1][:-1]) / 2, grids[1][-1:])
+        )
+        if kwargs["scale"] == "log":
+            norm = col.LogNorm()
+        else:
+            norm = None
+        plt.pcolormesh(
+            xx,
+            yy,
+            scores.reshape(len(grids[1]), len(grids[0])),
+            cmap="jet",
+            norm=norm,
+            rasterized=True,
+        )
         plt.colorbar()
         if self.geom.units[vrs[0]] == self.geom.units[vrs[1]]:
-            units = self.geom.units[vrs[0]]+"^2"
+            units = self.geom.units[vrs[0]] + "^2"
         else:
             units = self.geom.units[vrs[0]] + self.geom.units[vrs[1]]
         title = kwargs["title"]
-        title += "\n"+r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(self.plist.pt,units)
+        title += "\n" + r"$J\ \left[ \frac{{{}}}{{{}\ s}} \right]$".format(
+            self.plist.pt, units
+        )
         plt.title(title)
-        plt.xlabel(r"${}\ [{}]$".format(self.geom.varnames[vrs[0]], self.geom.units[vrs[0]]))
-        plt.ylabel(r"${}\ [{}]$".format(self.geom.varnames[vrs[1]], self.geom.units[vrs[1]]))
+        plt.xlabel(
+            r"${}\ [{}]$".format(
+                self.geom.varnames[vrs[0]], self.geom.units[vrs[0]]
+            )
+        )
+        plt.ylabel(
+            r"${}\ [{}]$".format(
+                self.geom.varnames[vrs[1]], self.geom.units[vrs[1]]
+            )
+        )
         plt.tight_layout()
-        
-        return [plt.gcf(), [scores,errs]]
+
+        return [plt.gcf(), [scores, errs]]

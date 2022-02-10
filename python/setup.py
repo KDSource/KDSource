@@ -3,8 +3,11 @@
 """KDSource installer script using setuptools.
 """
 
+import os
+import re
+
 import setuptools
-import os, re
+from setuptools import find_packages
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,7 +16,9 @@ with open(os.path.join(HERE, "README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 # Get version
-with open(os.path.join(HERE, "kdsource/__init__.py"), encoding="utf-8") as file:
+with open(
+    os.path.join(HERE, "kdsource/__init__.py"), encoding="utf-8"
+) as file:
     VERSION = re.search(r"__version__ = \"(.*?)\"", file.read()).group(1)
 
 
@@ -32,7 +37,7 @@ setuptools.setup(
         "License ::",
         "Operating System :: OS Independent",
     ],
-    packages=["kdsource"],
+    packages=find_packages(exclude=["tests*"]),
     install_requires=[
         "numpy>=1.20.3,<2.0",
         "scipy>=1.6.3,<2.0",
@@ -41,7 +46,18 @@ setuptools.setup(
         "joblib>=1.0.1,<2.0",
         "scikit-learn>=0.24.2,<1.0",
         "mcpl>=1.3.2,<2.0",
-        "Pillow>=8.2.0,<9.0"
+        "Pillow>=8.2.0,<9.0",
     ],
     python_requires=">=3.6",
+    extras_require={
+        "docs": [
+            "sphinx",
+            "sphinxcontrib-katex",
+            "sphinx-numfig",
+            "jupyter",
+            "sphinxcontrib-svg2pdfconverter",
+            "sphinx-rtd-theme",
+        ],
+        "test": ["pytest"],
+    },
 )

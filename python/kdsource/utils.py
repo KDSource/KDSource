@@ -6,7 +6,7 @@
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
+
 from scipy import interpolate
 
 
@@ -26,10 +26,15 @@ def pt2pdg(pt):
     pt: str
         Particle type.
     """
-    if pt == 'n': return 2112
-    if pt == 'p': return 22
-    if pt == 'e': return 11
+    if pt == "n":
+        return 2112
+    if pt == "p":
+        return 22
+    if pt == "e":
+        return 11
     return 0
+
+
 def pdg2pt(pdgcode):
     """
     Convert pdgcode to particle type.
@@ -45,17 +50,21 @@ def pdg2pt(pdgcode):
     pdgcode: int
         Particle PDG code.
     """
-    if pdgcode == 2112: return 'n'
-    if pdgcode == 22: return 'p'
-    if pdgcode == 11: return 'e'
-    return '0'
+    if pdgcode == 2112:
+        return "n"
+    if pdgcode == 22:
+        return "p"
+    if pdgcode == 11:
+        return "e"
+    return "0"
 
 
 # Dosimetric factors
 
-fact_dos = os.path.dirname(__file__)+"/fact_dos"
+fact_dos = os.path.dirname(__file__) + "/fact_dos"
 
-def H10(pt='n', ref='ICRP'):
+
+def H10(pt="n", ref="ICRP"):
     """
     Object for loading and interpolating dosimetric factors.
 
@@ -70,30 +79,31 @@ def H10(pt='n', ref='ICRP'):
         - 'ICRP': International Commission on Radiological Protection.
         - 'ARN': Nuclear Regulatory Authority of Argentina.
     """
-    if ref == 'ARN':
-        if pt == 'n':
-            E,H10 = np.loadtxt(fact_dos+"/ARN_neutron", unpack=True)
-        elif pt == 'p':
-            E,H10 = np.loadtxt(fact_dos+"/ARN_photon", unpack=True)
+    if ref == "ARN":
+        if pt == "n":
+            E, H10 = np.loadtxt(fact_dos + "/ARN_neutron", unpack=True)
+        elif pt == "p":
+            E, H10 = np.loadtxt(fact_dos + "/ARN_photon", unpack=True)
         else:
             raise ValueError("Tipo de particula invalido")
-    elif ref == 'ICRP':
-        if pt == 'n':
-            E,H10 = np.loadtxt(fact_dos+"/ICRP_neutron", unpack=True)
-        elif pt == 'p':
-            E,H10 = np.loadtxt(fact_dos+"/ICRP_photon", unpack=True)
+    elif ref == "ICRP":
+        if pt == "n":
+            E, H10 = np.loadtxt(fact_dos + "/ICRP_neutron", unpack=True)
+        elif pt == "p":
+            E, H10 = np.loadtxt(fact_dos + "/ICRP_photon", unpack=True)
         else:
             raise ValueError("Invalid particle type.")
     else:
         raise ValueError("Invalid reference.")
-    with np.errstate(divide = 'ignore'): # Avoid warning
-        log_E = np.log(1E-6*E)
+    with np.errstate(divide="ignore"):  # Avoid warning
+        log_E = np.log(1e-6 * E)
         log_H10 = np.log(H10)
     lin_interp = interpolate.interp1d(log_E, log_H10)
-    log_interp = lambda EE: np.exp(lin_interp(np.log(EE)))
-    return log_interp
+    return lambda EE: np.exp(lin_interp(np.log(EE)))
+
 
 # Masks
+
 
 class Box:
     def __init__(self, vec0, vec1):
@@ -111,14 +121,15 @@ class Box:
             self.dim = 0
         else:
             if vec0 is None:
-                vec0 = len(vec1)*[None]
+                vec0 = len(vec1) * [None]
             if vec1 is None:
-                vec1 = len(vec0)*[None]
+                vec1 = len(vec0) * [None]
             if len(vec0) != len(vec1):
                 raise ValueError("vec0 and vec1 must have same len.")
             self.dim = len(vec0)
         self.vec0 = vec0
         self.vec1 = vec1
+
     def __call__(self, vecs):
         """
         Box-style masking function.
@@ -140,7 +151,7 @@ class Box:
         mask = np.ones(len(vecs), dtype=bool)
         for i in range(self.dim):
             if self.vec0[i] is not None:
-                mask = np.logical_and(mask, self.vec0[i] < vecs[:,i])
+                mask = np.logical_and(mask, self.vec0[i] < vecs[:, i])
             if self.vec1[i] is not None:
-                mask = np.logical_and(mask, vecs[:,i] < self.vec1[i])
+                mask = np.logical_and(mask, vecs[:, i] < self.vec1[i])
         return mask
