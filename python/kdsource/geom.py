@@ -19,7 +19,7 @@ class Metric:
         subset of particle variables to certain parametrized variables,
         which can be more suitable for applying KDE.
 
-        See _metrics for available metrics.
+        See geom._metrics for available metrics.
 
         Parameters
         ----------

@@ -13,7 +13,7 @@
 This is source version of KDSource, a tool for Monte Carlo particle sources generation
 using Kernel Density Estimation.
 
-KDSource assists Monte Carlo beams and shielding calculations. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
+KDSource assists Monte Carlo beams and shielding calculations, improving tally results in difficult problems. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
 
 It processes particle lists recorded as output of a simulation (e.g.: passing thru a window), to be used as input in another one. It estimates density distribution in energy, position and direction by means of Kernel Density Estimation (KDE) technique, allowing visualizing it as well as using it to produce new particles (artificial, but with the same estimated density). This allows to increase the number of source particles in the second simulation, improving its statistics (variance reduction).
 
@@ -42,25 +42,22 @@ The KDSource package consists in the following tools:
 
 ## Installation (Linux):
 
-The installation instructions assume this repo has been cloned to a local directory.
-	
-1. Go to source directory:
+1. First of all, clone this repository with all its submodules to a local repository.
+
+   ```bash
+   $ git clone --recurse-submodules https://github.com/KDSource/KDSource
+   ```
+
+2. Go to source directory and install with `cmake`:
 
    ```bash
    $ cd /path/to/kdsourcesource
-   ```
-
-   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was extracted.
-
-2. Install with `cmake`:
-
-   ```bash
    $ mkdir build && cd build
    $ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/kdsourceinstall
    $ make install
    $ cd ..
-	```
-   Where `path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
+   ```
+   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
 
    It is required to have previously installed `libxml2`.
 
@@ -87,6 +84,8 @@ The installation instructions assume this repo has been cloned to a local direct
 
 
 ## Usage examples and templates
+
+See the [documentation](https://kdsource.readthedocs.io/en/latest/) page for usage instructions, tutorials, and a detailed documentation of all the functionalities in KDSource.
 
 Usage examples can be found in the [`docs/examples`](docs/examples) subdirectory. At the moment these are:
 * [`Verification.ipynb`](docs/examples/Verification.ipynb): Analytic example. KDSource is used to generate a source from a particle list sampled from an known correlated distribution, and the generated particles distributions are compared with the analytical density.

@@ -6,14 +6,14 @@
 
 /***********************************************************************************/
 /*                                                                                 */
-/*  KDSource: KDE particle sources                                                  */
+/*  KDSource: KDE particle sources                                                 */
 /*                                                                                 */
-/*  Utilities for sampling particles from a KDE source. KDSource sources use        */
+/*  Utilities for sampling particles from a KDE source. KDSource sources use       */
 /*  particle lists in MCPL format, and apply on them the Kernel Density Estimation */
 /*  (KDE) method. This allows coupling different Monte Carlo radiation transport   */
 /*  simulations, and gives variance reduction.                                     */
 /*                                                                                 */
-/*  Find more information and updates at https://github.com/inti-abbate/KDSource    */
+/*  Find more information and updates at https://github.com/KDSource/KDSource      */
 /*                                                                                 */
 /*  This file can be freely used as per the terms in the LICENSE file.             */
 /*                                                                                 */
@@ -49,11 +49,11 @@ double KDS_w_mean(KDSource* kds, int N, WeightFun bias);
 void KDS_destroy(KDSource* kds);
 
 typedef struct MultiSource{
-	int len;     // Number of sources
+	int len;      // Number of sources
 	KDSource** s; // Array of sources
-	double J;    // Total current [1/s]
-	double* ws;  // Frequency weights of sources
-	double* cdf; // cdf of sources weights
+	double J;     // Total current [1/s]
+	double* ws;   // Frequency weights of sources
+	double* cdf;  // cdf of sources weights
 } MultiSource;
 
 MultiSource* MS_create(int len, KDSource** s, const double* ws);

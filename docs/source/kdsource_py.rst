@@ -1,10 +1,7 @@
-kdsource python API
+kdsource Python API
 ===================
 
 .. automodule:: kdsource.__init__
-
-Modules
-=======
 
 
 kdsource.geom module

@@ -1,24 +1,23 @@
-## Installation (Linux):
+# Installation
 
-The installation instructions assume this repo has been cloned to a local directory.
-	
-1. Go to source directory:
+## Linux
+
+1. First of all, clone this repository with all its submodules to a local repository.
+
+   ```bash
+   $ git clone --recurse-submodules https://github.com/KDSource/KDSource
+   ```
+
+2. Go to source directory and install with `cmake`:
 
    ```bash
    $ cd /path/to/kdsourcesource
-   ```
-
-   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was extracted.
-
-2. Install with `cmake`:
-
-   ```bash
    $ mkdir build && cd build
    $ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/kdsourceinstall
    $ make install
    $ cd ..
 	```
-   Where `path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
+   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
 
    It is required to have previously installed `libxml2`.
 
@@ -42,3 +41,7 @@ The installation instructions assume this repo has been cloned to a local direct
    $ export PATH=$PATH:/path/to/kdsourceinstall/bin
    ```
    Or add this command to `~/.profile` (and update with `source ~/.profile`).
+
+## Windows
+
+Under development

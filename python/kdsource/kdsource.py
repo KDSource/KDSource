@@ -31,8 +31,8 @@ units = ["MeV", "cm", "cm", "cm", "", "", ""]
 
 def load(xmlfilename, N=-1):
     """
-    Load KDSource from XML parameters file. After building the KDSource object,
-    a fit is performed to load the particle list,
+    Load KDSource from XML parameters file. After building the KDSource
+    object, a fit is performed to load the particle list,
     leaving the KDSource ready to be evaluated. The bandwidths
     given in the XML file are not modified.
 
