@@ -4,21 +4,24 @@
 cff-version: 1.2.0
 title: >-
   KDSource, a tool for the generation of Monte Carlo
-  particlesources using kernel density estimation
+  particle sources using kernel density estimation
 message: >-
   If you use this software, please cite it using the
   metadata from this file.
 type: software
 authors:
-  - given-names: Inti
-    family-names: Abatte
-    email: intiAbbate@gmail.com
-  - given-names: Norberto
+  - given-names: Osiris Inti
+    family-names: Abbate
+    email: intiabbate@gmail.com
+    orcid: 'https://orcid.org/0000-0002-7764-1776'
+  - given-names: Norberto Sebastián
     family-names: Schmidt
-    email: norbertoschmidt@gmail.com
-  - given-names: Zoe
+    email: norberttschmidt@gmail.com
+    orcid: 'https://orcid.org/0000-0003-3600-1446'
+  - given-names: Zoe Micaela
     family-names: Prieto
     email: zoe.prietom@gmail.com
+    orcid: 'https://orcid.org/0000-0001-8641-1588'
   - given-names: Jose Ignacio
     family-names: Robledo
     email: jose.robledo@cab.cnea.gov.ar
@@ -27,9 +30,13 @@ authors:
     family-names: Dawidowski
     email: jdawidowski@gmail.com
     orcid: 'https://orcid.org/0000-0003-0289-7838'
-  - given-names: Ariel
+  - given-names: Ariel Aníbal
     family-names: Márquez
-  - given-names: 'José Ignacio '
-    family-names: Márquez
+    email: arielmqz@gmail.com
+  - given-names: José Ignacio
+    family-names: Márquez Damián
     email: nachomarquez@gmail.com
     orcid: 'https://orcid.org/0000-0002-9611-914X'
+
+license: GPL-3
+repository-code: "https://github.com/KDSource/KDSource"

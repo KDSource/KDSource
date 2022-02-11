@@ -21,9 +21,11 @@ distribution.
 If you use KDSource tools in your work, please add the following
 reference:
 
-    O. I. Abbate, Desarrollo de herramientas computacionales para el
-    cálculo de blindajes, Master's thesis, Universidad Nacional de Cuyo,
-    2021.
+    Abbate, O. I., Schmidt, N. S., Prieto, Z. M., Robledo, J. I.,
+    Dawidowski, J., Márquez, A. A., & Márquez Damián, J. I. KDSource,
+    a tool for the generation of Monte Carlo particle sources using
+    kernel density estimation [Computer software].
+    https://github.com/KDSource/KDSource
 
 """
 
