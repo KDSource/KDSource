@@ -116,4 +116,4 @@ Contributions are very welcome. To contribute, fork the project, create a branch
 Usage of the KDSource package is allowed in the terms detailed in the LICENSE file. However, if you use it for your work, we
 would appreciate it if you would use the following reference:
 
-O. I. Abbate, Desarrollo de herramientas computacionales para el cálculo de blindajes, Master's thesis, Universidad Nacional de Cuyo, 2021.
+Abbate, O. I., Schmidt, N. S., Prieto, Z. M., Robledo, J. I., Dawidowski, J., Márquez, A. A., & Márquez Damián, J. I. KDSource, a tool for the generation of Monte Carlo particle sources using kernel density estimation [Computer software]. https://github.com/KDSource/KDSource
