@@ -46,7 +46,7 @@ setuptools.setup(
         "joblib>=1.0.1,<2.0",
         "scikit-learn>=0.24.2,<1.0",
         "mcpl>=1.3.2,<2.0",
-        "Pillow>=8.2.0,<9.0",
+        "Pillow>=9.0.1,<10.0",
     ],
     python_requires=">=3.6",
     extras_require={
