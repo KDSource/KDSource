@@ -3,7 +3,7 @@
 """Module for Geometry and Metric objects
 """
 
-from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import SubElement
 
 import numpy as np
 
@@ -99,8 +99,8 @@ class Metric:
 
     def save(self, mtree):
         """Save Metric parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        ET.SubElement(mtree, "params").set("nps", "0")
+        SubElement(mtree, "dim").text = str(self.dim)
+        SubElement(mtree, "params").set("nps", "0")
 
     @staticmethod
     def load(mtree):
@@ -262,18 +262,18 @@ class Geometry(Metric):
         """Save Geometry parameters into XML tree."""
         gtree.set("order", str(len(self.ms)))
         for metric in self.ms:
-            mtree = ET.SubElement(gtree, metric.__class__.__name__)
+            mtree = SubElement(gtree, metric.__class__.__name__)
             metric.save(mtree)
         trasl = (
             np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
         )
-        ET.SubElement(gtree, "trasl").text = trasl
+        SubElement(gtree, "trasl").text = trasl
         rot = (
             np.array_str(self.rot.as_rotvec())[1:-1]
             if self.rot is not None
             else ""
         )
-        ET.SubElement(gtree, "rot").text = rot
+        SubElement(gtree, "rot").text = rot
 
     @staticmethod
     def load(gtree):
@@ -340,8 +340,8 @@ class Lethargy(Metric):
 
     def save(self, mtree):
         """Save Lethargy parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        paramsel = ET.SubElement(mtree, "params")
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
         paramsel.set("nps", "1")
         paramsel.text = "{}".format(self.E0)
 
@@ -385,8 +385,8 @@ class Vol(Metric):
 
     def save(self, mtree):
         """Save Vol parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        paramsel = ET.SubElement(mtree, "params")
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
         paramsel.set("nps", "6")
         paramsel.text = "{} {} {} {} {} {}".format(
             self.xmin, self.xmax, self.ymin, self.ymax, self.zmin, self.zmax
@@ -434,8 +434,8 @@ class SurfXY(Metric):
 
     def save(self, mtree):
         """Save SurfXY parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        paramsel = ET.SubElement(mtree, "params")
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
         paramsel.set("nps", "5")
         paramsel.text = "{} {} {} {} {}".format(
             self.xmin, self.xmax, self.ymin, self.ymax, self.z
@@ -457,13 +457,16 @@ class Guide(Metric):
         Guide metric for position and direction.
 
         Position is parametrized with following variables:
-            z: distance along guide, following curvature (if any).
-            t: transversal direction along mirrors, starting at (x+,y-)
-               corner, towards (x+,y+) corner.
+
+            - z: distance along guide, following curvature (if any).
+            - t: transversal direction along mirrors, starting at\
+            (x+,y-) corner, towards (x+,y+) corner.
+
         Direction is parametrized with following variables:
-            mu: cosine of angle between particle direction and mirror
-                normal.
-            phi: azimuthal angle, starting from z direction, in [deg].
+
+            - mu: cosine of angle between particle direction and mirror\
+            normal.
+            - phi: azimuthal angle, starting from z direction, in [deg].
 
         Parameters
         ----------
@@ -474,11 +477,12 @@ class Guide(Metric):
         zmax: float
             Guide length.
         rcurv: float
-            Curvature radius, defined as follows. Default is no
+            Curvature radius, defined as follows. Default is no\
             curvature.
-                rcurv > 0 for curvature towards negative x
-                rcurv < 0 for curvature towards negative x
-                rcurv = 0 or rcurv = infinity for no curvature
+
+                - rcurv > 0 for curvature towards negative x
+                - rcurv < 0 for curvature towards negative x
+                - rcurv = 0 or rcurv = infinity for no curvature
         """
         super().__init__(
             [1, 2, 3, 4, 5, 6],
@@ -590,8 +594,8 @@ class Guide(Metric):
 
     def save(self, mtree):
         """Save Guide parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        paramsel = ET.SubElement(mtree, "params")
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
         paramsel.set("nps", "4")
         paramsel.text = "{} {} {} {}".format(
             self.xwidth, self.yheight, self.zmax, self.rcurv
@@ -688,8 +692,8 @@ class Isotrop(Metric):
 
     def save(self, mtree):
         """Save Guide parameters into XML tree."""
-        ET.SubElement(mtree, "dim").text = str(self.dim)
-        paramsel = ET.SubElement(mtree, "params")
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
         paramsel.set("nps", "3")
         paramsel.text = "{:d} {:d} {:d}".format(
             self.keep_xdir, self.keep_ydir, self.keep_zdir

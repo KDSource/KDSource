@@ -4,6 +4,24 @@ kdsource Python API
 .. automodule:: kdsource.__init__
 
 
+kdsource.kdsource module
+------------------------
+
+.. automodule:: kdsource.kdsource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members:
+
+kdsource.plist module
+---------------------
+
+.. automodule:: kdsource.plist
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members:
+
 kdsource.geom module
 --------------------
 
@@ -20,22 +38,7 @@ kdsource.kde module
    :members:
    :undoc-members:
    :show-inheritance:
-
-kdsource.kdsource module
-------------------------
-
-.. automodule:: kdsource.kdsource
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-kdsource.plist module
----------------------
-
-.. automodule:: kdsource.plist
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :special-members:
 
 kdsource.stats module
 ---------------------
@@ -44,6 +47,7 @@ kdsource.stats module
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members:
 
 kdsource.summary module
 -----------------------
@@ -52,6 +56,7 @@ kdsource.summary module
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members:
 
 kdsource.tally module
 ---------------------
@@ -60,6 +65,7 @@ kdsource.tally module
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members:
 
 kdsource.utils module
 ---------------------
@@ -68,11 +74,4 @@ kdsource.utils module
    :members:
    :undoc-members:
    :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: kdsource
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   :special-members:

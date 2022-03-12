@@ -12,7 +12,7 @@ It processes particle lists recorded as output of a simulation (e.g.: passing th
 
 .. note::
 
-   Check out the :doc:`usage` section for further information, as well as the :doc:`Tutorial.ipynb` and the :doc:`installation` instructions.
+   Check out the :doc:`usage` section for further information, as well as the `Tutorial <Tutorial.ipynb>`_ and the :doc:`installation` instructions.
 
    This project is under active development.
 
@@ -25,4 +25,4 @@ Contents
    installation
    Tutorial.ipynb
    usage
-   documentation
+   api-ref

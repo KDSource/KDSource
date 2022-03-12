@@ -13,7 +13,7 @@ def apply_weight_mask(vecs, ws, weightfun=None, maskfun=None):
     Apply weighting and masking functions to particle list.
 
     Parameters
-    ---------
+    ----------
     vecs: array-like
         Array of particles. Must have shape (N, dim).
     ws: array-like, optional
@@ -48,7 +48,7 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     subset the specified statistic parameter is computed.
 
     Parameters
-    ---------
+    ----------
     vecs: array-like
         Array of particles. Must have shape (N, dim).
     ws: array-like, optional
@@ -56,6 +56,7 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     param: function
         Function that computes the statistic parameter. Must have
         signature:
+
             param(vecs, ws) -> [param, err]
     fracmin: float, optional
         Size of the first subset, as a fraction of the full particle

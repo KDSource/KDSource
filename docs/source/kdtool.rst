@@ -7,6 +7,7 @@ C library for particle generation with KDSource objects.
 The general instructions for the ``kdtool`` command are the following:
 
 ::
+
     Usage: kdtool [options]
 
     KDSource is a Monte Carlo calculations assistance tool. It implements particles
@@ -27,6 +28,7 @@ The ``resample`` argument brings a high-level interface for particle sampling, u
 The instructions for the ``kdtool resample`` command are the following:
 
 ::
+
     Usage: kdtool resample sourcefile [options]
 
     Resample particles from source defined in XML file sourcefile, and save them in
@@ -46,6 +48,7 @@ The ``templates`` argument copies some helpful templates for several usages of t
 The instructions for the ``kdtool templates`` command are the following:
 
 ::
+
     Usage: kdtool templates dest [options]
 
     Copy to dest templates for KDSource usage in Python, or for interacting with
@@ -65,6 +68,7 @@ The ``beamtest`` argument gives access to a module for comparison between the or
 The instructions for the ``kdtool beamtest`` command are the following:
 
 ::
+
     Usage: kdtool beamtest sourcefile [options]
 
     Executes a simple simulation with source defined in XML file sourcefile, in

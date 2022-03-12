@@ -52,7 +52,7 @@ Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilena
 	geom->bwfile = NULL;
 	if(bwfilename) if(strlen(bwfilename)){
 		FILE* bwfile;
-		if((bwfile=fopen(bwfilename, "r")) == 0){
+		if((bwfile=fopen(bwfilename, "rb")) == 0){
 			printf("Could not open file %s\n", bwfilename);
 			KDS_error("Error in Geom_create");
 		}
@@ -85,7 +85,7 @@ Geometry* Geom_copy(const Geometry* from){
 	if(geom->bwfile){
 		geom->bwfilename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 		strcpy(geom->bwfilename, from->bwfilename);
-		geom->bwfile = fopen(geom->bwfilename, "r");
+		geom->bwfile = fopen(geom->bwfilename, "rb");
 		Geom_next(geom, 1);
 	}
 	if(from->trasl){

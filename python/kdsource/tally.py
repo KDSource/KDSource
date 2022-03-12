@@ -20,7 +20,9 @@ def read_spectrum(spectrum=None):
     Read and load decay spectrum from CSV file.
 
     Decay spectrum files can be downloaded from:
+
         https://www-nds.iaea.org/relnsd/vcharthtml/VChartHTML.html
+
     Select nuclide, and in 'Decay Radiation' tab download Gamma table as
     CSV.
 
@@ -292,13 +294,14 @@ class T4Tally:
             is averaged over other variables.
         **kwargs: optional
             Additional parameters for plotting options:
-            xscale: 'linear' or 'log'
+
+            - xscale: 'linear' or 'log'
                 Scale for x axis. Default: 'linear'
-            yscale: 'linear' or 'log'. Default: 'log'
+            - yscale: 'linear' or 'log'. Default: 'log'
                 Scale for y axis.
-            fact: float
+            - fact: float
                 Factor to apply on all densities. Default: 1
-            label: string
+            - label: string
                 Label for plot legend.
 
         Returns
@@ -397,6 +400,7 @@ class T4Tally:
             If a list, gives the tally values to plot level curves.
         **kwargs: optional
             Additional parameters for plotting options:
+
             scale: 'linear' or 'log'
                 Scale for color map. Default: 'log'
             fact: float

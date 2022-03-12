@@ -1,0 +1,17 @@
+# Configuration file for line endings handling
+
+# Auto detect text files and perform LF normalization
+*        text=auto
+
+# C files
+*.c      text diff=cpp
+*.h      text diff=cpp
+*.o      binary
+*.so     binary
+*.dll    binary
+*.out    binary
+*.exe    binary
+
+# Python files
+*.py     text diff=python
+*.ipynb  text

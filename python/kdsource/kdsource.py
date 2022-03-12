@@ -5,7 +5,7 @@
 
 import os
 from xml.dom import minidom
-from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element, SubElement, parse, tostring
 
 from KDEpy import TreeKDE
 
@@ -48,7 +48,7 @@ def load(xmlfilename, N=-1):
     -------
     kdsource: KDSource object
     """
-    tree = ET.parse(xmlfilename)
+    tree = parse(xmlfilename)
     root = tree.getroot()
     J = np.double(root[0].text)
     plist = PList.load(root[1])
@@ -242,16 +242,16 @@ class KDSource:
                 self.plist.set_params()
             bw *= bw_silv(dim, self.plist.N_eff) / bw_silv(dim, self.N_eff)
         # Build XML tree
-        root = ET.Element("KDSource")
-        Jel = ET.SubElement(root, "J")
+        root = Element("KDSource")
+        Jel = SubElement(root, "J")
         Jel.set("units", "1/s")
         Jel.text = str(self.J)
-        pltree = ET.SubElement(root, "PList")
+        pltree = SubElement(root, "PList")
         self.plist.save(pltree)
-        gtree = ET.SubElement(root, "Geom")
+        gtree = SubElement(root, "Geom")
         self.geom.save(gtree)
-        ET.SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
-        bwel = ET.SubElement(root, "BW")
+        SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
+        bwel = SubElement(root, "BW")
         if np.isscalar(bw):  # Constant bandwidth
             bwel.set("variable", "0")
             bwel.text = str(bw)
@@ -261,7 +261,7 @@ class KDSource:
             print("Bandwidth file: {}".format(bwfilename))
             bwel.text = os.path.abspath(bwfilename)
         # Write XML file
-        xmlstr = ET.tostring(root, encoding="utf8", method="xml")
+        xmlstr = tostring(root, encoding="utf8", method="xml")
         xmlstr = minidom.parseString(xmlstr).toprettyxml()
         with open(xmlfilename, "w") as file:
             file.write(xmlstr)
@@ -290,6 +290,7 @@ class KDSource:
             list. Value of var variable will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
+
             xscale: 'linear' or 'log'
                 Scale for x axis. Default: 'linear'
             yscale: 'linear' or 'log'. Default: 'log'
@@ -369,6 +370,7 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
+
             xscale: 'linear' or 'log'
                 Scale for x axis. Default: 'linear'
             yscale: 'linear' or 'log'. Default: 'log'
@@ -473,6 +475,7 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
+
             fact: float
                 Factor to apply on all densities. Default: 1
             label: str
@@ -563,6 +566,7 @@ class KDSource:
             list. Value of vrs variables will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
+
             scale: 'linear' or 'log'
                 Scale for color map. Default: 'log'
             fact: float
@@ -654,6 +658,7 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
+
             scale: 'linear' or 'log'
                 Scale for color map. Default: 'log'
             fact: float

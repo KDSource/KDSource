@@ -5,7 +5,7 @@
 
 import os
 import subprocess
-from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import SubElement
 
 import mcpl
 
@@ -34,11 +34,12 @@ def convert2mcpl(filename, readformat):
         Name of file with particle list to convert.
     readformat: str
         Particle list format. Valid formats are:
+
         - 'ssw': MCNP binary surface source.
         - 'phits': PHITS particle list.
         - 'ptrac': MCNP text surface source.
         - 'stock': TRIPOLI-4 stored particles.
-        - 'ssv': Text file with space-separated values, with format
+        - 'ssv': Text file with space-separated values, with format\
                  resulting from 'mcpltool --text' command.
 
     Returns
@@ -276,7 +277,9 @@ class PList:
         switch_x2z: bool
             If true, the following permutation is applied after
             translation and rotation:
+
                 (x, y, z) -> (y, z, x)
+
         set_params: bool
             Whether to set I (sum of weights) and p2 (sum of squared
             weights) after construction.
@@ -394,19 +397,19 @@ class PList:
 
     def save(self, pltree):
         """Save PList parameters into XML tree."""
-        ET.SubElement(pltree, "pt").text = self.pt
-        ET.SubElement(pltree, "mcplname").text = os.path.abspath(self.filename)
+        SubElement(pltree, "pt").text = self.pt
+        SubElement(pltree, "mcplname").text = os.path.abspath(self.filename)
         trasl = (
             np.array_str(self.trasl)[1:-1] if self.trasl is not None else ""
         )
-        ET.SubElement(pltree, "trasl").text = trasl
+        SubElement(pltree, "trasl").text = trasl
         rot = (
             np.array_str(self.rot.as_rotvec())[1:-1]
             if self.rot is not None
             else ""
         )
-        ET.SubElement(pltree, "rot").text = rot
-        ET.SubElement(pltree, "x2z").text = str(int(self.x2z))
+        SubElement(pltree, "rot").text = rot
+        SubElement(pltree, "x2z").text = str(int(self.x2z))
 
     @staticmethod
     def load(pltree):

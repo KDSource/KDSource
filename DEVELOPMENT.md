@@ -44,45 +44,87 @@ KDSource/
 +-- tests/                      : C API unit testing.
 ```
 
-# Installation, testing and distribution
+# Workflow (Linux)
 
-### Installation
+## Installation
 
+Clone GitHub repository:
+```bash
+git clone --recurse-submodules https://github.com/KDSource/KDSource
+git remote add origin https://github.com/KDSource/KDSource
+```
 Install C and command line APIs:
 ```bash
-$ mkdir build && cd build
-$ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/install
-$ make install
-$ cd ..
+mkdir build && cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/kdsourceinstall
+make install
+cd ..
 ```
 Install Python API:
 ```bash
-$ cd python
-$ pip install [-e] .
-$ cd ..
+cd python
+pip install .
+cd ..
 ```
 To have KDSource command line tool in your path execute (or add to `~/.profile` and update with `source ~/.profile`):
 ```bash
-$ export PATH=$PATH:/path/to/install/bin
+export PATH=$PATH:/path/to/install/bin
 ```
 
-### Testing
+## Development
+
+Create and switch to feature branch:
+```bash
+git pull origin master
+git branch newfeature
+git switch newfeature
+```
+Here you can modify, delete or create files in the working tree.
+
+## Testing
 
 Test C and command line APIs:
 ```bash
-$ mkdir build && cd build
-$ cmake ..
-$ make
-$ make test
-$ cd ..
+mkdir build && cd build
+cmake ..
+make
+make test
+cd ..
 ```
 Test Python API:
 ```bash
-$ cd python
-$ pytest -v
-$ cd ..
+tox -r -c python
+```
+Check documentation:
+```bash
+sphinx-build -b html docs/source docs/html
+```
+The HTML files will be built in `docs/html`.
+
+## Contribution
+
+Save your work in feature branch:
+```bash
+git status
+git add -u
+git add [new-files]
+git git commit
+git push origin newfeature
+```
+Merge chanches to master branch:
+```bash
+git rebase [-i] master
+git switch master
+git merge newfeature
+git push origin master
+```
+Delete feature branch:
+```bash
+git branch -d newfeature
+git push origin -d newfeature
 ```
 
-### Distribution
 
-At the time, the only implemented distribution is cloning the GitHub repo.
+## Distribution
+
+At the time, the only implemented distribution the GitHub repo.
