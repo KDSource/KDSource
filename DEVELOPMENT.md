@@ -12,6 +12,7 @@ KDSource/
 +-- KDSourceConfig.h.in         : File to generate configurations header for C.
 +-- pyproject.toml              : Configuration file for Python.
 |                                 library.
++-- INSTALL.ps1                 : PowerShell installation script for Windows.
 +-- docs/                       : Documentation.
 |   +-- Makefile                : Configuration file for Sphynx documentation.
 |   +-- make.bat                : Configuration file for Sphynx documentation.

@@ -1,6 +1,8 @@
-*.sublime-workspace
 build
 mcpl
+dependencies
+
+*.sublime-workspace
 .vscode
 
 # Python aux files
@@ -12,6 +14,7 @@ python/*.egg-info
 python/build
 python/.tox
 python/python/*
+python/.coverage
 
 
 # Compiled Object files

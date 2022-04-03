@@ -1,13 +1,14 @@
 # Installation
 
-Currently, the only implemented installation method is via cloning the GitHub repository and building with CMake and Pip. It is required to have previously installed `libxml2`. See bellow for specifical instructions for Linux and Windows.
+Currently, the only implemented installation method is via cloning the GitHub repository and building with CMake and Pip. See bellow for specifical instructions for Linux and Windows.
 
 ## Linux:
 
-Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+)
+Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
 
 You can install `libxml2` with:
 ```bash
+   $ sudo apt-get update
    $ sudo apt-get install libxml2
 ```
 for Ubuntu, or similarly for other Linux distributions, using the corresponding package manager.
@@ -53,48 +54,55 @@ for Ubuntu, or similarly for other Linux distributions, using the corresponding 
 
 ## Windows
 
-Requirements: Git 2.14+, MinGW, CMake 3+, Pip 22+ (Python 3.8+)
+Requirements: Git 2.14+, MinGW-GCC 11+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
 
-You can download `libxml2` in the following link:
+You can install KDSource, including LibXml2, using the `INSTALL.ps1` PowerShell script:
+   ```bash
+   > .\INSTALL.ps1
+   ```
+The script requires 7-Zip, with `7z` command in the system path.
+
+If you prefer a step-by-step approach, you can download `libxml2` in the following link:
 * 64 bits: http://xmlsoft.org/sources/win32/64bit/
 * 32 bits: http://xmlsoft.org/sources/win32/
-Download and extract the `libxml2` and `libiconv` archives, and add the path to the `bin` subdirectory of each library to the system `PATH` variable.
+Download and extract the `libxml2` and `iconv` archives, and add the path to the `bin` subdirectory of each library to the system `PATH` variable.
 
-Important: The architecture (32 vs 64 bits) of the installed `libxml2` and `libiconv` must be the same as the MinGW and CMake architecture. Also make sure that other `libxml2` or `libiconv` files with different architecture are not in the `PATH`, or at least not ahead of the ones to be used.
+Important: The architecture (32 vs 64 bits) of the installed `libxml2` and `iconv` must be the same as the MinGW and CMake architecture. Also make sure that other `libxml2` or `iconv` files with different architecture are not in the `PATH`, or at least not ahead of the ones to be used.
 
 The following instructions use the command prompt, and therefore assume that the `bin` subdirectory of Git, MinGW and CMake are in the system `PATH`.
 
 1. First of all, clone this repository with all its submodules to a local repository.
 
    ```bash
-   $ git clone --recurse-submodules https://github.com/KDSource/KDSource
+   > git clone --recurse-submodules https://github.com/KDSource/KDSource
    ```
 
 2. Go to source directory and install with `cmake`:
 
    ```bash
-   $ cd C:\\path\\to\\kdsourcesource
-   $ mkdir build && cd build
-   $ cmake .. -DCMAKE_INSTALL_PREFIX=C:\\path\\to\\kdsourceinstall -G "MinGW Makefiles"
-   $ mingw32-make install
-   $ cd ..
+   > cd C:\\path\\to\\kdsourcesource
+   > mkdir build && cd build
+   > cmake .. -DCMAKE_INSTALL_PREFIX=C:\\path\\to\\kdsourceinstall -G "MinGW Makefiles"
+   > set C_INCLUDE_PATH=C:\\path\\to\\iconv\\include
+   > mingw32-make install
+   > cd ..
    ```
-   Where `C:\\path\\to\\kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `C:\\path\\to\\kdsourceinstall` is the folder where you wish to install KDSource internal files.
+   Where `C:\\path\\to\\kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `C:\\path\\to\\kdsourceinstall` is the folder where you wish to install KDSource internal files. `C:\\path\\to\\iconv` is the folder where `iconv` was extracted.
 
 3. Add the `C:\\path\\to\\kdsourceinstall\lib` subdirectory to the system `PATH`.
 
 4. Install Python API with `pip`:
 
    ```bash
-   $ cd python
-   $ pip install .
-   $ cd ..
+   > cd python
+   > pip install .
+   > cd ..
    ```
 
 5. KDSource is ready to be used in `C:\\path\\to\\kdsourceinstall`. For example, you can see the `kdtool-resample` command options with:
 
    ```bash
-   $ /path/to/kdsourceinstall/bin/kdtool-resample --help
+   > /path/to/kdsourceinstall/bin/kdtool-resample --help
    ```
 
    If you wish to have KDSource tools available in your path, add the `bin` subdirectory to the system `PATH`.
