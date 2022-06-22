@@ -17,9 +17,10 @@ void KDS_end(const char* msg){
 	exit(EXIT_SUCCESS);
 }
 
-KDSource* KDS_create(double J, PList* plist, Geometry* geom){
+KDSource* KDS_create(double J, char kernel, PList* plist, Geometry* geom){
 	KDSource* kds = (KDSource*)malloc(sizeof(KDSource));
 	kds->J = J;
+	kds->kernel = kernel;
 	kds->plist = plist;
 	kds->geom = geom;
 	return kds;
@@ -30,6 +31,7 @@ KDSource* KDS_open(const char* xmlfilename){
 
 	int i, j, n;
 	double J;
+	char kernel;
 	char *buf;
 
 	char pt;    
@@ -57,8 +59,11 @@ KDSource* KDS_open(const char* xmlfilename){
 	xmlNodePtr node = root->children; // Node: J
 	sscanf((char*)xmlNodeGetContent(node), "%lf", &J); // Read J
 
+	xmlNodePtr node_k = node->next; // Node: kernel
+	sscanf((char*)xmlNodeGetContent(node_k), "%s", &kernel); // Read kernel
+
 	// PList
-	xmlNodePtr pltree = node->next;
+	xmlNodePtr pltree = node_k->next;
 	node = pltree->children; // Node: pt
 	sscanf((char*)xmlNodeGetContent(node), "%c", &pt); // Read pt
 	node = node->next; // Node: mcplname
@@ -152,9 +157,9 @@ KDSource* KDS_open(const char* xmlfilename){
 	}
 	Metric* metrics[order];
 	for(i=0; i<order; i++) metrics[i] = Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
-	Geometry* geom = Geom_create(order, metrics, bw, bwfilename, trasl_geom, rot_geom);
+	Geometry* geom = Geom_create(order, metrics, bw, bwfilename, kernel, trasl_geom, rot_geom);
 	// Create KDSource
-	KDSource* s = KDS_create(J, plist, geom);
+	KDSource* s = KDS_create(J, kernel, plist, geom);
 
 	printf("Done.\n");
 

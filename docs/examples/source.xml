@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<KDSource>
+	<J units="1/s">1.0</J>
+	<PList>
+		<pt>n</pt>
+		<mcplname>/home/max/PI/kdsource/docs/examples/samples.mcpl.gz</mcplname>
+		<trasl/>
+		<rot/>
+		<x2z>0</x2z>
+	</PList>
+	<Geom order="3">
+		<Lethargy>
+			<dim>1</dim>
+			<params nps="1">10.0</params>
+		</Lethargy>
+		<SurfXY>
+			<dim>2</dim>
+			<params nps="5">-inf inf -inf inf 0</params>
+		</SurfXY>
+		<Isotrop>
+			<dim>3</dim>
+			<params nps="3">0 0 0</params>
+		</Isotrop>
+		<trasl/>
+		<rot/>
+	</Geom>
+	<scaling> 0.74346773 14.15623191 10.01443292  0.4704508   0.4704508   0.4704508 </scaling>
+	<BW variable="0">0.29534296826178785</BW>
+</KDSource>

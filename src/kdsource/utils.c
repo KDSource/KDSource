@@ -11,6 +11,27 @@ double rand_norm(){
 	return sqrt(-2 * log(y1)) * cos(2 * M_PI * y2);
 }
 
+// Sample with Epanechnikov distribution (x0=0)
+double rand_epan(){
+	double x1=(double)rand()/((double)RAND_MAX/2.0) - 1.0;
+	double x2=(double)rand()/((double)RAND_MAX/2.0) - 1.0;
+	double x3=(double)rand()/((double)RAND_MAX/2.0) - 1.0;
+	if(abs(x3)>=abs(x2) && abs(x3)>=abs(x1)) return x2;
+	else return x3;
+}
+
+// Sample depending on kernel selected
+double rand_type(char kernel){
+	if(kernel=='g') return rand_norm();
+	if(kernel=='e') return rand_epan();
+	else {
+		printf("Cannot perturbate with current kernel. \n");
+		// KDS_error("Cannot perturbate with current kernel.");
+		return 0;
+	}
+	return 0;
+}
+
 // Translation
 double *traslv(double *vect, const double *trasl, int inverse){
 	int i;

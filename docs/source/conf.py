@@ -22,8 +22,6 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.intersphinx",
     "myst_parser",
-    "nbsphinx",
-    "numpydoc"
 ]
 
 intersphinx_mapping = {
@@ -34,8 +32,6 @@ intersphinx_disabled_domains = ["std"]
 
 templates_path = ["_templates"]
 
-autodoc_member_order = 'bysource'
-
 # -- Options for HTML output
 
 html_theme = "sphinx_rtd_theme"
@@ -43,11 +39,8 @@ html_theme = "sphinx_rtd_theme"
 # -- Options for EPUB output
 epub_show_urls = "footnote"
 
-html_logo = "https://raw.githubusercontent.com/KDSource/KDSource/master/img/kdsource_logo.png"
+html_logo = "https://raw.githubusercontent.com/jorobledo/KDSource/master/img/kdsource_logo.png"
 html_theme_options = {
     'logo_only': True,
     'display_version': False,
 }
-
-# -- Options for numpydoc
-numpydoc_show_class_members = False

@@ -5,7 +5,7 @@
 
 import os
 from xml.dom import minidom
-from xml.etree.ElementTree import Element, SubElement, parse, tostring
+from xml.etree import ElementTree as ET
 
 from KDEpy import TreeKDE
 
@@ -31,8 +31,8 @@ units = ["MeV", "cm", "cm", "cm", "", "", ""]
 
 def load(xmlfilename, N=-1):
     """
-    Load KDSource from XML parameters file. After building the KDSource
-    object, a fit is performed to load the particle list,
+    Load KDSource from XML parameters file. After building the KDSource object,
+    a fit is performed to load the particle list,
     leaving the KDSource ready to be evaluated. The bandwidths
     given in the XML file are not modified.
 
@@ -48,7 +48,7 @@ def load(xmlfilename, N=-1):
     -------
     kdsource: KDSource object
     """
-    tree = parse(xmlfilename)
+    tree = ET.parse(xmlfilename)
     root = tree.getroot()
     J = np.double(root[0].text)
     plist = PList.load(root[1])
@@ -65,7 +65,7 @@ def load(xmlfilename, N=-1):
 
 
 class KDSource:
-    def __init__(self, plist, geom, bw="silv", J=1.0):
+    def __init__(self, plist, geom, bw="silv", J=1.0, kernel="gaussian"):
         """
         Object representing Kernel Density Estimation (KDE) sources.
 
@@ -110,6 +110,7 @@ class KDSource:
         self.kde = TreeKDE(bw=bw)
         self.scaling = None
         self.J = J
+        self.kernel = kernel
         self.fitted = False
 
     def fit(self, N=-1, skip=0, scaling=None, **kwargs):
@@ -157,8 +158,8 @@ class KDSource:
             print("Calculating bw ... ")
             bw = optimize_bw(self.bw_method, vecs / self.scaling, ws, **kwargs)
             bw_opt = np.reshape(bw, (-1, 1)) * self.scaling
-            print("Done\nOptimal bw ({}) = {}".format(self.bw_method, bw_opt))
-            self.kde = TreeKDE(bw=bw)
+            print("Done\nOptimal bw ({}) = {} \n".format(self.bw_method, bw_opt))
+            self.kde = TreeKDE(kernel=self.kernel, bw=bw)
         self.kde.fit(vecs / self.scaling, weights=ws)
         self.fitted = True
 
@@ -190,7 +191,7 @@ class KDSource:
         )
         errs = np.sqrt(
             evals
-            * R_gaussian ** self.geom.dim
+            * R_gaussian ** self.geom.dim                                           # Esto se cambia??
             / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling))
         )
         evals *= self.J * jacs
@@ -242,16 +243,20 @@ class KDSource:
                 self.plist.set_params()
             bw *= bw_silv(dim, self.plist.N_eff) / bw_silv(dim, self.N_eff)
         # Build XML tree
-        root = Element("KDSource")
-        Jel = SubElement(root, "J")
+        root = ET.Element("KDSource")
+        Jel = ET.SubElement(root, "J")
         Jel.set("units", "1/s")
         Jel.text = str(self.J)
-        pltree = SubElement(root, "PList")
+
+        kernelel = ET.SubElement(root, "kernel")
+        kernelel.text = str(self.kernel[0])
+        
+        pltree = ET.SubElement(root, "PList")
         self.plist.save(pltree)
-        gtree = SubElement(root, "Geom")
+        gtree = ET.SubElement(root, "Geom")
         self.geom.save(gtree)
-        SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
-        bwel = SubElement(root, "BW")
+        ET.SubElement(root, "scaling").text = np.array_str(self.scaling)[1:-1]
+        bwel = ET.SubElement(root, "BW")
         if np.isscalar(bw):  # Constant bandwidth
             bwel.set("variable", "0")
             bwel.text = str(bw)
@@ -261,7 +266,7 @@ class KDSource:
             print("Bandwidth file: {}".format(bwfilename))
             bwel.text = os.path.abspath(bwfilename)
         # Write XML file
-        xmlstr = tostring(root, encoding="utf8", method="xml")
+        xmlstr = ET.tostring(root, encoding="utf8", method="xml")
         xmlstr = minidom.parseString(xmlstr).toprettyxml()
         with open(xmlfilename, "w") as file:
             file.write(xmlstr)
@@ -290,7 +295,6 @@ class KDSource:
             list. Value of var variable will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
-
             xscale: 'linear' or 'log'
                 Scale for x axis. Default: 'linear'
             yscale: 'linear' or 'log'. Default: 'log'
@@ -370,7 +374,6 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
-
             xscale: 'linear' or 'log'
                 Scale for x axis. Default: 'linear'
             yscale: 'linear' or 'log'. Default: 'log'
@@ -425,7 +428,7 @@ class KDSource:
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
-        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
+        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))       # R_gaussian es de los errores o del kernel?
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         if "fact" in kwargs:
@@ -475,7 +478,6 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
-
             fact: float
                 Factor to apply on all densities. Default: 1
             label: str
@@ -519,7 +521,7 @@ class KDSource:
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
-        kde = TreeKDE(bw=bw)
+        kde = TreeKDE(kernel=self.kernel, bw=bw)
         kde.fit(vecs, weights=ws)
         grid = self.geom.ms[0].transform(grid_E)
         jacs = self.geom.ms[0].jac(grid_E)
@@ -566,7 +568,6 @@ class KDSource:
             list. Value of vrs variables will be ignored.
         **kwargs: optional
             Additional parameters for plotting options:
-
             scale: 'linear' or 'log'
                 Scale for color map. Default: 'log'
             fact: float
@@ -658,7 +659,6 @@ class KDSource:
             considerations as for vec0.
         **kwargs: optional
             Additional parameters for plotting options:
-
             scale: 'linear' or 'log'
                 Scale for color map. Default: 'log'
             fact: float
@@ -710,7 +710,7 @@ class KDSource:
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
-        kde = TreeKDE(bw=bw)
+        kde = TreeKDE(kernel=self.kernel, bw=bw)
         kde.fit(vecs, weights=ws)
         grid = np.reshape(np.meshgrid(*grids), (2, -1)).T
         scores = 1 / np.prod(scaling) * kde.evaluate(grid / scaling)

@@ -19,7 +19,7 @@
 
 typedef struct Metric Metric;
 
-typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part, double bw);
+typedef int (*PerturbFun)(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
 struct Metric{
 	int dim;            // Dimension
@@ -39,32 +39,34 @@ typedef struct Geometry{
 	char* bwfilename; // Bandwidth file name
 	FILE* bwfile;     // Bandwidth file
 	double bw;        // Normalized bandwidth
+	char kernel;	  // Kernel
 
 	double* trasl;    // Geometry translation
 	double* rot;      // Geometry rotation
 } Geometry;
 
-Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilename,
+Geometry* Geom_create(int ord, Metric** metrics, double bw, const char* bwfilename, char kernel, 
 	const double* trasl, const double* rot);
 Geometry* Geom_copy(const Geometry* from);
 int Geom_perturb(const Geometry* geom, mcpl_particle_t* part);
 int Geom_next(Geometry* geom, int loop);
 void Geom_destroy(Geometry* geom);
 
-int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
-int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
-int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
-int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
-int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int SurfCirc_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
-int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
-int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
-int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw);
+int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
-static const int _n_metrics = 8;
-static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "Guide", "Isotrop", "Polar", "PolarMu"};
-static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb};
+static const int _n_metrics = 9;
+static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "SurfCirc", "Guide", "Isotrop", "Polar", "PolarMu"};
+static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, SurfCirc_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb};
 
 
 #endif

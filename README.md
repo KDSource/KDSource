@@ -13,7 +13,7 @@
 This is source version of KDSource, a tool for Monte Carlo particle sources generation
 using Kernel Density Estimation.
 
-KDSource assists Monte Carlo beams and shielding calculations, improving tally results in difficult problems. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
+KDSource assists Monte Carlo beams and shielding calculations. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
 
 It processes particle lists recorded as output of a simulation (e.g.: passing thru a window), to be used as input in another one. It estimates density distribution in energy, position and direction by means of Kernel Density Estimation (KDE) technique, allowing visualizing it as well as using it to produce new particles (artificial, but with the same estimated density). This allows to increase the number of source particles in the second simulation, improving its statistics (variance reduction).
 
@@ -40,37 +40,29 @@ The KDSource package consists in the following tools:
 
 
 
-## Installation:
+## Installation (Linux):
 
-Currently, the only implemented installation method is via cloning the GitHub repository and building with CMake and Pip. See bellow for specifical instructions for Linux and Windows.
-
-### Linux:
-
-Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
-
-You can install `libxml2` with:
-```bash
-   $ sudo apt-get update
-   $ sudo apt-get install libxml2
-```
-for Ubuntu, or similarly for other Linux distributions, using the corresponding package manager.
-
-1. First of all, clone this repository with all its submodules to a local repository.
-
-   ```bash
-   $ git clone --recurse-submodules https://github.com/KDSource/KDSource
-   ```
-
-2. Go to source directory and install with `cmake`:
+The installation instructions assume this repo has been cloned to a local directory.
+	
+1. Go to source directory:
 
    ```bash
    $ cd /path/to/kdsourcesource
+   ```
+
+   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was extracted.
+
+2. Install with `cmake`:
+
+   ```bash
    $ mkdir build && cd build
    $ cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/kdsourceinstall
    $ make install
    $ cd ..
-   ```
-   Where `/path/to/kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `/path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
+	```
+   Where `path/to/kdsourceinstall` is the folder where you wish to install KDSource internal files.
+
+   It is required to have previously installed `libxml2`.
 
 3. Install Python API with `pip`:
 
@@ -94,68 +86,7 @@ for Ubuntu, or similarly for other Linux distributions, using the corresponding 
    Or add this command to `~/.profile` (and update with `source ~/.profile`).
 
 
-### Windows
-
-Requirements: Git 2.14+, MinGW-GCC 11+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
-
-You can install KDSource, including LibXml2, using the `INSTALL.ps1` PowerShell script:
-   ```bash
-   > .\INSTALL.ps1
-   ```
-The script requires 7-Zip, with `7z` command in the system path.
-
-If you prefer a step-by-step approach, you can download `libxml2` in the following link:
-* 64 bits: http://xmlsoft.org/sources/win32/64bit/
-* 32 bits: http://xmlsoft.org/sources/win32/
-Download and extract the `libxml2` and `iconv` archives, and add the path to the `bin` subdirectory of each library to the system `PATH` variable.
-
-Important: The architecture (32 vs 64 bits) of the installed `libxml2` and `iconv` must be the same as the MinGW and CMake architecture. Also make sure that other `libxml2` or `iconv` files with different architecture are not in the `PATH`, or at least not ahead of the ones to be used.
-
-The following instructions use the command prompt, and therefore assume that the `bin` subdirectory of Git, MinGW and CMake are in the system `PATH`.
-
-1. First of all, clone this repository with all its submodules to a local repository.
-
-   ```bash
-   > git clone --recurse-submodules https://github.com/KDSource/KDSource
-   ```
-
-2. Go to source directory and install with `cmake`:
-
-   ```bash
-   > cd C:\\path\\to\\kdsourcesource
-   > mkdir build && cd build
-   > cmake .. -DCMAKE_INSTALL_PREFIX=C:\\path\\to\\kdsourceinstall -G "MinGW Makefiles"
-   > set C_INCLUDE_PATH=C:\\path\\to\\iconv\\include
-   > mingw32-make install
-   > cd ..
-   ```
-   Where `C:\\path\\to\\kdsourcesource` is the folder where the source distribution of KDSource was cloned, and `C:\\path\\to\\kdsourceinstall` is the folder where you wish to install KDSource internal files. `C:\\path\\to\\iconv` is the folder where `iconv` was extracted.
-
-3. Add the `C:\\path\\to\\kdsourceinstall\lib` subdirectory to the system `PATH`.
-
-4. Install Python API with `pip`:
-
-   ```bash
-   > cd python
-   > pip install .
-   > cd ..
-   ```
-
-5. KDSource is ready to be used in `C:\\path\\to\\kdsourceinstall`. For example, you can see the `kdtool-resample` command options with:
-
-   ```bash
-   > /path/to/kdsourceinstall/bin/kdtool-resample --help
-   ```
-
-   If you wish to have KDSource tools available in your path, add the `bin` subdirectory to the system `PATH`.
-
-   Note: Currently, the `kdtool` and `kdtool-resample` applications are not available on Windows.
-
-
-
 ## Usage examples and templates
-
-See the [documentation](https://kdsource.readthedocs.io/en/latest/) page for usage instructions, tutorials, and a detailed documentation of all the functionalities in KDSource.
 
 Usage examples can be found in the [`docs/examples`](docs/examples) subdirectory. At the moment these are:
 * [`Verification.ipynb`](docs/examples/Verification.ipynb): Analytic example. KDSource is used to generate a source from a particle list sampled from an known correlated distribution, and the generated particles distributions are compared with the analytical density.

@@ -32,7 +32,7 @@ reference:
 __version__ = "0.1.0"
 __author__ = "inti-abbate"
 
-from .geom import Geometry, Metric
 from .kde import bw_silv
+from .geom import Metric, Geometry
+from .plist import PList, convert2mcpl, join2mcpl, savessv, appendssv
 from .kdsource import KDSource, load
-from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv

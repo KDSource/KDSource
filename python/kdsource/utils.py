@@ -16,11 +16,9 @@ def pt2pdg(pt):
     Convert particle type to pdgcode.
 
     Valid particle types are:
-
         - 'n': neutron  (pdgcode = 2112)
         - 'p': photon   (pdgcode = 22)
         - 'e': electron (pdgcode = 11)
-
     For other particle types, 0 is returned.
 
     Parameters
@@ -42,11 +40,9 @@ def pdg2pt(pdgcode):
     Convert pdgcode to particle type.
 
     Available pdgcode to be converted are:
-
         - 2112: neutron  (pt = 'n')
         - 22:   photon   (pt = 'p')
         - 11:   electron (pt = 'e')
-
     For other pdgcodes, '0' is returned.
 
     Parameters
@@ -148,7 +144,6 @@ class Box:
         mask: array-like
             Array of bools with same len as vecs. Each element has the
             following value:
-
             - True: if the corresponding vecs element has all its
                     variables above vec0 values and below vec1 values.
             - False: otherwise.
