@@ -150,6 +150,15 @@ int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	return 0;
 }
 
+int t_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->time += bw*metric->scaling[7] * rand_norm();
+	return 0;
+}
+int Dec_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
+	part->time *= pow(10, bw*metric->scaling[7] * rand_norm());
+	return 0;
+}
+
 int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw){
 	double xmin=metric->params[0], xmax=metric->params[1];
 	double ymin=metric->params[2], ymax=metric->params[3];
