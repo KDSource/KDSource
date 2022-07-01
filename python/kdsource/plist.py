@@ -141,7 +141,7 @@ def savessv(
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered
+        Array of particles. Must have shape (N, 8), with columns ordered
         as in varnames list.
     ws: array-like
         Particle weights.
@@ -180,7 +180,7 @@ def savessv(
                     p[4],
                     p[5],
                     p[6],
-                    0,
+                    p[7],
                     ws[idx],
                     0,
                     0,
@@ -203,7 +203,7 @@ def appendssv(pt, parts, ws, outfile):
     pt: str
         Particle type. See pt2pdg for available particle types.
     parts: array-like
-        Array of particles. Must have shape (N, 7), with columns ordered
+        Array of particles. Must have shape (N, 8), with columns ordered
         as in varnames list.
     ws: array-like
         Particle weights.
@@ -228,7 +228,7 @@ def appendssv(pt, parts, ws, outfile):
                     p[4],
                     p[5],
                     p[6],
-                    0,
+                    p[7],
                     ws[idx],
                     0,
                     0,
@@ -369,7 +369,7 @@ class PList:
         -------
         [parts,ws]: list
             Array of particles and weights. Particles array will have
-            shape (N', 7), with columns ordered as in varnames list.
+            shape (N', 8), with columns ordered as in varnames list.
         """
         if N < 0:
             N = mcpl.MCPLFile(self.filename).nparticles
@@ -377,9 +377,9 @@ class PList:
         pl.skip_forward(skip)
         pb = pl.read_block()
         if pb is None:
-            return np.zeros(0), np.zeros((0, 7))
+            return np.zeros(0), np.zeros((0, 8))
         parts = np.stack(
-            (pb.ekin, pb.x, pb.y, pb.z, pb.ux, pb.uy, pb.uz), axis=1
+            (pb.ekin, pb.x, pb.y, pb.z, pb.ux, pb.uy, pb.uz, pb.time), axis=1
         )
         ws = pb.weight
         mask = np.logical_and(ws > 0, pb.pdgcode == pt2pdg(self.pt))
@@ -391,8 +391,8 @@ class PList:
             parts[:, 1:4] = self.rot.apply(parts[:, 1:4])
             parts[:, 4:7] = self.rot.apply(parts[:, 4:7])
         if self.x2z:  # Apply permutation (x,y,z) -> (y,z,x)
-            ekin, x, y, z, ux, uy, uz = parts.T
-            parts = np.array([ekin, y, z, x, uy, uz, ux]).T
+            ekin, x, y, z, ux, uy, uz, t = parts.T
+            parts = np.array([ekin, y, z, x, uy, uz, ux, t]).T
         return parts, ws
 
     def save(self, pltree):

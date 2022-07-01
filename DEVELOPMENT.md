@@ -101,7 +101,7 @@ Test Python API:
 ```bash
 tox -r -c python
 ```
-Check that style, tests and coverage test succeed. If style fails, use `black` tool to format Python code.
+Check that style, tests and coverage test succeed. If style fails, you can fix the style error manually or use `black` tool to format Python code.
 
 Check documentation:
 ```bash

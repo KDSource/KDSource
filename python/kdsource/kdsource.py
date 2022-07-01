@@ -24,9 +24,9 @@ R_gaussian = 1 / (2 * np.sqrt(np.pi))  # Roughness of gaussian kernel
 
 STD_DEFAULT = 1
 
-varnames = ["ekin", "x", "y", "z", "dx", "dy", "dz"]
+varnames = ["ekin", "x", "y", "z", "dx", "dy", "dz", "t"]
 varmap = {name: idx for idx, name in enumerate(varnames)}
-units = ["MeV", "cm", "cm", "cm", "", "", ""]
+units = ["MeV", "cm", "cm", "cm", "", "", "", "ms"]
 
 
 def load(xmlfilename, N=-1):
@@ -174,7 +174,7 @@ class KDSource:
         ----------
         parts: array-like
             Array of particles where evaluate density. Must have shape
-            (obs, 7), with columns being [ekin, x, y, z, dx, dy, dz].
+            (obs, 8), with columns being [ekin, x, y, z, dx, dy, dz, t].
 
         Returns
         -------
@@ -512,6 +512,7 @@ class KDSource:
         mask = np.logical_and(mask1, mask2)
         if np.sum(mask) == 0:
             raise Exception("No particles in [vec0,vec1] range.")
+        # This function assumes that energy is the first defined metric
         vecs = self.kde.data[:, 0][mask].reshape(-1, 1)
         ws = self.kde.weights[mask]
         N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
@@ -539,6 +540,102 @@ class KDSource:
         plt.xlabel(r"$E\ [MeV]$")
         plt.ylabel(
             r"$J\ \left[ \frac{{{}}}{{MeV\ s}} \right]$".format(self.plist.pt)
+        )
+        plt.grid()
+        plt.legend()
+        plt.tight_layout()
+
+        return [plt.gcf(), [scores, errs]]
+
+    def plot_t(self, grid_t, vec0=None, vec1=None, **kwargs):
+        """
+        1D plot of the time distribution.
+
+        Same as plot("t", grid_t), but applying jacobian of time
+        parametrization (if any). When using Decade metric, plot
+        method will give plots with units [s-1] (decade is
+        dimesionless), while this method will produce the expected
+        spectrum with units [s-2].
+
+        Parameters
+        ----------
+        grid_t: array-like
+            1D array with values of t.
+        vec0: array-like
+            Lower limits of integration range for other variables. Must
+            be of shape (geom.dim,), with variables ordered as in
+            varnames parameter of the geometry. Value of energy variable
+            will be ignored.
+        vec1: array-like
+            Upper limits of integration range for other variables. Same
+            considerations as for vec0.
+        **kwargs: optional
+            Additional parameters for plotting options:
+
+            fact: float
+                Factor to apply on all densities. Default: 1
+            label: str
+                Line label in plot legend.
+            adjust_bw: str
+                If True, a Silverman factor will be applied to adjust
+                the bandwidth to the dimension and number of samples
+                used in plot. Default: False.
+
+        Returns
+        -------
+        [fig, [scores, errs]]:
+            Figure object, and evaluated densities and statistic errors.
+        """
+        if self.fitted is False:
+            raise Exception("Must fit before plotting.")
+        if "label" not in kwargs:
+            kwargs["label"] = "KDE"
+        if "adjust_bw" not in kwargs:
+            kwargs["adjust_bw"] = False
+        trues = np.ones(len(self.kde.data), dtype=bool)
+        if vec0 is not None:
+            mask1 = np.logical_and.reduce(
+                vec0 / self.scaling <= self.kde.data, axis=1
+            )
+        else:
+            mask1 = trues
+        if vec1 is not None:
+            mask2 = np.logical_and.reduce(
+                self.kde.data <= vec1 / self.scaling, axis=1
+            )
+        else:
+            mask2 = trues
+        mask = np.logical_and(mask1, mask2)
+        if np.sum(mask) == 0:
+            raise Exception("No particles in [vec0,vec1] range.")
+        # This function assumes that time is the last defined metric
+        vecs = self.kde.data[:, -1][mask].reshape(-1, 1)
+        ws = self.kde.weights[mask]
+        N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
+        scaling = self.scaling[-1]
+        bw = self.kde.bw
+        if kwargs["adjust_bw"]:
+            bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
+        kde = TreeKDE(bw=bw)
+        kde.fit(vecs, weights=ws)
+        grid = self.geom.ms[-1].transform(grid_t)
+        jacs = self.geom.ms[-1].jac(grid_t)
+        scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
+        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
+        scores *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
+        errs *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
+        if "fact" in kwargs:
+            scores *= kwargs["fact"]
+            errs *= kwargs["fact"]
+
+        plt.errorbar(
+            grid_t, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
+        )
+        plt.xscale("log")
+        plt.yscale("log")
+        plt.xlabel(r"$t$ [ms]")
+        plt.ylabel(
+            r"$J\ \left[ \frac{{{}}}{{s^2}} \right]$".format(self.plist.pt)
         )
         plt.grid()
         plt.legend()
