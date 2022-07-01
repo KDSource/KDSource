@@ -121,8 +121,8 @@ class Geometry(Metric):
         ----------
         metrics: list
             List of metrics for each subset of variables. They must
-            cover all particle variables (energy, position and
-            direction).
+            cover all particle variables (energy, position,
+            direction and time).
         trasl: array-like, optional
             Spatial traslation for source. Default is no traslation.
         rot: numpy.ndarray or scipy.spatial.transform.Rotation, optional
@@ -133,7 +133,7 @@ class Geometry(Metric):
             and before traslation in inverse_transform. Default is no
             rotation.
         """
-        partvars = range(7)
+        partvars = range(8)
         varnames = sum([metric.varnames for metric in metrics], [])
         units = sum([metric.units for metric in metrics], [])
         volunits = "".join([metric.volunits + " " for metric in metrics])[:-1]
@@ -175,7 +175,7 @@ class Geometry(Metric):
 
     def inverse_transform(self, vecs):
         """Transform parametrized variables to particle variables."""
-        parts = np.zeros((len(vecs), 7))
+        parts = np.zeros((len(vecs), 8))
         end = 0
         for metric in self.ms:
             start = end
@@ -353,6 +353,43 @@ class Lethargy(Metric):
         if dim != 1 or len(params) != 1 or int(mtree[1].attrib["nps"]) != 1:
             raise Exception("Invalid metric tree.")
         return Lethargy(*params)
+
+class Time(Metric):
+    def __init__(self):
+        """Simple metric for time, with no transformation."""
+        super().__init__([7], ["t"], ["ms"], "ms")
+
+    def load(mtree):
+        """Build Time."""
+        return Time()
+
+
+class Decade(Metric):
+    def __init__(self):
+        """
+        Decade metric for time.
+
+        Decade is defined as:
+            d = log(t)
+        """
+        super().__init__([7], ["d"], ["[dec]"], "ms")
+
+    def transform(self, ts):
+        """Transform time to decade."""
+        return np.log10(ts)
+
+    def inverse_transform(self, ds):
+        """Transform deacde to time."""
+        return 10**ds
+
+    def jac(self, ts):
+        """Jacobian of lethargy transformation."""
+        return np.log10(np.e) / ts.reshape(-1)
+
+    @staticmethod
+    def load(mtree):
+        """Build Decade."""
+        return Decade()
 
 
 class Vol(Metric):
@@ -785,6 +822,8 @@ _metrics = {
     "Isotrop": Isotrop,
     "Polar": Polar,
     "PolarMu": PolarMu,
+    "Time": Time,
+    "Decade": Decade,
 }
 
 # Aliases for usual geometries
@@ -804,8 +843,8 @@ def GeomFlat(
     """
     Build flat neutron source.
 
-    Energy metric is Lethargy, position metric is SurfXY, and direction
-    metric is Isotrop.
+    Energy metric is Lethargy, position metric is SurfXY, direction
+    metric is Isotrop, and time metric is Decade.
 
     See Metric's and Geometry constructors for parameters docs.
     """
@@ -814,6 +853,7 @@ def GeomFlat(
             Lethargy(E0),
             SurfXY(xmin, xmax, ymin, ymax, z),
             Isotrop(keep_zdir=keep_zdir),
+            Decade()
         ],
         trasl=trasl,
         rot=rot,
@@ -826,12 +866,13 @@ def GeomGuide(
     """
     Build neutron source for leaks thru guide mirrors.
 
-    Energy metric is Lethargy, position and direction metric is Guide.
+    Energy metric is Lethargy, position and direction metric is Guide,
+    and time metric is Decade.
 
     See Metric's and Geometry constructors for parameters docs.
     """
     return Geometry(
-        [Lethargy(E0), Guide(xwidth, yheight, zmax, rcurv)],
+        [Lethargy(E0), Guide(xwidth, yheight, zmax, rcurv), Decade()],
         trasl=trasl,
         rot=rot,
     )
@@ -850,13 +891,13 @@ def GeomActiv(
     """
     Build photon volumetric activation source.
 
-    Energy metric is Energy, position metric is Vol, and direction
-    metric is Isotrop.
+    Energy metric is Energy, position metric is Vol, direction
+    metric is Isotrop, and time metric is Time.
 
     See Metric's and Geometry constructors for parameters docs.
     """
     return Geometry(
-        [Energy(), Vol(xmin, xmax, ymin, ymax, zmin, zmax), Isotrop()],
+        [Energy(), Vol(xmin, xmax, ymin, ymax, zmin, zmax), Isotrop(), Time()],
         trasl=trasl,
         rot=rot,
     )
