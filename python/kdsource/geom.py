@@ -372,6 +372,9 @@ class Vol(Metric):
         max value. By default these are -infinity and infinity,
         respectively. All positions in the particle list should be
         inside these limits.
+
+        Axis system of reference can be changed by means of the 'trasl'
+        and 'rot' arguments of the Geometry object.
         """
         super().__init__(
             [1, 2, 3], ["x", "y", "z"], ["cm", "cm", "cm"], "cm^3"
@@ -415,6 +418,9 @@ class SurfXY(Metric):
         inside these limits.
 
         z has the fixed value given as argument.
+
+        Axis system of reference can be changed by means of the 'trasl'
+        and 'rot' arguments of the Geometry object.
         """
         super().__init__([1, 2, 3], ["x", "y"], ["cm", "cm"], "cm^2")
         self.z = z
@@ -467,6 +473,9 @@ class Guide(Metric):
             - mu: cosine of angle between particle direction and mirror\
             normal.
             - phi: azimuthal angle, starting from z direction, in [deg].
+
+        Axis system of reference can be changed by means of the 'trasl'
+        and 'rot' arguments of the Geometry object.
 
         Parameters
         ----------
@@ -619,6 +628,9 @@ class Isotrop(Metric):
         Distance is measured as the euclidean distance between 3D
         unitary direction vectors.
 
+        Axis orientation can be changed by means of the rot' argument of
+        the Geometry object.
+
         Parameters
         ----------
         keep_xdir: bool
@@ -717,6 +729,9 @@ class Polar(Metric):
         Polar angles are defined as follows:
             theta: angle between direction and z, in [deg].
             phi: azimuthal angle, starting from x direction, in [deg].
+
+        Axis orientation can be changed by means of the rot' argument of
+        the Geometry object.
         """
         super().__init__([4, 5, 6], ["theta", "phi"], ["deg", "deg"], "sr^2")
 
@@ -753,6 +768,9 @@ class PolarMu(Metric):
         Polar parameters are defined as follows:
             mu: cosine of angle between direction and z, in [deg].
             phi: azimuthal angle, starting from x direction, in [deg].
+
+        Axis orientation can be changed by means of the rot' argument of
+        the Geometry object.
         """
         super().__init__([4, 5, 6], ["mu", "phi"], ["", "deg"], "sr")
 

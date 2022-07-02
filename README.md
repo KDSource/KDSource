@@ -111,7 +111,7 @@ Download and extract the `libxml2` and `iconv` archives, and add the path to the
 
 Important: The architecture (32 vs 64 bits) of the installed `libxml2` and `iconv` must be the same as the MinGW and CMake architecture. Also make sure that other `libxml2` or `iconv` files with different architecture are not in the `PATH`, or at least not ahead of the ones to be used.
 
-The following instructions use the command prompt, and therefore assume that the `bin` subdirectory of Git, MinGW and CMake are in the system `PATH`.
+The following instructions use the PowerShell command prompt, and therefore assume that the `bin` subdirectory of Git, MinGW and CMake are in the system `PATH`.
 
 1. First of all, clone this repository with all its submodules to a local repository.
 
@@ -144,12 +144,12 @@ The following instructions use the command prompt, and therefore assume that the
 5. KDSource is ready to be used in `C:\\path\\to\\kdsourceinstall`. For example, you can see the `kdtool-resample` command options with:
 
    ```bash
-   > /path/to/kdsourceinstall/bin/kdtool-resample --help
+   > C:\\path\\to\\kdsourceinstall\\bin\\kdtool-resample --help
    ```
 
    If you wish to have KDSource tools available in your path, add the `bin` subdirectory to the system `PATH`.
 
-   Note: Currently, the `kdtool` and `kdtool-resample` applications are not available on Windows.
+   Note: Currently, the `kdtool` application is not available on Windows, but the resampling tool can be invoked directly with `kdtool-resample`, as shown in the example above.
 
 
 
