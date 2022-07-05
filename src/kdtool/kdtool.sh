@@ -21,7 +21,6 @@ fi
 
 case "$1" in
 	"resample")
-		export LD_LIBRARY_PATH=$KDSDIR/lib
 		$KDSDIR/bin/kdtool-resample "${@:2}"
 		exit 0
 		;;
@@ -30,7 +29,6 @@ case "$1" in
 		exit 0
 		;;
 	"beamtest")
-		export LD_LIBRARY_PATH=$KDSDIR/lib
 		$KDSDIR/bin/kdtool-beamtest "${@:2}"
 		exit 0
 		;;
