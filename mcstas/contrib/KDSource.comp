@@ -60,7 +60,8 @@ SHARE
 DECLARE
 %{
 	int N;
-	double I, p2;
+	double I;
+	double p2;
 	
 	KDSource *kdsource;
 	double w_crit;

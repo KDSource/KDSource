@@ -1,0 +1,66 @@
+McStas simulation description file for kds_instrument_example.
+Date:    Wed Jul  6 14:18:25 2022
+Program: McStas 3.1 - Nov. 24, 2021
+
+begin instrument: kds_instrument_example
+  File: example/mccode
+  Source: kds_instrument_example.instr
+  Parameters: 
+  Trace_enabled: yes
+  Default_main: yes
+  Embedded_runtime: yes
+end instrument
+
+begin simulation: example
+  Format: McCode with text headers
+  URL: http://www.mccode.org
+  Creator: McStas 3.1 - Nov. 24, 2021
+  Instrument: kds_instrument_example.instr
+  Ncount: 1000000
+  Trace: no
+  Gravitation: no
+  Seed: 1657127905862602
+  Directory: example
+end simulation
+
+begin data
+  Date: Wed Jul  6 14:18:27 2022 (1657127907)
+  type: array_2d(90, 90)
+  Source: kds_instrument_example (kds_instrument_example.instr)
+  component: pos_det
+  position: 0 0 1
+  title: PSD monitor
+  Ncount: 2000000
+  filename: psd_mon.dat
+  statistics: X0=3.35897; dX=13.7344; Y0=3.01675; dY=12.6983;
+  signal: Min=0; Max=354; Mean=112.335;
+  values: 909913 953.894 909913
+  xvar: X 
+  yvar: Y 
+  xlabel: X position [cm]
+  ylabel: Y position [cm]
+  zvar: I
+  zlabel: Signal per bin
+  xylimits: -30 30 -30 30
+  variables: I I_err N
+end data
+
+begin data
+  Date: Wed Jul  6 14:18:27 2022 (1657127907)
+  type: array_1d(20)
+  Source: kds_instrument_example (kds_instrument_example.instr)
+  component: E_det
+  position: 0 0 1
+  title: Energy monitor
+  Ncount: 2000000
+  filename: E_mon.dat
+  statistics: X0=8.32639e+06; dX=1.31127e+06;
+  signal: Min=0; Max=695; Mean=169.85;
+  values: 3397 58.2838 3397
+  xvar: E
+  yvar: (I,I_err)
+  xlabel: Energy [meV]
+  ylabel: Intensity
+  xlimits: 0.1 1e+07
+  variables: E I I_err N
+end data

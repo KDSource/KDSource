@@ -1,0 +1,74 @@
+/********************************************************************************
+* 
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2008, All rights reserved
+*         Risoe National Laboratory, Roskilde, Denmark
+*         Institut Laue Langevin, Grenoble, France
+* 
+* This file was written by McStasScript, which is a 
+* python based McStas instrument generator written by 
+* Mads Bertelsen in 2019 while employed at the 
+* European Spallation Source Data Management and 
+* Software Center
+* 
+* Instrument kds_instrument_example
+* 
+* %Identification
+* Written by: José Robledo, Paul Toris and Zoe Prieto
+* Date: 13:51:32 on July 05, 2022
+* Origin: IB-CAB-CNEA
+* %INSTRUMENT_SITE: Generated_instruments
+* 
+* 
+* %Parameters
+* 
+* %End 
+********************************************************************************/
+
+DEFINE INSTRUMENT kds_instrument_example (
+)
+/********************************************************************************
+* The following line is necessary for mcrun to find all the libraried needed.
+* Must be modified accordingly to path of installation.
+********************************************************************************/
+DEPENDENCY "-lkdsource -lmcpl -lm -I/usr/local/KDSource/include -L/usr/local/KDSource/lib"
+DECLARE 
+%{
+int DistSrcDet = 1;
+double E_min = 0.1;
+double E_max = 1E+07;
+int ude_kde = 1;
+int loop = 1;
+%}
+
+INITIALIZE 
+%{
+// Start of initialize for generated kds_instrument_example
+%}
+
+TRACE 
+COMPONENT origin = Arm()
+AT (0,0,0) ABSOLUTE
+
+COMPONENT source = KDSource(
+ sourcefile = "source.xml", use_kde = 1,
+ loop = 1)
+AT (0,0,0) RELATIVE origin
+
+COMPONENT pos_det = PSD_monitor(
+ filename = "psd_mon.dat", xwidth = 0.6,
+ yheight = 0.6)
+AT (0,0,DistSrcDet) RELATIVE source
+
+COMPONENT E_det = E_monitor(
+ filename = "E_mon.dat", xwidth = 0.6,
+ yheight = 0.6, Emin = E_min,
+ Emax = E_max)
+AT (0,0,DistSrcDet) RELATIVE source
+
+FINALLY 
+%{
+// Start of finally for generated kds_instrument_example
+%}
+
+END
