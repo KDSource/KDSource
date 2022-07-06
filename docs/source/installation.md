@@ -2,16 +2,25 @@
 
 Currently, the only implemented installation method is via cloning the GitHub repository and building with CMake and Pip. See bellow for specifical instructions for Linux and Windows.
 
-## Linux:
+## Linux and Mac
 
 Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
 
-You can install `libxml2` with:
+If you are on linux OS you can install `libxml2` with:
+
 ```bash
    $ sudo apt-get update
    $ sudo apt-get install libxml2
 ```
+
 for Ubuntu, or similarly for other Linux distributions, using the corresponding package manager.
+
+In case you are in MacOS `libxml2` can be installed by using [Homebrew](https://brew.sh/):
+
+```bash
+   $ brew install libxml2
+```
+The following mandatory steps are valid for both MacOS and linux systems:
 
 1. First of all, clone this repository with all its submodules to a local repository.
 

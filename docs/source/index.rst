@@ -24,5 +24,5 @@ Contents
    self
    installation
    Tutorial.ipynb
-   usage
+   user-guide
    api-ref
