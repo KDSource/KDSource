@@ -1,0 +1,46 @@
+# Format: McCode with text headers
+# URL: http://www.mccode.org
+# Creator: McStas 3.1 - Nov. 24, 2021
+# Instrument: kds_instrument_example.instr
+# Ncount: 2000000
+# Trace: no
+# Gravitation: no
+# Seed: 1657127905862602
+# Directory: example
+# Date: Wed Jul  6 14:18:27 2022 (1657127907)
+# type: array_1d(20)
+# Source: kds_instrument_example (kds_instrument_example.instr)
+# component: E_det
+# position: 0 0 1
+# title: Energy monitor
+# Ncount: 2000000
+# filename: E_mon.dat
+# statistics: X0=8.32639e+06; dX=1.31127e+06;
+# signal: Min=0; Max=695; Mean=169.85;
+# values: 3397 58.2838 3397
+# xvar: E
+# yvar: (I,I_err)
+# xlabel: Energy [meV]
+# ylabel: Intensity
+# xlimits: 0.1 1e+07
+# variables: E I I_err N
+250000.0975 0 0 0 
+750000.0925 0 0 0 
+1250000.088 0 0 0 
+1750000.083 0 0 0 
+2250000.078 0 0 0 
+2750000.073 1 1 1 
+3250000.068 7 2.645751311 7 
+3750000.063 7 2.645751311 7 
+4250000.058 19 4.358898944 19 
+4750000.052 38 6.164414003 38 
+5250000.048 47 6.8556546 47 
+5750000.042 87 9.327379053 87 
+6250000.037 168 12.9614814 168 
+6750000.033 202 14.2126704 202 
+7250000.027 229 15.13274595 229 
+7750000.022 349 18.68154169 349 
+8250000.017 393 19.8242276 393 
+8750000.012 512 22.627417 512 
+9250000.008 643 25.35744467 643 
+9750000.002 695 26.36285265 695 

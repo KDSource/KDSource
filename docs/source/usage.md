@@ -1,4 +1,4 @@
-# User Guide
+# Other less documented examples
 
 Usage examples can be found in the [`docs/examples`](https://github.com/KDSource/KDSource/tree/master/docs/examples) subdirectory. At the moment these are:
 * [`Verification.ipynb`](https://github.com/KDSource/KDSource/tree/master/docs/examples/Verification.ipynb): Analytic example. KDSource is used to generate a source from a particle list sampled from an known correlated distribution, and the generated particles distributions are compared with the analytical density.
