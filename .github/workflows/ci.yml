@@ -18,6 +18,11 @@ jobs:
             python-version: 3.9,
           }
           - {
+            name: "MacOS_Latest",
+            os: macos-latest,
+            python-version: 3.9,
+          }
+          - {
             name: "Windows Latest",
             os: windows-latest,
             python-version: 3.9,
@@ -42,6 +47,23 @@ jobs:
           cd ..
           export PATH=$PATH:/usr/share/KDSource/bin
           kdtool -h
+          kdtool resample -h
+      - name: Install and test C API on MacOS
+        if: startsWith(matrix.config.name, 'MacOS')
+        run: |
+          brew update
+          brew install cmake libxml2
+          mkdir build
+          cd build
+          mkdir /Users/runner/work/KDSource/KDinstall
+          cmake .. -DCMAKE_INSTALL_PREFIX=/Users/runner/work/KDSource/KDinstall
+          make
+          make test
+          make install
+          cd ..
+          export PATH=$PATH:/Users/runner/work/KDSource/KDinstall/bin
+          kdtool -h
+          kdtool resample -h
       - name: Install and test C API on Windows
         if: startsWith(matrix.config.name, 'Windows')
         run: |

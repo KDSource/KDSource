@@ -28,6 +28,8 @@ find_package(LibXml2 REQUIRED)
 set(BUILD_WITHG4 OFF CACHE STRING "Whether to build Geant4 plugins if Geant4 is available.")
 add_subdirectory(mcpl)
 
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
 add_library(kdsource SHARED "${SRC}/kdsource/kdsource.c"
                             "${SRC}/kdsource/plist.c"
                             "${SRC}/kdsource/geom.c"
