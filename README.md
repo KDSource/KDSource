@@ -11,7 +11,7 @@
 
 
 This is source version of KDSource, a tool for Monte Carlo particle sources generation
-using Kernel Density Estimation.
+using Kernel Density Estimation. Visit our [Documentation Page](https://kdsource.readthedocs.io/en/latest/) for more details!
 
 KDSource assists Monte Carlo beams and shielding calculations, improving tally results in difficult problems. It allows to model big systems (e.g.: investigation reactor guides hall) thru spatial or temporal coupling of different simulations in different transport codes, implementing as well variance reduction.
 
@@ -44,16 +44,25 @@ The KDSource package consists in the following tools:
 
 Currently, the only implemented installation method is via cloning the GitHub repository and building with CMake and Pip. See bellow for specifical instructions for Linux and Windows.
 
-### Linux:
+### Linux and Mac
 
 Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
 
-You can install `libxml2` with:
+If you are on Linux OS you can install `libxml2` with:
+
 ```bash
    $ sudo apt-get update
    $ sudo apt-get install libxml2
 ```
+
 for Ubuntu, or similarly for other Linux distributions, using the corresponding package manager.
+
+In case you are in MacOS `libxml2` can be installed by using [Homebrew](https://brew.sh/):
+
+```bash
+   $ brew install libxml2
+```
+The following mandatory steps are valid for both MacOS and linux systems:
 
 1. First of all, clone this repository with all its submodules to a local repository.
 
@@ -166,7 +175,8 @@ Moreover, templates for common usage of KDSource in Monte Carlo simulations can 
 * [`postproc.ipynb`](templates/postproc.ipynb): Template for collecting integral results of simulations with McStas and/or TRIPOLI-4.
 * [`doseplots.ipynb`](templates/doseplots.ipynb): Template for plotting TRIPOLI-4 volume tallies (usually dose maps).
 * McStas templates:
-  * [`exe_McStas.sh`](templates/mcstas/exe_McStas.sh): Template for executing McStas with KDSource.
+  * [`kds_instrument_example.instr`](templates/mcstas/kds_instrument_example.instr): Template instrument for using KDSource in McStas.
+  * [`exe_McStas.sh`](templates/mcstas/exe_McStas.sh): Template for executing McStas using KDSource.
 * TRIPOLI-4 templates:
   * [`exe_Tripoli.sh`](templates/tripoli/exe_McStas.sh): Template for executing TRIPOLI-4 with KDSource.
   * [`KDSource.c`](templates/tripoli/KDSource.c): Template for using KDSource as an external source.

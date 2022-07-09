@@ -43,9 +43,12 @@ KDSource/
 +-- templates/                  : Template files for KDSource usage in Python and
 |                                 McStas and TRIPOLI-4 execution.
 +-- tests/                      : C API unit testing.
++-- .github/workflows/ci.yml    : Workflow file for GitHub Actions.
 ```
 
 # Workflow (Linux)
+
+This is the recommended workflow for developing and contributing to KDSource.
 
 ## Installation
 
@@ -92,15 +95,19 @@ make
 make test
 cd ..
 ```
+Check that make process completes correctly and that all tests are passed.
+
 Test Python API:
 ```bash
 tox -r -c python
 ```
+Check that style, tests and coverage test succeed. If style fails, use `black` tool to format Python code.
+
 Check documentation:
 ```bash
 sphinx-build -b html docs/source docs/html
 ```
-The HTML files will be built in `docs/html`.
+The HTML files will be built in `docs/html`. These are the files that will be built in the [Documentation Page](https://kdsource.readthedocs.io/en/latest/). Check that the presented documentation is correct.
 
 ## Contribution
 

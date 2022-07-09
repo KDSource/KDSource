@@ -6,7 +6,7 @@ Currently, the only implemented installation method is via cloning the GitHub re
 
 Requirements: Git 2.14+, GCC 9+, CMake 3+, Pip 22+ (Python 3.8+), LibXml2 2.9.3.
 
-If you are on linux OS you can install `libxml2` with:
+If you are on Linux OS you can install `libxml2` with:
 
 ```bash
    $ sudo apt-get update
