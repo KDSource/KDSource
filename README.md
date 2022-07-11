@@ -1,5 +1,5 @@
 <p align="center">
-<img src="img/kdsource_logo.png" alt="logo" height="100"/>
+<img src="docs/img/kdsource_logo.png" alt="logo" height="100"/>
 </p>
 
 ![KDSource](https://img.shields.io/badge/KDSource-0.1.0-brightgreen)
