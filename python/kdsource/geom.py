@@ -494,6 +494,66 @@ class SurfXY(Metric):
             raise Exception("Invalid metric tree.")
         return SurfXY(*params)
 
+class SurfCirc(Metric):
+    def __init__(
+        self, rho_min=0, rho_max=np.inf, psi_min=-np.pi, psi_max=np.pi, z=0
+    ):
+        """
+        Polar parametrization for position.
+
+        Polar variables are defined as follows:
+            rho: 
+            psi: azimuthal angle, starting from x direction, in [deg].
+
+        Spatial variable rho is delimited between a min and max
+        value. By default these are zero and infinity,
+        respectively. All positions in the particle list should be
+        inside these limits.
+
+        z has the fixed value given as argument.
+        """
+        super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "deg.cm")            #???
+        self.z = z
+        self.rho_min = rho_min
+        self.rho_max = rho_max
+        self.psi_min = psi_min
+        self.psi_max = psi_max
+
+    def transform(self, poss):                                   # poss=parts[:,SurfaceXY.partvars] -> poss[i,:]=[[xi], [yi], [zi]]
+        """Transform volume position (x,y,z) to circular flat position (rho,psi)."""
+        rhos = np.sqrt(poss[:,0]**2+poss[:,1]**2)
+        psis = np.arctan2(poss[:,1],poss[:,0])*180/np.pi         # Plot x distribution
+        return np.stack((rhos, psis), axis=1)                    # -> poss[:,:2]=[[x1,...,xn],[y1,...,yn]]
+
+    def inverse_transform(self, poss):
+        """Transform polar flat position (rho,psi) to volume position (x,y,z)."""
+        z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))  # -> z_col = [[z1,...,zn]]
+        x_col = poss[:,0]*np.cos(poss[:,1]* np.pi / 180)
+        y_col = poss[:,0]*np.sin(poss[:,1]* np.pi / 180)
+        return np.stack((x_col, y_col, z_col), axis=1)          
+
+    def save(self, mtree):
+        """Save SurfCirc parameters into XML tree."""
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
+        paramsel.set("nps", "5")
+        paramsel.text = "{} {} {} {} {}".format(
+            self.rho_min, self.rho_max, self.psi_min, self.psi_max, self.z
+        )
+        
+    def jac(self, poss):
+        """Jacobian of lethargy transformation."""
+        rhos = np.sqrt(poss[:,0]**2+poss[:,1]**2)
+        return 1 / rhos.reshape(-1)
+
+    @staticmethod
+    def load(mtree):
+        """Load parameters from XML tree and build SurfXY."""
+        dim = int(mtree[0].text)
+        params = np.array(mtree[1].text.split(), dtype="float64")
+        if dim != 2 or len(params) != 5 or int(mtree[1].attrib["nps"]) != 5:
+            raise Exception("Invalid metric tree.")
+        return SurfXY(*params)
 
 class Guide(Metric):
     def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
@@ -837,6 +897,7 @@ _metrics = {
     "Lethargy": Lethargy,
     "Vol": Vol,
     "SurfXY": SurfXY,
+    "SurfCirc": SurfCirc,    
     "Guide": Guide,
     "Isotrop": Isotrop,
     "Polar": Polar,
