@@ -37,11 +37,12 @@ typedef double (*WeightFun)(const mcpl_particle_t* part);
 
 typedef struct KDSource{
 	double J;       // Total current [1/s]
+	char kernel;	// Kernel
 	PList* plist;   // Particle list
 	Geometry* geom; // Geometry defining variable treatment
 } KDSource;
 
-KDSource* KDS_create(double J, PList* plist, Geometry* geom);
+KDSource* KDS_create(double J, char kernel, PList* plist, Geometry* geom);
 KDSource* KDS_open(const char* xmlfilename);
 int KDS_sample2(KDSource* kds, mcpl_particle_t* part, int perturb, double w_crit, WeightFun bias, int loop);
 int KDS_sample(KDSource* kds, mcpl_particle_t* part);
