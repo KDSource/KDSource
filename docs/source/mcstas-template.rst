@@ -1,3 +1,3 @@
 Using a KDSource as source component in McStas
 ==============================================
-.. include:: ../../templates/mcstas/README.rst
+.. include:: ../examples/3_mcstas_source_det/README.rst

@@ -12,17 +12,22 @@ void display_usage(){
 	printf("Resample particles from source defined in XML file sourcefile, and save them in\n");
 	printf("a MCPL file.\n\n");
 	printf("Options:\n");
-	printf("\t-o outfile: Name of MCPL file with new samples\n");
-	printf("\t            (default: \"resampled.mcpl\").\n");
-	printf("\t-n N:       Number of new samples (default: 1E5).\n");
-	printf("\t-h, --help: Display usage instructions.\n");
+	printf("\t-o outfile:   Name of MCPL file with new samples\n");
+	printf("\t              (default: \"resampled.mcpl\").\n");
+	printf("\t-n N:         Number of new samples (default: 1E5).\n");
+	printf("\t--no-perturb: Do not perturb particles, i.e. turn off the KDE method.\n");
+	printf("\t              Translations and/or rotations are still applied. This\n");
+	printf("\t              option is useful for translating and/or rotating particle.\n");
+	printf("\t              lists.\n");
+	printf("\t-h, --help:   Display usage instructions.\n");
 
 }
 
-int resample_parse_args(int argc, char **argv, const char** filename, const char** outfilename, long int* N){
+int resample_parse_args(int argc, char **argv, const char** filename, const char** outfilename, long int* N, int* no_perturb){
 	*filename = 0;
 	*outfilename = 0;
 	*N = 1E5;
+	*no_perturb = 0;
 	int i;
 	for(i=1; i<argc; i++){
 		if(argv[i][0] == '\0')
@@ -37,6 +42,10 @@ int resample_parse_args(int argc, char **argv, const char** filename, const char
 		}
 		if(strcmp(argv[i],"-n") == 0){
 			*N = atof(argv[++i]);
+			continue;
+		}
+		if(strcmp(argv[i],"--no-perturb")==0){
+			*no_perturb = 1;
 			continue;
 		}
 		if(argv[i][0] == '-'){
@@ -62,8 +71,9 @@ int main(int argc, char *argv[]){
 	const char *filename;
 	const char *outfilename;
 	long int N;
+	int no_perturb;
 
-	if(resample_parse_args(argc, argv, &filename, &outfilename, &N)) return 1;
+	if(resample_parse_args(argc, argv, &filename, &outfilename, &N, &no_perturb)) return 1;
 
 	KDSource* kds = KDS_open(filename);
 	mcpl_particle_t part;
@@ -76,7 +86,7 @@ int main(int argc, char *argv[]){
 	printf("Resampling...\n");
 	long int i;
 	for(i=0; i<N; i++){
-		KDS_sample2(kds, &part, 1, w_crit, NULL, 1);
+		KDS_sample2(kds, &part, !no_perturb, w_crit, NULL, 1);
 		mcpl_add_particle(file, &part);
 	}
 	mcpl_closeandgzip_outfile(file);

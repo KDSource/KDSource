@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<KDSource>
+	<J units="1/s">1.0</J>
+	<PList>
+		<pt>n</pt>
+		<mcplname>/media/inti/Disco local/Users/Osiris Inti Abbate/Documents/Universidad/KDSource/KDSource/docs/user-guide/surf_source.mcpl.gz</mcplname>
+		<trasl> 118.5497276 -102.897199     5.       </trasl>
+		<rot> 0.          0.         -2.75762022</rot>
+		<x2z>1</x2z>
+	</PList>
+	<Geom order="3">
+		<Lethargy>
+			<dim>1</dim>
+			<params nps="1">10</params>
+		</Lethargy>
+		<SurfXY>
+			<dim>2</dim>
+			<params nps="5">-inf inf -inf inf 0</params>
+		</SurfXY>
+		<Isotrop>
+			<dim>3</dim>
+			<params nps="3">0 0 1</params>
+		</Isotrop>
+		<trasl> 118.5497276 -102.897199     5.       </trasl>
+		<rot> 0.          0.         -2.75762022</rot>
+	</Geom>
+	<scaling> 1.58286164 12.61807222 12.52861048  0.36809604  0.36809604  0.36809604</scaling>
+	<BW variable="0">0.4755528751084532</BW>
+</KDSource>
