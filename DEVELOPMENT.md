@@ -105,9 +105,9 @@ Check that style, tests and coverage test succeed. If style fails, you can fix t
 
 Check documentation:
 ```bash
-sphinx-build -b html docs/source docs/html
+sphinx-build -b html docs docs/build
 ```
-The HTML files will be built in `docs/html`. These are the files that will be built in the [Documentation Page](https://kdsource.readthedocs.io/en/latest/). Check that the presented documentation is correct.
+The HTML files will be built in `docs/build`, being `index.html` the main page. These are the files that will be built in the [Documentation Page](https://kdsource.readthedocs.io/en/latest/). Check that the presented documentation is correct.
 
 ## Contribution
 

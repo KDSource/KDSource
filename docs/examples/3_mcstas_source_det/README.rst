@@ -1,3 +1,6 @@
+Using a KDSource as source component in McStas
+==============================================
+
 Using this template
 -------------------
 
