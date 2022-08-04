@@ -19,8 +19,7 @@ from .kde import bw_silv
 from .kde import optimize_bw
 from .plist import PList
 
-
-R_gaussian = 1 / (2 * np.sqrt(np.pi))  # Roughness of gaussian kernel
+R = {'g': 1 / (2 * np.sqrt(np.pi)), 'e': 0.6}   # Roughness of the kernel
 
 STD_DEFAULT = 1
 
@@ -111,6 +110,7 @@ class KDSource:
         self.scaling = None
         self.J = J
         self.kernel = kernel
+        self.R = R[self.kernel[0]]
         self.fitted = False
 
     def fit(self, N=-1, skip=0, scaling=None, **kwargs):
@@ -191,7 +191,7 @@ class KDSource:
         )
         errs = np.sqrt(
             evals
-            * R_gaussian ** self.geom.dim             #check if Epanechnikov kernel is used
+            * self.R ** self.geom.dim                                    
             / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling))
         )
         evals *= self.J * jacs
@@ -428,7 +428,7 @@ class KDSource:
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
-        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
+        errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))   
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         if "fact" in kwargs:
@@ -528,7 +528,7 @@ class KDSource:
         grid = self.geom.ms[0].transform(grid_E)
         jacs = self.geom.ms[0].jac(grid_E)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
-        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
+        errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
         if "fact" in kwargs:
@@ -815,7 +815,7 @@ class KDSource:
         grid = np.reshape(np.meshgrid(*grids), (2, -1)).T
         scores = 1 / np.prod(scaling) * kde.evaluate(grid / scaling)
         errs = np.sqrt(
-            scores * R_gaussian ** 2 / (N_eff * np.mean(bw) * np.prod(scaling))
+            scores * self.R ** 2 / (N_eff * np.mean(bw) * np.prod(scaling))
         )
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
