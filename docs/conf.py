@@ -44,7 +44,7 @@ html_theme = "sphinx_rtd_theme"
 # -- Options for EPUB output
 epub_show_urls = "footnote"
 
-html_logo = "https://raw.githubusercontent.com/KDSource/KDSource/docs/docs/img/kdsource_logo.png"
+html_logo = "img/kdsource_logo.svg"
 html_theme_options = {
     'logo_only': True,
     'display_version': False,
