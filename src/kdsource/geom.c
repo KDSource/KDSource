@@ -197,39 +197,6 @@ int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char 
 	return 0;
 }
 
-int SurfCirc_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel){
-	double rho_min=metric->params[0], rho_max=metric->params[1];
-	double psi_min=metric->params[2], psi_max=metric->params[3];
-	double rho, psi, rho2, psi2;
-
-	rho = sqrt(part->position[0]*part->position[0]+part->position[1]*part->position[1]);
-	psi = atan2(part->position[1], part->position[0]);
-	// printf("rho:%f, psi:%f \n", rho, psi);
-
-	rho2 = rho + bw*metric->scaling[0] * rand_type(kernel);
-	// while((rho2 < rho_min) || (rho2 > rho_max)){
-	// 	rho2 = rho + bw*metric->scaling[0] * rand_type(kernel);
-	// }
-
-	psi2 = psi + bw*metric->scaling[1]*M_PI/180 * rand_type(kernel);
-	// while((psi2 < psi_min) || (psi2>psi_max)){
-	// 	psi2 = psi + bw*metric->scaling[1]*M_PI/180 * rand_type(kernel);
-	// }
-
-	while((rho2 < rho_min) || (rho2 > rho_max)){
-		if(rho2 < rho_min) rho2 += 2 * (rho_min - rho2);
-		else               rho2 -= 2 * (rho2 - rho_max);
-	}
-
-	while((psi2 < psi_min) || (psi2>psi_max)){
-		if(psi2 < psi_min) psi2 += 2 * (psi_min - psi2);
-		else               psi2 -= 2 * (psi2 - psi_max);
-	}
-
-	part->position[0] = rho2*cos(psi2);
-	part->position[1] = rho2*sin(psi2);
-	return 0;
-}
 
 int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel){
 	double x=part->position[0], y=part->position[1], z=part->position[2];
