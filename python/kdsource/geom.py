@@ -949,4 +949,3 @@ def GeomActiv(
         trasl=trasl,
         rot=rot,
     )
-

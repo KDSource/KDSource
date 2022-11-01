@@ -191,7 +191,7 @@ class KDSource:
         )
         errs = np.sqrt(
             evals
-            * self.R ** self.geom.dim                                    
+            * self.R ** self.geom.dim
             / (self.N_eff * np.mean(self.kde.bw) * np.prod(self.scaling))
         )
         evals *= self.J * jacs
@@ -428,7 +428,7 @@ class KDSource:
         kde = TreeKDE(bw=bw)
         kde.fit(vecs, weights=ws)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
-        errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))   
+        errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights)
         if "fact" in kwargs:
@@ -624,7 +624,7 @@ class KDSource:
         grid = self.geom.ms[-1].transform(grid_t)
         jacs = self.geom.ms[-1].jac(grid_t)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
-        errs = np.sqrt(scores * R_gaussian / (N_eff * np.mean(bw) * scaling))
+        errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))
         scores *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
         errs *= self.J * np.sum(ws) / np.sum(self.kde.weights) * jacs
         if "fact" in kwargs:

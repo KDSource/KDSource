@@ -165,8 +165,8 @@ def savessv(
                 pol-y                   pol-z  userflags\n"
         )
         pdgcode = ptmap[pt]
-        fmtstr = "%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g\
-            %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
+        fmtstr = "%5i %11i %23.18g %23.18g %23.18g %23.18g %23.18g \
+            %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g %23.18g 0x%08x\n"
         for idx, p in enumerate(parts):
             fout.write(
                 fmtstr
