@@ -845,7 +845,6 @@ _metrics = {
     "Decade": Decade,
 }
 
-
 # Aliases for usual geometries
 
 
