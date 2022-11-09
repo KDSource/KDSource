@@ -201,6 +201,9 @@ int SurfCirc_perturb(const Metric* metric, mcpl_particle_t* part, double bw, cha
 	double psi_min=metric->params[2], psi_max=metric->params[3];
 	double rho, psi, rho2, psi2;
 
+	rho_min *= rho_min;
+	rho_max *= rho_max;
+
 	rho = part->position[0]*part->position[0]+part->position[1]*part->position[1];
 	psi = atan2(part->position[1], part->position[0]);
 

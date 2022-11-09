@@ -512,8 +512,8 @@ class SurfCirc(Metric):
         """
         super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "deg.cm")
         self.z = z
-        self.rho_min = rho_min**2
-        self.rho_max = rho_max**2
+        self.rho_min = rho_min
+        self.rho_max = rho_max
         self.psi_min = psi_min
         self.psi_max = psi_max
 
@@ -521,7 +521,7 @@ class SurfCirc(Metric):
         """
         Transform volume position (x,y,z) to circular flat position (rho,psi).
         """
-        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)**2
+        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
         return np.stack((rhos, psis), axis=1)
 
@@ -531,8 +531,8 @@ class SurfCirc(Metric):
         to volume position (x,y,z).
         """
         z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))
-        x_col = poss[:, 0]**0.5 * np.cos(poss[:, 1] * np.pi / 180)
-        y_col = poss[:, 0]**0.5 * np.sin(poss[:, 1] * np.pi / 180)
+        x_col = poss[:, 0] * np.cos(poss[:, 1] * np.pi / 180)
+        y_col = poss[:, 0] * np.sin(poss[:, 1] * np.pi / 180)
         return np.stack((x_col, y_col, z_col), axis=1)
 
     def save(self, mtree):
