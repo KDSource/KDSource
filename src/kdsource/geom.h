@@ -60,14 +60,15 @@ int Dec_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char ker
 
 int Vol_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 int SurfXY_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
+int SurfCirc_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 int Guide_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
 int Isotrop_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 int Polar_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel);
 
-static const int _n_metrics = 10;
-static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "Guide", "Isotrop", "Polar", "PolarMu", "Time", "Decade"};
+static const int _n_metrics = 11;
+static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "SurfCirc", "Guide", "Isotrop", "Polar", "PolarMu", "Time", "Decade"};
 static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb, t_perturb, Dec_perturb};
 
 
