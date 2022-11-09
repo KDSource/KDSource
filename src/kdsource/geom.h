@@ -69,7 +69,7 @@ int PolarMu_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char
 
 static const int _n_metrics = 11;
 static const char *_metric_names[] = {"Energy", "Lethargy", "Vol", "SurfXY", "SurfCirc", "Guide", "Isotrop", "Polar", "PolarMu", "Time", "Decade"};
-static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb, t_perturb, Dec_perturb};
+static const PerturbFun _metric_perturbs[] = {E_perturb, Let_perturb, Vol_perturb, SurfXY_perturb, SurfCirc_perturb, Guide_perturb, Isotrop_perturb, Polar_perturb, PolarMu_perturb, t_perturb, Dec_perturb};
 
 
 #endif
