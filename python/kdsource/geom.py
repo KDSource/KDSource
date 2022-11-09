@@ -494,6 +494,7 @@ class SurfXY(Metric):
             raise Exception("Invalid metric tree.")
         return SurfXY(*params)
 
+
 class SurfCirc(Metric):
     def __init__(
         self, rho_min=0, rho_max=np.inf, psi_min=-np.pi, psi_max=np.pi, z=0
@@ -517,17 +518,22 @@ class SurfCirc(Metric):
         self.psi_max = psi_max
 
     def transform(self, poss):
-        """Transform volume position (x,y,z) to circular flat position (rho,psi)."""
-        rhos = np.sqrt(poss[:,0]**2+poss[:,1]**2)**2
-        psis = np.arctan2(poss[:,1],poss[:,0])*180/np.pi
+        """
+        Transform volume position (x,y,z) to circular flat position (rho,psi).
+        """
+        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)**2
+        psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
         return np.stack((rhos, psis), axis=1)
 
     def inverse_transform(self, poss):
-        """Transform polar flat position (rho,psi) to volume position (x,y,z)."""
+        """
+        Transform polar flat position (rho,psi)
+        to volume position (x,y,z).
+        """
         z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))
-        x_col = poss[:,0]**0.5*np.cos(poss[:,1]* np.pi / 180)
-        y_col = poss[:,0]**0.5*np.sin(poss[:,1]* np.pi / 180)
-        return np.stack((x_col, y_col, z_col), axis=1)          
+        x_col = poss[:, 0]**0.5 * np.cos(poss[:, 1] * np.pi / 180)
+        y_col = poss[:, 0]**0.5 * np.sin(poss[:, 1] * np.pi / 180)
+        return np.stack((x_col, y_col, z_col), axis=1)
 
     def save(self, mtree):
         """Save SurfCirc parameters into XML tree."""
@@ -540,7 +546,7 @@ class SurfCirc(Metric):
 
     def jac(self, poss):
         """Jacobian of polar transformation."""
-        rhos = np.sqrt(poss[:,0]**2+poss[:,1]**2)
+        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
         return 1 / rhos.reshape(-1)
 
     @staticmethod
@@ -551,6 +557,7 @@ class SurfCirc(Metric):
         if dim != 2 or len(params) != 5 or int(mtree[1].attrib["nps"]) != 5:
             raise Exception("Invalid metric tree.")
         return SurfCirc(*params)
+
 
 class Guide(Metric):
     def __init__(self, xwidth, yheight, zmax=np.inf, rcurv=None):
