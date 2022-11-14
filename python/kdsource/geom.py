@@ -510,7 +510,7 @@ class SurfR(Metric):
         inside these limits.
         z has the fixed value given as argument.
         """
-        super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "deg.cm")
+        super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "cm")
         self.z = z
         self.rho_min = rho_min
         self.rho_max = rho_max
@@ -574,7 +574,7 @@ class SurfR2(Metric):
         inside these limits.
         z has the fixed value given as argument.
         """
-        super().__init__([1, 2, 3], ["rho^2", "psi"], ["cm^2", "deg"], "deg.cm^2")
+        super().__init__([1, 2, 3], ["rho^2", "psi"], ["cm^2", "deg"], "cm^2")
         self.z = z
         self.rho_min = rho_min
         self.rho_max = rho_max
@@ -610,7 +610,7 @@ class SurfR2(Metric):
 
     def jac(self, poss):
         """Jacobian of polar transformation."""
-        return np.full(len(poss[:,0]), 2)
+        return np.full(len(poss[:, 0]), 2)
 
     @staticmethod
     def load(mtree):
@@ -632,7 +632,7 @@ class SurfCircle(Metric):
         Spatial variables x and y are delimited between a min and max
         value for the radius (rho) and the angle (psi), in polar
         coordinates. By default these are 0 and infinity for rho, and
-        -pi and pi for psi, respectively. All positions in the 
+        -pi and pi for psi, respectively. All positions in the
         particle list should be inside these limits.
 
         z has the fixed value given as argument.
