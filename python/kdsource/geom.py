@@ -610,8 +610,7 @@ class SurfR2(Metric):
 
     def jac(self, poss):
         """Jacobian of polar transformation."""
-        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
-        return 1 / 2 / rhos.reshape(-1)
+        return np.full(len(poss[:,0]), 2)
 
     @staticmethod
     def load(mtree):
