@@ -495,7 +495,7 @@ class SurfXY(Metric):
         return SurfXY(*params)
 
 
-class SurfCirc(Metric):
+class SurfR(Metric):
     def __init__(
         self, rho_min=0, rho_max=np.inf, psi_min=-np.pi, psi_max=np.pi, z=0
     ):
@@ -510,7 +510,7 @@ class SurfCirc(Metric):
         inside these limits.
         z has the fixed value given as argument.
         """
-        super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "deg.cm")
+        super().__init__([1, 2, 3], ["rho", "psi"], ["cm", "deg"], "cm")
         self.z = z
         self.rho_min = rho_min
         self.rho_max = rho_max
@@ -556,7 +556,123 @@ class SurfCirc(Metric):
         params = np.array(mtree[1].text.split(), dtype="float64")
         if dim != 2 or len(params) != 5 or int(mtree[1].attrib["nps"]) != 5:
             raise Exception("Invalid metric tree.")
-        return SurfCirc(*params)
+        return SurfR(*params)
+
+
+class SurfR2(Metric):
+    def __init__(
+        self, rho_min=0, rho_max=np.inf, psi_min=-np.pi, psi_max=np.pi, z=0
+    ):
+        """
+        Pseudo-polar parametrization for position.
+        Polar variables are defined as follows:
+            rho2: radius squared, in [cm²]
+            psi:  azimuthal angle, starting from x direction, in [deg].
+        Spatial variable rho2 is delimited between a min and max
+        value. By default these are zero and infinity,
+        respectively. All positions in the particle list should be
+        inside these limits.
+        z has the fixed value given as argument.
+        """
+        super().__init__([1, 2, 3], ["rho^2", "psi"], ["cm^2", "deg"], "cm^2")
+        self.z = z
+        self.rho_min = rho_min
+        self.rho_max = rho_max
+        self.psi_min = psi_min
+        self.psi_max = psi_max
+
+    def transform(self, poss):
+        """
+        Transform volume position (x,y,z) to circular flat position (rho2,psi).
+        """
+        rhos = poss[:, 0]**2 + poss[:, 1]**2
+        psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
+        return np.stack((rhos, psis), axis=1)
+
+    def inverse_transform(self, poss):
+        """
+        Transform polar flat position (rho2,psi)
+        to volume position (x,y,z).
+        """
+        z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))
+        x_col = poss[:, 0]**0.5 * np.cos(poss[:, 1] * np.pi / 180)
+        y_col = poss[:, 0]**0.5 * np.sin(poss[:, 1] * np.pi / 180)
+        return np.stack((x_col, y_col, z_col), axis=1)
+
+    def save(self, mtree):
+        """Save SurfCirc parameters into XML tree."""
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
+        paramsel.set("nps", "5")
+        paramsel.text = "{} {} {} {} {}".format(
+            self.rho_min, self.rho_max, self.psi_min, self.psi_max, self.z
+        )
+
+    def jac(self, poss):
+        """Jacobian of polar transformation."""
+        return np.full(len(poss[:, 0]), 2)
+
+    @staticmethod
+    def load(mtree):
+        """Load parameters from XML tree and build SurfCirc."""
+        dim = int(mtree[0].text)
+        params = np.array(mtree[1].text.split(), dtype="float64")
+        if dim != 2 or len(params) != 5 or int(mtree[1].attrib["nps"]) != 5:
+            raise Exception("Invalid metric tree.")
+        return SurfR2(*params)
+
+
+class SurfCircle(Metric):
+    def __init__(
+        self, rho_min=0, rho_max=np.inf, psi_min=-np.pi, psi_max=np.pi, z=0
+    ):
+        """
+        Simple metric for 2D position, with no transformation.
+
+        Spatial variables x and y are delimited between a min and max
+        value for the radius (rho) and the angle (psi), in polar
+        coordinates. By default these are 0 and infinity for rho, and
+        -pi and pi for psi, respectively. All positions in the
+        particle list should be inside these limits.
+
+        z has the fixed value given as argument.
+
+        Axis system of reference can be changed by means of the 'trasl'
+        and 'rot' arguments of the Geometry object.
+        """
+        super().__init__([1, 2, 3], ["x", "y"], ["cm", "cm"], "cm^2")
+        self.z = z
+        self.rho_min = rho_min
+        self.rho_max = rho_max
+        self.psi_min = psi_min
+        self.psi_max = psi_max
+
+    def transform(self, poss):
+        """Transform volume position (x,y,z) to flat position (x,y)."""
+        return poss[:, :2]
+
+    def inverse_transform(self, poss):
+        """Transform flat position (x,y) to volume position (x,y,z)."""
+        z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))
+        return np.concatenate((poss, z_col), axis=1)
+
+    def save(self, mtree):
+        """Save SurfXY parameters into XML tree."""
+        SubElement(mtree, "dim").text = str(self.dim)
+        paramsel = SubElement(mtree, "params")
+        paramsel.set("nps", "5")
+        paramsel.text = "{} {} {} {} {}".format(
+            self.rho_min, self.rho_max, self.psi_min, self.psi_max, self.z
+        )
+
+    @staticmethod
+    def load(mtree):
+        """Load parameters from XML tree and build SurfXY."""
+        dim = int(mtree[0].text)
+        params = np.array(mtree[1].text.split(), dtype="float64")
+        if dim != 2 or len(params) != 5 or int(mtree[1].attrib["nps"]) != 5:
+            raise Exception("Invalid metric tree.")
+        return SurfCircle(*params)
 
 
 class Guide(Metric):
@@ -901,7 +1017,9 @@ _metrics = {
     "Lethargy": Lethargy,
     "Vol": Vol,
     "SurfXY": SurfXY,
-    "SurfCirc": SurfCirc,
+    "SurfR": SurfR,
+    "SurfR2": SurfR2,
+    "SurfCircle": SurfCircle,
     "Guide": Guide,
     "Isotrop": Isotrop,
     "Polar": Polar,
