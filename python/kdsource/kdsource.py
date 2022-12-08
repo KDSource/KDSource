@@ -50,15 +50,20 @@ def load(xmlfilename, N=-1):
     tree = parse(xmlfilename)
     root = tree.getroot()
     J = np.double(root[0].text)
-    plist = PList.load(root[1])
-    geom = Geometry.load(root[2])
-    scaling = np.array(root[3].text.split(), dtype="float64")
-    bwel = root[4]
+    kern = root[1].text
+    if kern == 'g':
+        kern = 'gaussian'
+    elif kern == 'e':
+        kern = 'epa'
+    plist = PList.load(root[2])
+    geom = Geometry.load(root[3])
+    scaling = np.array(root[4].text.split(), dtype="float64")
+    bwel = root[5]
     if bool(int(bwel.attrib["variable"])):
         bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
     else:
         bw = np.double(bwel.text)
-    s = KDSource(plist, geom, bw, J=J)
+    s = KDSource(plist, geom, bw, J=J, kernel=kern)
     s.fit(N=N, scaling=scaling)
     return s
 
@@ -94,6 +99,7 @@ class KDSource:
         J: float, optional
             The source total current, in [1/s]. If set, the density
             plots will have the correct units.
+        kernel: string, optional
         """
         self.plist = plist
         self.geom = geom
@@ -106,7 +112,7 @@ class KDSource:
                 msg = "BW dimension must be < 2. \
                     Use scaling for anisotropic KDE."
                 raise ValueError(msg)
-        self.kde = TreeKDE(bw=bw)
+        self.kde = TreeKDE(kernel=kernel, bw=bw)
         self.scaling = None
         self.J = J
         self.kernel = kernel
@@ -425,7 +431,7 @@ class KDSource:
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
-        kde = TreeKDE(bw=bw)
+        kde = TreeKDE(kernel=self.kernel, bw=bw)
         kde.fit(vecs, weights=ws)
         scores = 1 / scaling * kde.evaluate(grid.reshape(-1, 1) / scaling)
         errs = np.sqrt(scores * self.R / (N_eff * np.mean(bw) * scaling))
@@ -619,7 +625,7 @@ class KDSource:
         bw = self.kde.bw
         if kwargs["adjust_bw"]:
             bw *= bw_silv(1, N_eff) / bw_silv(self.geom.dim, self.N_eff)
-        kde = TreeKDE(bw=bw)
+        kde = TreeKDE(kernel=self.kernel, bw=bw)
         kde.fit(vecs, weights=ws)
         grid = self.geom.ms[-1].transform(grid_t)
         jacs = self.geom.ms[-1].jac(grid_t)
