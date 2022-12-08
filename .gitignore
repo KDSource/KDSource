@@ -55,6 +55,9 @@ mcpl
 .vscode/settings.json
 docs/examples/samples.ssv
 docs/examples/Verification.ipynb
-docs/examples/Verification.ipynb
+docs/examples/*.pdf
+docs/examples/*.mcpl.gz
+docs/examples/*.xml
+docs/examples/*_bws
 docs/html
 CMakeLists_for_wsl2.txt
