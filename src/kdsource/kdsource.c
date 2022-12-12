@@ -31,7 +31,7 @@ KDSource* KDS_open(const char* xmlfilename){
 
 	int i, j, n;
 	double J;
-	char kernel;
+	char kernel='g';
 	char *buf;
 
 	char pt;    
@@ -59,11 +59,15 @@ KDSource* KDS_open(const char* xmlfilename){
 	xmlNodePtr node = root->children; // Node: J
 	sscanf((char*)xmlNodeGetContent(node), "%lf", &J); // Read J
 
-	xmlNodePtr node_k = node->next; // Node: kernel
-	sscanf((char*)xmlNodeGetContent(node_k), "%s", &kernel); // Read kernel
+	node = node->next; // Node: kernel
+	if(strcmp((char*)node->name, "kernel") == 0){
+		sscanf((char*)xmlNodeGetContent(node), "%s", &kernel); // Read kernel
+		node = node->next;
+	}
+	else printf("No kernel specified. Using gaussian as default.\n");
 
 	// PList
-	xmlNodePtr pltree = node_k->next;
+	xmlNodePtr pltree = node;
 	node = pltree->children; // Node: pt
 	sscanf((char*)xmlNodeGetContent(node), "%c", &pt); // Read pt
 	node = node->next; // Node: mcplname

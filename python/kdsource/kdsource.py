@@ -49,16 +49,21 @@ def load(xmlfilename, N=-1):
     """
     tree = parse(xmlfilename)
     root = tree.getroot()
-    J = np.double(root[0].text)
-    kern = root[1].text
+    J = np.double(root.find("J").text)
+    kelem = root.find("kernel")
+    if kelem:
+        kern = kelem.text
+    else:
+        print("No kernel specified. Using gaussian as default.")
+        kern = 'g'
     if kern == 'g':
         kern = 'gaussian'
     elif kern == 'e':
         kern = 'epa'
-    plist = PList.load(root[2])
-    geom = Geometry.load(root[3])
-    scaling = np.array(root[4].text.split(), dtype="float64")
-    bwel = root[5]
+    plist = PList.load(root.find("PList"))
+    geom = Geometry.load(root.find("Geom"))
+    scaling = np.array(root.find("scaling").text.split(), dtype="float64")
+    bwel = root.find("BW")
     if bool(int(bwel.attrib["variable"])):
         bw = np.fromfile(bwel.text, dtype="float32").astype("float64")
     else:
