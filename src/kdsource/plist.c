@@ -15,7 +15,7 @@ PList* PList_create(char pt, const char* filename, const double* trasl, const do
 	plist->pt = pt;
 	plist->pdgcode = pt2pdg(pt);
 	mcpl_file_t file = mcpl_open_file(filename);
-	plist->nparticles = mcpl_hdr_nparticles(file);
+	plist->npts = mcpl_hdr_nparticles(file);
 	plist->filename = (char*)malloc(NAME_MAX_LEN*sizeof(char));
 	strcpy(plist->filename, filename);
 	plist->file = file;
