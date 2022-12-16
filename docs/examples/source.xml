@@ -4,7 +4,7 @@
 	<kernel>g</kernel>
 	<PList>
 		<pt>n</pt>
-		<mcplname>/home/nschmidt/kdsource/develop/docs/examples/samples.mcpl.gz</mcplname>
+		<mcplname>samples.mcpl.gz</mcplname>
 		<trasl/>
 		<rot/>
 		<x2z>0</x2z>
@@ -31,5 +31,5 @@
 	</Geom>
 	<scaling> 0.74714183 14.1685937   9.97335412  0.47189839  0.47189839  0.47189839
   0.48671936</scaling>
-	<BW variable="1">/home/nschmidt/kdsource/develop/docs/examples/samples_bws</BW>
+	<BW variable="1">samples_bws</BW>
 </KDSource>
