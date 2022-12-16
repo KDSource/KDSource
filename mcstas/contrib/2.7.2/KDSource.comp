@@ -1,0 +1,273 @@
+/*******************************************************************************
+*
+* McStas, neutron ray-tracing package
+*         Copyright (C) 1997-2017, All rights reserved
+*         DTU Physics, Kgs. Lyngby, Denmark
+*
+* Component: KDSource
+*
+* %I
+* Written by: Osiris I Abbate, Norberto S Schmidt
+* Date: Dec 2022
+* Origin: Instituto Balseiro
+*
+* Distributional source, based on a MCPL-format particle list, on which
+* the Kernel Density Estimation (KDE) method is applied.
+*
+* %D
+* Distributional source, based on a MCPL-format particle list, on which
+* the Kernel Density Estimation (KDE) method is applied.
+* 
+* It allows sampling more particles than the number present in a virtual,
+* previously generated virtual source, without repeating samples.
+* 
+* It requires a XML parameters file containing the needed configurations
+* for an optimized KDE source, which can be generated with the KDSource
+* package.
+*
+* When used with MPI, the --ncount given on the commandline is overwritten by 
+* #MPI nodes x #events in the file.
+*
+* Example: KDSource("optimized_source.xml")
+*
+* %VALIDATION
+*
+* %BUGS
+*
+* %P
+* INPUT PARAMETERS:
+*
+* filename: [str]       Name of the XML parameters file containing KDSource definition.
+* use_kde    [0/1]      Whether to use KDE or just sample particles from the MCPL file. Default: 1
+* verbose: [ ]          Print debugging information for first 10 particles read.
+* polarisationuse: [ ]  If !=0 read polarisation vectors from file.
+* Emin: [meV]           Lower energy bound. Particles found in the MCPL-file below the limit are skipped.
+* Emax: [meV]           Upper energy bound. Particles found in the MCPL-file above the limit are skipped.
+* repeat_count: [1]     Repeat contents of the MCPL file this number of times. NB: When running MPI, repeating is implicit and is taken into account by integer division. Should be combined sith the _smear options!
+*
+* %D
+* Example values:
+*
+* %E
+*******************************************************************************/
+
+DEFINE COMPONENT KDSource
+DEFINITION PARAMETERS ()
+SETTING PARAMETERS (string filename=0, polarisationuse=0, verbose=0, Emin=0, Emax=FLT_MAX, repeat_count=1, use_kde=1)
+OUTPUT PARAMETERS (nparticles, read_neutrons, used_neutrons, inactive, I, p2, N)
+/* Neutron parameters: (x,y,z,vx,vy,vz,t,sx,sy,sz,p) */ 
+DEPENDENCY "-Wl,-rpath,CMD(mcpl-config --show libdir) -ICMD(mcpl-config --show includedir) -LCMD(mcpl-config --show libdir) -lmcpl"
+
+SHARE
+%{
+#include <mcpl.h>
+#include <kdsource.h>
+%}
+
+DECLARE
+%{
+long long nparticles;
+long long read_neutrons;
+long long used_neutrons;
+int repeat_cnt;
+int repeat_tot;
+int inactive;
+int mpi_cnt;
+
+int N;
+double I;
+double p2;
+
+KDSource *kdsource;
+double w_crit;
+%}
+
+INITIALIZE
+%{
+    char line[256];
+    long long ncount;
+
+    if (filename && strlen(filename) && strcmp(filename, "NULL") && strcmp(filename,"0")) {
+      /* We got a proper filename, do the rest of the work */
+    inactive=0;
+    if(Emax<Emin){
+        fprintf(stderr,"Warning(%s): Nonsensical energy interval: E=[%g,%g]. Aborting.\n",NAME_CURRENT_COMP,Emin,Emax);
+        exit(-1);
+    }
+    /* No need to check if the file opens correctly since mcpl will
+     * abort internally if it cannot open the file.*/
+    kdsource = KDS_open(filename);
+  
+    if ( !(nparticles=kdsource->plist->npts) ) {
+        fprintf(stderr,"Warning(%s): MCPL-file reports no present particles. Foolishly trying to go on.\n",NAME_CURRENT_COMP);
+        nparticles=ncount;
+    }else{
+        printf("Message(%s): MCPL file called in the %s file contains %lu particles.\n",NAME_CURRENT_COMP,filename,(long unsigned)nparticles); 
+    }
+    if(repeat_count==0) repeat_count=1;
+    repeat_cnt = repeat_count;
+    mpi_cnt=1;
+#if defined (USE_MPI)
+    repeat_cnt = ceil(1.0*repeat_cnt/mpi_node_count);
+    mpi_cnt=mpi_node_count;
+    MPI_MASTER(
+#endif
+	   fprintf(stdout, "\n\n Warning: You are using MCPL_input with a repeat_count of %lu:\n - Minimum neutron count requested is %lu x %lu <= %lu",
+	       (long unsigned)repeat_count,(long unsigned)nparticles,
+	       (long unsigned)repeat_count,(long unsigned)(repeat_cnt*nparticles)); 
+#if defined (USE_MPI)
+  fprintf(stdout, " x %i MPI nodes = %lu neutrons total\n",
+    mpi_node_count,(long unsigned)(mpi_node_count*repeat_cnt*nparticles));
+     );
+  w_crit = use_kde ? KDS_w_mean(kdsource, 1000+mpi_node_rank, NULL): -1;
+#else
+  fprintf(stdout, " neutrons total\n\n");
+  w_crit = use_kde ? KDS_w_mean(kdsource, 1000, NULL): -1;
+#endif
+    repeat_tot=repeat_cnt*mpi_cnt;
+    mcset_ncount(repeat_tot*nparticles);
+    ncount=mcget_ncount();
+#if defined (USE_MPI)
+    MPI_MASTER(
+#endif
+    fprintf(stdout,"Initialize ncount is %lld\n",ncount);
+#if defined (USE_MPI)
+    );
+#endif
+    read_neutrons=0;
+    used_neutrons=0;
+
+#if defined (USE_MPI)   
+    MPI_MASTER(
+#endif
+
+      if (verbose==1) {
+        printf("MCPL_input verbose mode - outputting data on the 10 first read neutrons in MCPL units:\n");
+      }
+
+#if defined (USE_MPI) 
+    );
+#endif
+} else {
+  /* Not presented with a reasonable filename, skip further action */
+  inactive=1;
+  printf("%s: filename is NULL or empty, skipping init and reads\n", NAME_CURRENT_COMP);
+}
+%}
+
+TRACE
+%{
+  long long ncount;
+  int eof_reached;
+
+  double nrm;
+  mcpl_particle_t part;
+  if(!inactive) {
+    eof_reached = KDS_sample2(kdsource, &part, use_kde, w_crit, NULL, 1);
+
+    ncount=mcget_ncount();
+    // fprintf(stdout,"Trace ncount is %ld\n",ncount);      
+    if (part.pdgcode!=2112) {
+        /*Either no particle read, particle is not a neutron, or it has invalid energy - terminate to trigger next ray*/
+       ABSORB;
+    }
+    read_neutrons++;
+    
+    /* check energy range*/
+    if ( part.ekin<Emin*1e-9 || part.ekin>Emax*1e-9 ) {
+        /*Particle energy out of range - terminate to trigger next ray*/
+        ABSORB;
+    }
+    used_neutrons++;
+#if defined (USE_MPI)   
+  MPI_MASTER(
+#endif
+
+    if (verbose && used_neutrons<11) {
+      printf("id=%lu pdg=2112\tekin=%g MeV\tx=%g cm\ty=%g cm\tz=%g cm\tux=%g\tuy=%g\tuz=%g\tt=%g ms\tweight=%g\tpolx=%g\tpoly=%g\tpolz=%g\n",
+	     (long unsigned)read_neutrons, part.ekin, part.position[0], part.position[1], part.position[2],
+	     part.direction[0], part.direction[1], part.direction[2], part.time, part.weight,
+	     part.polarisation[0], part.polarisation[1], part.polarisation[2]);
+    }
+
+#if defined (USE_MPI)   
+	    );
+#endif
+
+    /*positions are in cm*/
+    x=part.position[0]/100;
+    y=part.position[1]/100;
+    z=part.position[2]/100;
+    
+    if(polarisationuse){
+        sx=part.polarisation[0];
+        sy=part.polarisation[1];
+        sz=part.polarisation[2];
+    }else{
+        sx=sy=sz=0;
+    }
+
+    nrm = part.ekin *1e9/VS2E;
+    nrm = sqrt(nrm);
+    double d0=part.direction[0],d1=part.direction[1],d2=part.direction[2];
+    
+    vx=d0*nrm;
+    vy=d1*nrm;
+    vz=d2*nrm;   
+
+    /*time in ms:*/
+    t=part.time*1e-3;
+    /*weight in unspecified units:*/
+    p=part.weight;
+
+  /* Correct for repetition, by repeat_count and/or MPI */
+  p /= (repeat_tot);
+  I += p;
+  p2 += p*p;
+  N++;
+  SCATTER;
+  }
+%}
+
+SAVE
+%{
+#if defined (USE_MPI)
+	MPI_MASTER(
+#endif
+	printf("KDSource %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
+#if defined (USE_MPI)	
+	)
+#endif
+%}
+
+FINALLY
+%{
+  if(!inactive) {
+    long long ncount;
+
+    ncount=mcget_ncount();
+
+    if (used_neutrons!=read_neutrons){
+        fprintf(stdout,"Message(%s): You have used %lu of %lu neutrons available in the MCPL file.\n",NAME_CURRENT_COMP,
+          (long unsigned)used_neutrons,(long unsigned)read_neutrons);
+    }
+    if (ncount != used_neutrons){
+        fprintf(stderr,"Warning (%s): You requested %lu neutrons from a file which contains %lu particles in general, of which only %lu are neutrons (within the wanted energy interval).\n"
+                "Please examine the recorded intensities carefully.\n",
+          NAME_CURRENT_COMP,(long unsigned)ncount,(long unsigned)nparticles,(long unsigned)used_neutrons);
+    }
+  }
+%}
+
+MCDISPLAY
+%{
+    multiline(5, 0.2,0.2,0.0, -0.2,0.2,0.0, -0.2,-0.2,0.0, 0.2,-0.2,0.0, 0.2,0.2,0.0);
+    /*M*/
+    multiline(5,-0.085,-0.085,0.0, -0.085,0.085,0.0, -0.045,-0.085,0.0, -0.005,0.085,0.0, -0.005,-0.085,0.0);
+    /*I*/
+    line(0.045,-0.085,0, 0.045, 0.085,0);    
+    line(0.005, 0.085,0, 0.085, 0.085,0);    
+    line(0.005,-0.085,0, 0.085,-0.085,0);    
+%}
+
+END
