@@ -11,7 +11,7 @@ double rand_norm(){
 	return sqrt(-2 * log(y1)) * cos(2 * M_PI * y2);
 }
 
-// Sample with Epanechnikov distribution (x0=0)
+// Sample with Epanechnikov distribution (x0=0, s=1)
 double rand_epan(){
 	double x1=(double)rand()/((double)RAND_MAX/2.0) - 1.0;
 	double x2=(double)rand()/((double)RAND_MAX/2.0) - 1.0;
@@ -20,10 +20,17 @@ double rand_epan(){
 	else return x3;
 }
 
+// Sample with Tophat distribution (x0=0, s=1)
+double rand_box(){
+	double y1 = (double)rand()/((double)RAND_MAX/2.0) - 1.0;
+	return y1;
+}
+
 // Sample depending on kernel selected
 double rand_type(char kernel){
 	if(kernel=='g') return rand_norm();
 	if(kernel=='e') return rand_epan();
+	if(kernel=='b') return rand_box();
 	else {
 		printf("Cannot perturbate with current kernel. \n");
 		// KDS_error("Cannot perturbate with current kernel.");

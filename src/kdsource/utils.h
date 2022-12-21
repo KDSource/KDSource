@@ -17,6 +17,7 @@
 
 double rand_norm();
 double rand_epan();
+double rand_box();
 double rand_type(char kernel);
 
 double *traslv(double *vect, const double *trasl, int inverse);
