@@ -52,7 +52,7 @@ If you are on Linux OS you can install `libxml2` with:
 
 ```bash
    $ sudo apt-get update
-   $ sudo apt-get install libxml2
+   $ sudo apt-get install libxml2-dev
 ```
 
 for Ubuntu, or similarly for other Linux distributions, using the corresponding package manager.
