@@ -19,7 +19,9 @@ from .kde import bw_silv
 from .kde import optimize_bw
 from .plist import PList
 
-R = {'g': 1 / (2 * np.sqrt(np.pi)), 'e': 0.6}   # Roughness of the kernel
+R = {'g': 1 / (2 * np.sqrt(np.pi)),
+     'e': 3 / 5,
+     'b': 1 / 3}   # Roughness of the kernel
 
 STD_DEFAULT = 1
 
@@ -60,6 +62,8 @@ def load(xmlfilename, N=-1):
         kern = 'gaussian'
     elif kern == 'e':
         kern = 'epa'
+    elif kern == 'b':
+        kern = 'box'
     plist = PList.load(root.find("PList"))
     geom = Geometry.load(root.find("Geom"))
     scaling = np.array(root.find("scaling").text.split(), dtype="float64")
