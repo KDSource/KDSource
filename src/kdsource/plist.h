@@ -31,6 +31,7 @@ typedef struct PList{
 	int x2z;                     // If true, apply permutation x,y,z -> y,z,x
 
 	const mcpl_particle_t* part; // Pointer to selected particle
+	long long npts;
 } PList;
 
 PList* PList_create(char pt, const char* filename, const double* trasl, const double* rot, int switch_x2z);
