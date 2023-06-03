@@ -53,7 +53,7 @@ def load(xmlfilename, N=-1):
     root = tree.getroot()
     J = np.double(root.find("J").text)
     kelem = root.find("kernel")
-    if kelem:
+    if kelem is not None:
         kern = kelem.text
     else:
         print("No kernel specified. Using gaussian as default.")
