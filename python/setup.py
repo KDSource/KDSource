@@ -44,9 +44,13 @@ setuptools.setup(
         "matplotlib>=3.4.2,<4.0",
         "KDEpy>=1.1.0,<2.0",
         "joblib>=1.0.1,<2.0",
-        "scikit-learn>=0.24.2,<1.0",
+        "scikit-learn>=1.4.1,<2.0",
         "mcpl>=1.3.2,<2.0",
         "Pillow>=9.0.1,<10.0",
+        "astropy>=6.0.0,<7.0",
+        "h5py>=3.10.0,<4",
+        "pandas>=2.2.1,<3",
+        "uncertainties>=3.1.7,<4"
     ],
     python_requires=">=3.6",
     extras_require={
