@@ -53,6 +53,7 @@ jobs:
         run: |
           brew update
           brew install cmake libxml2
+          brew link --overwrite python@3.12
           mkdir build
           cd build
           mkdir /Users/runner/work/KDSource/KDinstall
