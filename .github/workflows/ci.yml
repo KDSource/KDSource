@@ -18,13 +18,8 @@ jobs:
             python-version: 3.9,
           }
           - {
-            name: "MacOS_Latest",
-            os: macos-latest,
-            python-version: 3.9,
-          }
-          - {
             name: "Windows Latest",
-            os: windows-latest,
+            os: windows-2019,
             python-version: 3.9,
             archiver: "7z a"
           }
