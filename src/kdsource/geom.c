@@ -147,7 +147,13 @@ int E_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kerne
 	return 0;
 }
 int Let_perturb(const Metric* metric, mcpl_particle_t* part, double bw, char kernel){
-	part->ekin *= exp(bw*metric->scaling[0] * rand_type(kernel));
+	float E = part->ekin;
+	E *= exp(bw*metric->scaling[0] * rand_type(kernel));
+	while(E > metric->params[0]){
+		E = part->ekin;
+		E *= exp(bw*metric->scaling[0] * rand_type(kernel));
+	}
+	part->ekin = E;
 	return 0;
 }
 
