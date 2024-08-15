@@ -39,14 +39,19 @@ setuptools.setup(
     ],
     packages=find_packages(exclude=["tests*"]),
     install_requires=[
+        "setuptools",
         "numpy>=1.20.3,<2.0",
         "scipy>=1.6.3,<2.0",
         "matplotlib>=3.4.2,<4.0",
         "KDEpy>=1.1.0,<2.0",
         "joblib>=1.0.1,<2.0",
-        "scikit-learn>=0.24.2,<1.0",
+        "scikit-learn>=0.24.2",
         "mcpl>=1.3.2,<2.0",
-        "Pillow>=9.0.1,<10.0",
+        "Pillow>=9.0.1",
+        "uncertainties",
+        "pandas",
+        "astropy",
+        "h5py"
     ],
     python_requires=">=3.6",
     extras_require={
