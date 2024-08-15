@@ -1,53 +1,68 @@
-name : kdsource
+name: kdsource
 
-           on : -push -
-                pull_request
+on:
+    - push
+    - pull_request
 
-                    jobs : build :
+jobs:
+  build:
 
-    name : $ {
-  { matrix.config.name }
-}
-runs - on : $ {
-  { matrix.config.os }
-}
-strategy : matrix : config : -{
-  name : "Ubuntu_Latest",
-  os : ubuntu - latest,
-  python - version : 3.9,
-} -
-                             {
-                               name : "MacOS_Latest",
-                               os : macos - 13,
-                               python - version : 3.9,
-                             }
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - {
+            name: "Ubuntu_Latest",
+            os: ubuntu-latest,
+            python-version: 3.9,
+          }
+          - {
+            name: "MacOS_Latest",
+            os: macos-13,
+            python-version: 3.9,
+          }
 
-                                 steps : -uses : actions /
-                                                 checkout @master with
-    : submodules : 'true' -
-                             name : Install and test C API on Ubuntu if
-    : startsWith(matrix.config.name, 'Ubuntu') run
-    : |
-      sudo apt - get update sudo apt
-          - get install cmake libxml2 mkdir build cd build cmake..-
-          DCMAKE_INSTALL_PREFIX =
-    / usr / share / KDSource make make test make install cd..export PATH =
-        $PATH : / usr / share / KDSource / bin kdtool - h kdtool resample - h
-            - name : Install
-        and test C API on MacOS if : startsWith(matrix.config.name, 'MacOS') run
-    : |
-      brew update brew install cmake libxml2 mkdir build cd build mkdir / Users
-              / runner / work / KDSource / KDinstall cmake..-
-          DCMAKE_INSTALL_PREFIX =
-            / Users / runner / work / KDSource
-            / KDinstall make make test make install cd..export PATH =
-                $PATH : / Users / runner / work / KDSource / KDinstall /
-                        bin kdtool
-                - h kdtool resample - h - name : Set up Python $ {
-  { matrix.config.python - version }
-}
-uses : actions / setup - python @v2 with : python -
-                                           version
-    : ${{matrix.config.python - version}} -
-      name : Install tox run : pip install tox tox - gh - actions -
-                               name : Test with tox run : tox - r - c python
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: 'true'
+      - name: Install and test C API on Ubuntu
+        if: startsWith(matrix.config.name, 'Ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install cmake libxml2
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=/usr/share/KDSource
+          make
+          make test
+          make install
+          cd ..
+          export PATH=$PATH:/usr/share/KDSource/bin
+          kdtool -h
+          kdtool resample -h
+      - name: Install and test C API on MacOS
+        if: startsWith(matrix.config.name, 'MacOS')
+        run: |
+          brew update
+          brew install cmake libxml2
+          mkdir build
+          cd build
+          mkdir /Users/runner/work/KDSource/KDinstall
+          cmake .. -DCMAKE_INSTALL_PREFIX=/Users/runner/work/KDSource/KDinstall
+          make
+          make test
+          make install
+          cd ..
+          export PATH=$PATH:/Users/runner/work/KDSource/KDinstall/bin
+          kdtool -h
+          kdtool resample -h
+      - name: Set up Python ${{ matrix.config.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.config.python-version}}
+      - name: Install tox
+        run: pip install tox tox-gh-actions
+      - name: Test with tox
+        run: tox -r -c python
