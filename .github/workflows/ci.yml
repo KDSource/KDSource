@@ -1,103 +1,53 @@
-name: kdsource
+name : kdsource
 
-on:
-    - push
-    - pull_request
+           on : -push -
+                pull_request
 
-jobs:
-  build:
+                    jobs : build :
 
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
-    strategy:
-      matrix:
-        config:
-          - {
-            name: "Ubuntu_Latest",
-            os: ubuntu-latest,
-            python-version: 3.9,
-          }
-          - {
-            name: "MacOS_Latest",
-            os: macos-latest,
-            python-version: 3.9,
-          }
-          - {
-            name: "Windows Latest",
-            os: windows-latest,
-            python-version: 3.9,
-            archiver: "7z a"
-          }
+    name : $ {
+  { matrix.config.name }
+}
+runs - on : $ {
+  { matrix.config.os }
+}
+strategy : matrix : config : -{
+  name : "Ubuntu_Latest",
+  os : ubuntu - latest,
+  python - version : 3.9,
+} -
+                             {
+                               name : "MacOS_Latest",
+                               os : macos - 13,
+                               python - version : 3.9,
+                             }
 
-    steps:
-      - uses: actions/checkout@master
-        with:
-          submodules: 'true'
-      - name: Install and test C API on Ubuntu
-        if: startsWith(matrix.config.name, 'Ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install cmake libxml2
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=/usr/share/KDSource
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/usr/share/KDSource/bin
-          kdtool -h
-          kdtool resample -h
-      - name: Install and test C API on MacOS
-        if: startsWith(matrix.config.name, 'MacOS')
-        run: |
-          brew update
-          brew install cmake libxml2
-          mkdir build
-          cd build
-          mkdir /Users/runner/work/KDSource/KDinstall
-          cmake .. -DCMAKE_INSTALL_PREFIX=/Users/runner/work/KDSource/KDinstall
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/Users/runner/work/KDSource/KDinstall/bin
-          kdtool -h
-          kdtool resample -h
-      - name: Install and test C API on Windows
-        if: startsWith(matrix.config.name, 'Windows')
-        run: |
-          $KDDIR = "$pwd"
-          $INSTALLDIR = "$pwd\..\KDinstall"
-          mkdir dependencies
-          cd dependencies
-          Invoke-Webrequest http://xmlsoft.org/sources/win32/64bit/libxml2-2.9.3-win32-x86_64.7z -Outfile libxml2-2.9.3-win32-x86_64.7z
-          Invoke-Webrequest http://xmlsoft.org/sources/win32/64bit/iconv-1.14-win32-x86_64.7z -Outfile iconv-1.14-win32-x86_64.7z
-          Invoke-Webrequest http://xmlsoft.org/sources/win32/64bit/zlib-1.2.8-win32-x86_64.7z -Outfile zlib-1.2.8-win32-x86_64.7z
-          7z x libxml2-2.9.3-win32-x86_64.7z -o"libxml2-2.9.3-win32-x86_64" -y
-          7z x iconv-1.14-win32-x86_64.7z -o"iconv-1.14-win32-x86_64" -y
-          7z x zlib-1.2.8-win32-x86_64.7z -o"zlib-1.2.8-win32-x86_64" -y
-          $env:PATH = "$KDDIR\dependencies\libxml2-2.9.3-win32-x86_64;" + $env:PATH
-          $env:PATH = "$KDDIR\dependencies\iconv-1.14-win32-x86_64;" + $env:PATH
-          $env:PATH = "$KDDIR\dependencies\zlib-1.2.8-win32-x86_64;" + $env:PATH
-          $env:C_INCLUDE_PATH="$KDDIR\dependencies\iconv-1.14-win32-x86_64\include"
-          cd ..
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX="$INSTALLDIR" -G "MinGW Makefiles"
-          mingw32-make
-          mingw32-make test
-          mingw32-make install
-          cd ..
-          echo "$INSTALLDIR\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "$INSTALLDIR\lib" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          $env:PATH += ";$INSTALLDIR\bin;$INSTALLDIR\lib"
-          kdtool-resample -h
-      - name: Set up Python ${{ matrix.config.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.config.python-version}}
-      - name: Install tox
-        run: pip install tox tox-gh-actions
-      - name: Test with tox
-        run: tox -r -c python
+                                 steps : -uses : actions /
+                                                 checkout @master with
+    : submodules : 'true' -
+                             name : Install and test C API on Ubuntu if
+    : startsWith(matrix.config.name, 'Ubuntu') run
+    : |
+      sudo apt - get update sudo apt
+          - get install cmake libxml2 mkdir build cd build cmake..-
+          DCMAKE_INSTALL_PREFIX =
+    / usr / share / KDSource make make test make install cd..export PATH =
+        $PATH : / usr / share / KDSource / bin kdtool - h kdtool resample - h
+            - name : Install
+        and test C API on MacOS if : startsWith(matrix.config.name, 'MacOS') run
+    : |
+      brew update brew install cmake libxml2 mkdir build cd build mkdir / Users
+              / runner / work / KDSource / KDinstall cmake..-
+          DCMAKE_INSTALL_PREFIX =
+            / Users / runner / work / KDSource
+            / KDinstall make make test make install cd..export PATH =
+                $PATH : / Users / runner / work / KDSource / KDinstall /
+                        bin kdtool
+                - h kdtool resample - h - name : Set up Python $ {
+  { matrix.config.python - version }
+}
+uses : actions / setup - python @v2 with : python -
+                                           version
+    : ${{matrix.config.python - version}} -
+      name : Install tox run : pip install tox tox - gh - actions -
+                               name : Test with tox run : tox - r - c python
