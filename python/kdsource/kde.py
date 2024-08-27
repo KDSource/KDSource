@@ -210,7 +210,7 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
         for bw in bw_grid
     )
     idx_best = np.argmax(cv_scores)
-    
+
     if show:
         plt.plot(grid, cv_scores)
         plt.xlabel("Scaling factor")
