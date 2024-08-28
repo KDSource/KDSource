@@ -360,7 +360,7 @@ class Wavelength(Metric):
         """
         Wavelength metric for energy.
         Wavelength is defined as:
-            lambda [\AA] = 9.045 / sqrt(E [meV])
+        lambda [AA] = 9.045 / sqrt(E [meV])
         """
         super().__init__([0], ["l"], ["[AA]"], "AA")
 
@@ -546,7 +546,8 @@ class SurfR(Metric):
 
     def transform(self, poss):
         """
-        Transform volume position (x,y,z) to circular flat position (rho,psi).
+        Transform volume position (x,y,z)
+        to circular flat position (rho,psi).
         """
         rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
@@ -610,7 +611,8 @@ class SurfR2(Metric):
 
     def transform(self, poss):
         """
-        Transform volume position (x,y,z) to circular flat position (rho2,psi).
+        Transform volume position (x,y,z)
+        to circular flat position (rho2,psi).
         """
         rhos = poss[:, 0]**2 + poss[:, 1]**2
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
@@ -1055,6 +1057,7 @@ _metrics = {
     "Time": Time,
     "Decade": Decade,
 }
+
 
 # Aliases for usual geometries
 
