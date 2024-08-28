@@ -109,6 +109,8 @@ class KDSource:
             The source total current, in [1/s]. If set, the density
             plots will have the correct units.
         kernel: string, optional
+            The function kernel to fit the variables. Available options
+            are 'gaussian', 'box', and 'epa'
         """
         self.plist = plist
         self.geom = geom
