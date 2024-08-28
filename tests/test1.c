@@ -5,7 +5,7 @@
 #include "kdsource.h"
 
 void test_test(){
-	printf("C tests still not implemented.\n");
+	fprintf(stderr, "C tests still not implemented.\n");
 }
 
 int main(){

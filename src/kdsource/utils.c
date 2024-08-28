@@ -32,7 +32,7 @@ double rand_type(char kernel){
 	if(kernel=='e') return rand_epan();
 	if(kernel=='b') return rand_box();
 	else {
-		printf("Cannot perturbate with current kernel. \n");
+		fprintf(stderr, "Cannot perturbate with current kernel. \n");
 		// KDS_error("Cannot perturbate with current kernel.");
 		return 0;
 	}
@@ -82,7 +82,7 @@ char pdg2pt(int pdgcode){
 // Interpolation
 double interp(double x, const double *xs, const double *ys, int N){
 	if(x<xs[0] || x>xs[N-1]){
-		printf("Error in interp: x outside range.\n");
+		fprintf(stderr, "Error in interp: x outside range.\n");
 		return 0;
 	}
 	int i = 0;
