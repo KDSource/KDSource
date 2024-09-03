@@ -378,7 +378,7 @@ class Wavelength(Metric):
 
     @staticmethod
     def load(mtree):
-        """Load parameters from XML tree and build Lethargy."""
+        """Load parameters from XML tree and build Wavelength."""
         return Wavelength()
 
 
