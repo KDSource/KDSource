@@ -109,6 +109,8 @@ class KDSource:
             The source total current, in [1/s]. If set, the density
             plots will have the correct units.
         kernel: string, optional
+            The function kernel to fit the variables. Available options
+            are 'gaussian', 'box', and 'epa'
         """
         self.plist = plist
         self.geom = geom
@@ -879,3 +881,105 @@ class KDSource:
         plt.tight_layout()
 
         return [plt.gcf(), [scores, errs]]
+
+
+def run(plist, geom, kernel='gaussian', skip=0, importance=None,
+        N=-1, Nmlcv=-1, Nbatch=-1, Nknn=10, grid=None,
+        show=True):
+
+    """
+    Run KDSource to fit model to particle list with kNN and MLCV methods.
+
+    Parameters
+    ----------
+    plist: PList object
+        The PList wrapping the MCPL file containing the particle
+        list.
+    geom: Geometry object
+        The Geometry defining particle variables treatment.
+    kernel: string, optional
+        The function kernel to fit the variables. Available options
+        are 'gaussian', 'box', and 'epa'
+    skip: int
+        Number of particles to skip in the list before starting to
+        read.
+    importance: array-like, optional
+        Scaling to be applied to each variable. This means each
+        particle variable standard deviation will be divided by
+        the corresponding scaling element before applying KDE.
+        By default, the importance is set to 1, i.e.
+        the standard deviation of each variable is used.
+    N: int
+        Number of particles to use for fitting. The real number of
+        particles used may be lower if end of particle list is
+        reached or there are particles with zero weight. -1 to use
+        all particles.
+    Nmlcv: int
+        Number of particles to use for the MLCV bandwidth optimization.
+    Nbatch: int
+        Number of particles per batch to use for the kNN bandwidth
+        optimization.
+    Nknn: int
+        Number of closest neighbors used for the kNN bandiwdth
+        optimization.
+    grid: array-like
+        Grid to be used for the MLCV bandwidth optimization.
+    **kwargs: optional
+        Parameters to be passed to bandwidth selection method. Refer
+        corresponding method for docs (see bw_methods for method
+        names).
+    """
+
+    # Create KDSource
+    s = KDSource(plist, geom, kernel)
+
+    # Get the length of the particles list
+    parts, ws = s.plist.get(N=-1)
+    N = len(parts)
+    print('Using N={:d} particles from the original particles list.\n'.format(
+        N))
+
+    # Use the standard deviation as scaling factor
+    scaling = s.geom.std(parts=parts)
+
+    # If an importance is specified, apply to the scaling factors
+    if importance is None:
+        print('No importance selected. Using 1 for each variable.\n')
+        importance = [1] * s.geom.dim
+
+    scaling /= importance
+
+    # First fit with kNN to generate a seed adaptative bandwidth
+    print('Fitting first with kNN method:')
+    s.bw_method = "knn"
+    if Nbatch == -1:
+        Nbatch = int(N / Nknn)
+    s.fit(N, skip=skip, scaling=scaling, batch_size=Nbatch, k=Nknn)
+    bw_knn = s.kde.bw
+    print('')
+
+    # Then fit with MLCV
+    print('Fitting now with MLCV using the previous fitting as seed:')
+    s.bw_method = "mlcv"
+    if Nmlcv == -1:
+        print("No size for MLCV selected. Using all the particles list.")
+        Nmlcv = N
+    if grid is None:
+        print("No grid specified. Using np.logspace(-0.1, 0.1, 10).")
+        print("If fitting fails, change the grid.")
+        grid = np.logspace(-0.1, 0.1, 10)
+    seed = bw_knn[:Nmlcv]
+    print("If fitting takes too long, consider reducing Nmlcv.")
+    s.fit(Nmlcv, scaling=scaling, seed=seed, grid=grid, show=show)
+    bw_mlcv = s.kde.bw
+    print('')
+
+    print('Extending the MLCV optimization to full kNN bandwidth:')
+    bw_knn_mlcv = bw_knn * bw_mlcv[0] / bw_knn[0]
+    dim = s.geom.dim
+    bw_knn_mlcv *= bw_silv(dim, len(bw_knn)) / bw_silv(dim, len(bw_mlcv))
+    s = KDSource(plist, geom, bw=bw_knn_mlcv, kernel=kernel)
+    s.fit(N=N, scaling=scaling)
+    print('Done.')
+
+    return s
