@@ -365,7 +365,7 @@ class Wavelength(Metric):
         super().__init__([0], ["l"], ["[AA]"], "AA")
 
     def transform(self, ekins):
-        """Transform energy to lethargy."""
+        """Transform energy to wavelenght."""
         return 9.045 / np.sqrt(ekins * 1e9)
 
     def inverse_transform(self, ls):
