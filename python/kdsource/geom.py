@@ -369,7 +369,7 @@ class Wavelength(Metric):
         return 9.045 / np.sqrt(ekins * 1e9)
 
     def inverse_transform(self, ls):
-        """Transform lethargy to energy."""
+        """Transform wavelength to energy."""
         return 81.82e-9 / ls ** 2
 
     def jac(self, ekins):
