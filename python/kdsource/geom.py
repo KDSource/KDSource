@@ -355,6 +355,33 @@ class Lethargy(Metric):
         return Lethargy(*params)
 
 
+class Wavelength(Metric):
+    def __init__(self):
+        """
+        Wavelength metric for energy.
+        Wavelength is defined as:
+        lambda [AA] = 9.045 / sqrt(E [meV])
+        """
+        super().__init__([0], ["l"], ["[AA]"], "AA")
+
+    def transform(self, ekins):
+        """Transform energy to wavelenght."""
+        return 9.045 / np.sqrt(ekins * 1e9)
+
+    def inverse_transform(self, ls):
+        """Transform wavelength to energy."""
+        return 81.82e-9 / ls ** 2
+
+    def jac(self, ekins):
+        """Jacobian of wavelength transformation."""
+        return 9.045 / (2 * np.sqrt(ekins ** 3))
+
+    @staticmethod
+    def load(mtree):
+        """Load parameters from XML tree and build Wavelength."""
+        return Wavelength()
+
+
 class Time(Metric):
     def __init__(self):
         """Simple metric for time, with no transformation."""
@@ -519,7 +546,8 @@ class SurfR(Metric):
 
     def transform(self, poss):
         """
-        Transform volume position (x,y,z) to circular flat position (rho,psi).
+        Transform volume position (x,y,z)
+        to circular flat position (rho,psi).
         """
         rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
@@ -583,7 +611,8 @@ class SurfR2(Metric):
 
     def transform(self, poss):
         """
-        Transform volume position (x,y,z) to circular flat position (rho2,psi).
+        Transform volume position (x,y,z)
+        to circular flat position (rho2,psi).
         """
         rhos = poss[:, 0]**2 + poss[:, 1]**2
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
@@ -1015,6 +1044,7 @@ class PolarMu(Metric):
 _metrics = {
     "Energy": Energy,
     "Lethargy": Lethargy,
+    "Wavelength": Wavelength,
     "Vol": Vol,
     "SurfXY": SurfXY,
     "SurfR": SurfR,
@@ -1027,6 +1057,7 @@ _metrics = {
     "Time": Time,
     "Decade": Decade,
 }
+
 
 # Aliases for usual geometries
 

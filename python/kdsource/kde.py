@@ -211,11 +211,11 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     )
     idx_best = np.argmax(cv_scores)
 
-    plt.plot(grid, cv_scores)
-    plt.xlabel("Scaling factor")
-    plt.ylabel("MLCV Figure of Merit (FoM)")
-    plt.tight_layout()
     if show:
+        plt.plot(grid, cv_scores)
+        plt.xlabel("Scaling factor")
+        plt.ylabel("MLCV Figure of Merit (FoM)")
+        plt.tight_layout()
         plt.show()
     if idx_best in (0, len(bw_grid) - 1):
         raise Exception(

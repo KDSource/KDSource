@@ -36,3 +36,4 @@ from .geom import Geometry, Metric
 from .kde import bw_silv
 from .kdsource import KDSource, load
 from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv
+from .surfsource import SurfaceSourceFile, create_source_file
