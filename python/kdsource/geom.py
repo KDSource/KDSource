@@ -373,7 +373,7 @@ class Wavelength(Metric):
         return 81.82e-9 / ls ** 2
 
     def jac(self, ekins):
-        """Jacobian of lethargy transformation."""
+        """Jacobian of wavelength transformation."""
         return 9.045 / (2 * np.sqrt(ekins ** 3))
 
     @staticmethod
