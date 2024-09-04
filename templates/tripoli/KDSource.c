@@ -48,7 +48,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 
 	int i;
 	if(initialized == 0){
-		printf("\nLoading sources...\n");
+		fprintf(stderr, "\nLoading sources...\n");
 
 		msource = MS_open(len, filenames, ws);
 		w_crit = use_kde ? MS_w_mean(msource, 1000, bias) : -1;
@@ -58,7 +58,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 		srand(time(NULL));
 
 		initialized = 1;
-		printf("Done.\n");
+		fprintf(stderr, "Done.\n");
 	}
 
 	// ********************************************** Sampling ************************************************
@@ -74,7 +74,7 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	else if(part.pdgcode == 11) *ipt = 3;
 	else if(part.pdgcode == -11) *ipt = 4;
 	else{
-		printf("Warning: PDG code %d unknown. Taking as neutron.\n", part.pdgcode);
+		fprintf(stderr, "Warning: PDG code %d unknown. Taking as neutron.\n", part.pdgcode);
 		*ipt = 1;
 	}
 	*x = part.position[0];
@@ -97,14 +97,14 @@ void source(int *ipt, double *x, double *y, double *z, double *dx, double *dy, d
 	// *********************************************** Finalizacion ***************************************************
 
 		if(N%N_simul == 0){
-		printf("\nDestroying sources...\n");
+		fprintf(stderr, "\nDestroying sources...\n");
 		
 		MS_destroy(msource);
 
 		initialized = 0;
-		printf("Done.\n");
-		printf("Sampling time: %lf s\n", t_sample);
-		printf("Produced particles: I err N %lf %lf %ld\n", I, sqrt(p2), N);
+		fprintf(stderr, "Done.\n");
+		fprintf(stderr, "Sampling time: %lf s\n", t_sample);
+		fprintf(stderr, "Produced particles: I err N %lf %lf %ld\n", I, sqrt(p2), N);
 	}
 
 	clock_t end = clock();

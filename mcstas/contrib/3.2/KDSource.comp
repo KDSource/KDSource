@@ -102,7 +102,7 @@ INITIALIZE
         fprintf(stderr,"Warning(%s): MCPL-file reports no present particles. Foolishly trying to go on.\n",NAME_CURRENT_COMP);
         nparticles=ncount;
     }else{
-        printf("Message(%s): MCPL file called in the %s file contains %lu particles.\n",NAME_CURRENT_COMP,filename,(long unsigned)nparticles); 
+        fprintf(stderr, "Message(%s): MCPL file called in the %s file contains %lu particles.\n",NAME_CURRENT_COMP,filename,(long unsigned)nparticles); 
     }
     if(repeat_count==0) repeat_count=1;
     repeat_cnt = repeat_count;
@@ -142,7 +142,7 @@ INITIALIZE
 #endif
 
       if (verbose==1) {
-        printf("MCPL_input verbose mode - outputting data on the 10 first read neutrons in MCPL units:\n");
+        fprintf(stderr, "MCPL_input verbose mode - outputting data on the 10 first read neutrons in MCPL units:\n");
       }
 
 #if defined (USE_MPI) 
@@ -151,7 +151,7 @@ INITIALIZE
 } else {
   /* Not presented with a reasonable filename, skip further action */
   inactive=1;
-  printf("%s: filename is NULL or empty, skipping init and reads\n", NAME_CURRENT_COMP);
+  fprintf(stderr, "%s: filename is NULL or empty, skipping init and reads\n", NAME_CURRENT_COMP);
 }
 %}
 
@@ -184,7 +184,7 @@ TRACE
 #endif
 
     if (verbose && used_neutrons<11) {
-      printf("id=%lu pdg=2112\tekin=%g MeV\tx=%g cm\ty=%g cm\tz=%g cm\tux=%g\tuy=%g\tuz=%g\tt=%g ms\tweight=%g\tpolx=%g\tpoly=%g\tpolz=%g\n",
+      fprintf(stderr, "id=%lu pdg=2112\tekin=%g MeV\tx=%g cm\ty=%g cm\tz=%g cm\tux=%g\tuy=%g\tuz=%g\tt=%g ms\tweight=%g\tpolx=%g\tpoly=%g\tpolz=%g\n",
 	     (long unsigned)read_neutrons, part.ekin, part.position[0], part.position[1], part.position[2],
 	     part.direction[0], part.direction[1], part.direction[2], part.time, part.weight,
 	     part.polarisation[0], part.polarisation[1], part.polarisation[2]);
@@ -234,7 +234,7 @@ SAVE
 #if defined (USE_MPI)
 	MPI_MASTER(
 #endif
-	printf("KDSource %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
+	fprintf(stderr, "KDSource %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
 #if defined (USE_MPI)	
 	)
 #endif

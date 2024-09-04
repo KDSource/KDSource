@@ -366,10 +366,10 @@ TRACE
 
 SAVE
 %{
-	printf("Guide_tracks %s:\n", NAME_CURRENT_COMP);
-	printf("\tTransmisions: I err N %lf %lf %d\n", I_trans, sqrt(p2_trans), N_trans);
-	if(save_gammas) printf("\tAbsorptions: I err N %lf %lf %d\n", I_abs, sqrt(p2_abs), N_abs);
-	else printf("\tAbsorptions: Not considered\n");
+	fprintf(stderr, "Guide_tracks %s:\n", NAME_CURRENT_COMP);
+	fprintf(stderr, "\tTransmisions: I err N %lf %lf %d\n", I_trans, sqrt(p2_trans), N_trans);
+	if(save_gammas) fprintf(stderr, "\tAbsorptions: I err N %lf %lf %d\n", I_abs, sqrt(p2_abs), N_abs);
+	else fprintf(stderr, "\tAbsorptions: Not considered\n");
 %}
 
 FINALLY

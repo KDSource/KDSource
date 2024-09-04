@@ -103,7 +103,7 @@ TRACE
 
 SAVE
 %{
-	printf("Monitor_tracks %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
+	fprintf(stderr, "Monitor_tracks %s: I err N %lf %lf %d\n", NAME_CURRENT_COMP, I, sqrt(p2), N);
 %}
 
 FINALLY

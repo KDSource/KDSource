@@ -8,27 +8,27 @@
 
 
 void display_usage(){
-	printf("Usage: kdtool beamtest sourcefile [options]\n\n");
-	printf("Executes a simple simulation with source defined in XML file sourcefile, in\n");
-	printf("which calculates the number of particles passing thru a rectangular collimator.\n");
-	printf("The simulation is repeated using the particle list directly as source, to\n");
-	printf("compare the results.\n\n");
-	printf("Results are computed for 4 energy groups, and stored in a results file which\n");
-	printf("can be imported from a spreadsheet.\n\n");
-	printf("This tool is designed to be used with flat neutron sources with particles\n");
-	printf("propagating towards z direction.\n\n");
-	printf("Options:\n");
-	printf("\t-n N:           Number of source particles (default: 1E6).\n");
-	printf("\t-o results:     Name of file to store results.\n");
-	printf("\t-xwidth value:  Width of the collimator, in cm (default: 7).\n");
-	printf("\t-yheight value: Height of the collimator, in cm (default: 20).\n");
-	printf("\t-z value:       Position of the collimator along z axis, in cm\n");
-	printf("\t                (default: 500).\n");
-	printf("\t-xshift:        Horizontal shift of the center of the collimator,\n");
-	printf("\t                in cm (default: 0)\n");
-	printf("\t-yshift:        Vertical shift of the center of the collimator,\n");
-	printf("\t                in cm (default: 0)\n");
-	printf("\t-h, --help:     Display usage instructions.\n");
+	fprintf(stderr, "Usage: kdtool beamtest sourcefile [options]\n\n");
+	fprintf(stderr, "Executes a simple simulation with source defined in XML file sourcefile, in\n");
+	fprintf(stderr, "which calculates the number of particles passing thru a rectangular collimator.\n");
+	fprintf(stderr, "The simulation is repeated using the particle list directly as source, to\n");
+	fprintf(stderr, "compare the results.\n\n");
+	fprintf(stderr, "Results are computed for 4 energy groups, and stored in a results file which\n");
+	fprintf(stderr, "can be imported from a spreadsheet.\n\n");
+	fprintf(stderr, "This tool is designed to be used with flat neutron sources with particles\n");
+	fprintf(stderr, "propagating towards z direction.\n\n");
+	fprintf(stderr, "Options:\n");
+	fprintf(stderr, "\t-n N:           Number of source particles (default: 1E6).\n");
+	fprintf(stderr, "\t-o results:     Name of file to store results.\n");
+	fprintf(stderr, "\t-xwidth value:  Width of the collimator, in cm (default: 7).\n");
+	fprintf(stderr, "\t-yheight value: Height of the collimator, in cm (default: 20).\n");
+	fprintf(stderr, "\t-z value:       Position of the collimator along z axis, in cm\n");
+	fprintf(stderr, "\t                (default: 500).\n");
+	fprintf(stderr, "\t-xshift:        Horizontal shift of the center of the collimator,\n");
+	fprintf(stderr, "\t                in cm (default: 0)\n");
+	fprintf(stderr, "\t-yshift:        Vertical shift of the center of the collimator,\n");
+	fprintf(stderr, "\t                in cm (default: 0)\n");
+	fprintf(stderr, "\t-h, --help:     Display usage instructions.\n");
 
 }
 
@@ -79,18 +79,18 @@ int beamtest_parse_args(int argc, char **argv, const char** sourcefile,
 			continue;
 		}
 		if(argv[i][0] == '-'){
-			printf("Error: Invalid argument: %s\n",argv[i]);
+			fprintf(stderr, "Error: Invalid argument: %s\n",argv[i]);
 			exit(1);
 		}
 		if(!*sourcefile){
 			*sourcefile = argv[i];
 			continue;
 		}
-		printf("Too many arguments. Use -h or --help for help.\n");
+		fprintf(stderr, "Too many arguments. Use -h or --help for help.\n");
 		exit(1);
 	}
 	if(!*sourcefile){
-		printf("No source file. Use -h or --help for help.\n");
+		fprintf(stderr, "No source file. Use -h or --help for help.\n");
 		exit(1);
 	}
 	return 0;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[]){
 	// KDE simulation
 	mcpl_rewind(kds->plist->file);
 	if(kds->geom->bwfile) rewind(kds->geom->bwfile);
-	printf("Executing simulation with KDE source...\n");
+	fprintf(stderr, "Executing simulation with KDE source...\n");
 	for(i=0; i<N; i++){
 		KDS_sample2(kds, &part, 1, w_crit, NULL, 1);
 		N_source_KDE++;
@@ -146,12 +146,12 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	printf("Finished. Particles simulated: N_source = %ld, I_source = %lf\n\n", N_source_KDE, I_source_KDE);
+	fprintf(stderr, "Finished. Particles simulated: N_source = %ld, I_source = %lf\n\n", N_source_KDE, I_source_KDE);
 
 	// Tracks simulation
 	mcpl_rewind(kds->plist->file);
 	if(kds->geom->bwfile) rewind(kds->geom->bwfile);
-	printf("Executing simulation with tracks source...\n");
+	fprintf(stderr, "Executing simulation with tracks source...\n");
 	for(i=0; i<N; i++){
 		if(KDS_sample2(kds, &part, 0, w_crit, NULL, 1)) break;
 		N_source_tracks++;
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	printf("Finished. Particles simulated: N_source = %ld, I_source = %lf\n\n", N_source_tracks, I_source_tracks);
+	fprintf(stderr, "Finished. Particles simulated: N_source = %ld, I_source = %lf\n\n", N_source_tracks, I_source_tracks);
 
 	// Normalize results
 	for(j=0; j<ngroups; j++){
@@ -200,7 +200,7 @@ int main(int argc, char *argv[]){
 	fprintf(resfile, "Tot.\t%.3le\t%.1le\t%.3le\t%.1le\t%.3le\t%.1le\t%.2lf\t%.1lf\n",
 		I_KDE_tot, err_KDE_tot, I_tracks_tot, err_tracks_tot,
 		I_dif, err_dif, 100*reldif, 100*err_rd);
-	printf("Results stored in text file %s\n", results);
+	fprintf(stderr, "Results stored in text file %s\n", results);
 	
 	return 0;
 }
