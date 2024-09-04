@@ -4,15 +4,15 @@
 	<kernel>g</kernel>
 	<PList>
 		<pt>n</pt>
-		<mcplname>/home/nschmidt/kdsource/develop/docs/examples/samples.mcpl.gz</mcplname>
+		<mcplname>samples.mcpl.gz</mcplname>
 		<trasl/>
 		<rot/>
 		<x2z>0</x2z>
 	</PList>
-	<Geom order="3">
+	<Geom order="4">
 		<Lethargy>
 			<dim>1</dim>
-			<params nps="1">10.0</params>
+			<params nps="1">0.0001</params>
 		</Lethargy>
 		<SurfXY>
 			<dim>2</dim>
@@ -22,9 +22,14 @@
 			<dim>3</dim>
 			<params nps="3">0 0 0</params>
 		</Isotrop>
+		<Decade>
+			<dim>1</dim>
+			<params nps="0"/>
+		</Decade>
 		<trasl/>
 		<rot/>
 	</Geom>
-	<scaling> 0.74500182 14.05808304 10.0187549   0.47208846  0.47208846  0.47208846</scaling>
-	<BW variable="1">/home/nschmidt/kdsource/develop/docs/examples/samples_bws</BW>
+	<scaling> 0.74714183 14.1685937   9.97335412  0.47189839  0.47189839  0.47189839
+  0.48671936</scaling>
+	<BW variable="1">samples_bws</BW>
 </KDSource>
