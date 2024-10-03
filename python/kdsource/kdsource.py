@@ -15,13 +15,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .geom import Geometry
-from .kde import bw_silv, bw_methods
+from .kde import bw_methods, bw_silv
 from .kde import optimize_bw
 from .plist import PList
 
-R = {'g': 1 / (2 * np.sqrt(np.pi)),
-     'e': 3 / 5,
-     'b': 1 / 3}   # Roughness of the kernel
+R = {
+    "g": 1 / (2 * np.sqrt(np.pi)),
+    "e": 3 / 5,
+    "b": 1 / 3,
+}  # Roughness of the kernel
 
 STD_DEFAULT = 1
 
@@ -57,13 +59,13 @@ def load(xmlfilename, N=-1):
         kern = kelem.text
     else:
         print("No kernel specified. Using gaussian as default.")
-        kern = 'g'
-    if kern == 'g':
-        kern = 'gaussian'
-    elif kern == 'e':
-        kern = 'epa'
-    elif kern == 'b':
-        kern = 'box'
+        kern = "g"
+    if kern == "g":
+        kern = "gaussian"
+    elif kern == "e":
+        kern = "epa"
+    elif kern == "b":
+        kern = "box"
     plist = PList.load(root.find("PList"))
     geom = Geometry.load(root.find("Geom"))
     scaling = np.array(root.find("scaling").text.split(), dtype="float64")
@@ -130,8 +132,15 @@ class KDSource:
         self.R = R[self.kernel[0]]
         self.fitted = False
 
-    def fit(self, N=-1, skip=0, scaling=None, importance=None, bw_method=None,
-        **kwargs):
+    def fit(
+        self,
+        N=-1,
+        skip=0,
+        scaling=None,
+        importance=None,
+        bw_method=None,
+        **kwargs,
+    ):
         """
         Fit KDE model to particle list.
 
@@ -183,7 +192,8 @@ class KDSource:
                 importance = [1] * self.geom.dim
             elif len(importance) != self.geom.dim:
                 raise Exception(
-                    "importance must have len = {}.".format(self.geom.dim))
+                    "importance must have len = {}.".format(self.geom.dim)
+                )
             scaling /= importance
         else:
             scaling = np.array(scaling)
@@ -193,7 +203,8 @@ class KDSource:
             keys = list(bw_methods.keys())
             if bw_method not in keys:
                 raise Exception(
-                    "Invalid bw_method. Available: {}".format(keys))
+                    "Invalid bw_method. Available: {}".format(keys)
+                )
             self.bw_method = bw_method
         if self.bw_method is not None:
             print("Calculating bw ... ")

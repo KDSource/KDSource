@@ -111,11 +111,7 @@ YSCALE = {
     "t": 1e-3,
     "log(t)": 1,
 }
-PARTMASS = {
-    2112: 939.5653,
-    22: 0,
-    11: 0.511,
-    2212: 938.7829}
+PARTMASS = {2112: 939.5653, 22: 0, 11: 0.511, 2212: 938.7829}
 
 
 def momentum(ptype, pekin):
@@ -127,8 +123,9 @@ def momentum(ptype, pekin):
 def velocity(ptype, pekin):
     mc2 = np.array([PARTMASS[np.abs(i)] for i in ptype])
     pc = momentum(ptype, pekin)
-    v = np.array([pci / mc2i if mc2i > 0
-                  else c2 ** 0.5 for pci, mc2i in zip(pc, mc2)])
+    v = np.array(
+        [pci / mc2i if mc2i > 0 else c2 ** 0.5 for pci, mc2i in zip(pc, mc2)]
+    )
     return v
 
 
@@ -370,8 +367,11 @@ class SurfaceSourceFile:
             df = self.search_duplicated_particles(df, self._cloned)
 
         # Print some info regarding the particles in the file
-        print("Number of particles in file {:s}: {:d}".format(
-            self._filepath, len(df)))
+        print(
+            "Number of particles in file {:s}: {:d}".format(
+                self._filepath, len(df)
+            )
+        )
         for p, idx in zip((PDGCode), ["n", "g", "e-", "e+", "p"]):
             print(
                 "{:.0f}% {:s}, ".format(
@@ -409,8 +409,9 @@ class SurfaceSourceFile:
         self._normalize_direction(df)
         # Convolute time considering the pulse width
         if self._tpulse is not None and self._convoluted is False:
-            self._convolute(df, {"t": self._tpulse * 1e3},
-                            self._shape)  # from s to ms
+            self._convolute(
+                df, {"t": self._tpulse * 1e3}, self._shape
+            )  # from s to ms
             self._convoluted = True
         # Calculate extra coordinates
         df["R"] = (df[X].to_numpy() ** 2 + df[Y].to_numpy() ** 2) ** 0.5
@@ -472,14 +473,15 @@ class SurfaceSourceFile:
     def _normalize_direction(self, df):
         # Normalize the direction versor
         unorm = (
-            df["u"].to_numpy() ** 2 + df["v"].to_numpy() ** 2
+            df["u"].to_numpy() ** 2
+            + df["v"].to_numpy() ** 2
             + df["w"].to_numpy() ** 2
         )
 
         df["u"], df["v"], df["w"] = (
-            df["u"].to_numpy() / unorm**0.5,
-            df["v"].to_numpy() / unorm**0.5,
-            df["w"].to_numpy() / unorm**0.5,
+            df["u"].to_numpy() / unorm ** 0.5,
+            df["v"].to_numpy() / unorm ** 0.5,
+            df["w"].to_numpy() / unorm ** 0.5,
         )
         return df
 
@@ -535,7 +537,7 @@ class SurfaceSourceFile:
             pmin = min(df[nvar]) * YSCALE[nvar]
             pmax = max(df[nvar]) * YSCALE[nvar]
             if nvar == "R":
-                dp = 0.5 * (pmax**2 - pmin**2)
+                dp = 0.5 * (pmax ** 2 - pmin ** 2)
             elif nvar == "psi":
                 dp = -(np.cos(pmax) - np.cos(pmin))
             else:
@@ -630,7 +632,8 @@ class SurfaceSourceFile:
                     info += "Current: {:.2f} mA\n\n".format(self._current)
                 if self._tpulse is not None:
                     info += "Pulse width: {:.2f} us\n\n".format(
-                        self._tpulse * 1e6)
+                        self._tpulse * 1e6
+                    )
         return info
 
     def get_distribution(
@@ -709,7 +712,8 @@ class SurfaceSourceFile:
         if convolution is not None:
             df = self._convolute(df, convolution)
         p_units = self._get_brilliance(
-            df, [x for x in norm_vars if x not in vars])
+            df, [x for x in norm_vars if x not in vars]
+        )
 
         if len(bins) != len(vars):
             print("Both lists of variables and bins should have the same size")
@@ -730,18 +734,21 @@ class SurfaceSourceFile:
                         )[1]
                         bins[i] = 10 ** bins[i]
                     else:
-                        bins[i] = knuth_bin_width(df[var].to_numpy(),
-                                                  return_bins=True)[1]
+                        bins[i] = knuth_bin_width(
+                            df[var].to_numpy(), return_bins=True
+                        )[1]
 
                 else:
                     if scale == "log":
                         bins[i] = np.logspace(
-                            np.log10(df[var].min()), np.log10(
-                                df[var].max()), bin
+                            np.log10(df[var].min()),
+                            np.log10(df[var].max()),
+                            bin,
                         )
                     else:
                         bins[i] = np.linspace(
-                            df[var].min(), df[var].max(), bin)
+                            df[var].min(), df[var].max(), bin
+                        )
             else:
                 # If var is angle, convert degrees to radians
                 if var == "psi" or var == "phi" or var == "theta":
@@ -864,7 +871,7 @@ class SurfaceSourceFile:
         vmin=None,
         vmax=None,
         peak_brilliance=False,
-        **kwargs
+        **kwargs,
     ):
         """Plot 1-D or 2-D distribution for given variables
 
@@ -933,8 +940,11 @@ class SurfaceSourceFile:
             vars, bins, scales, factor, filters, norm_vars, convolution
         )
         if peak_brilliance and len(vars) == 2:
-            df = df.groupby([var for var in vars if var != "t"]
-                            ).max().reset_index()
+            df = (
+                df.groupby([var for var in vars if var != "t"])
+                .max()
+                .reset_index()
+            )
         if xscale == "log":
             norm_vars = [var for var in norm_vars if var != vars[0]]
         if yscale == "log" and len(vars) > 1:
@@ -951,24 +961,29 @@ class SurfaceSourceFile:
             if xscale == "log":
                 if info:
                     print("Plotting x*f(x) instead of f(x) (xscale='log')")
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
             df.loc[df["erel"] >= tolerance, "mean"] = 0
             df.loc[df["erel"] >= tolerance, "stdv"] = 0
             if errors:
-                plt.errorbar(df[vars], df["mean"], df["stdv"],
-                             ds="steps-mid", **kwargs)
+                plt.errorbar(
+                    df[vars], df["mean"], df["stdv"], ds="steps-mid", **kwargs
+                )
             else:
                 plt.plot(
-                    df[vars].to_numpy(), df["mean"].to_numpy(),
-                    ds="steps-mid", **kwargs
+                    df[vars].to_numpy(),
+                    df["mean"].to_numpy(),
+                    ds="steps-mid",
+                    **kwargs,
                 )
             plt.xscale(xscale)
             plt.yscale(yscale)
             if XUNITS[vars[0]] != "":
-                plt.xlabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[0]], XUNITS[vars[0]]))
+                plt.xlabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[0]], XUNITS[vars[0]])
+                )
             else:
                 plt.xlabel(r"${:s}$".format(XLATEX[vars[0]]))
             plt.ylabel(r"{:s}".format(Jlabel))
@@ -992,10 +1007,12 @@ class SurfaceSourceFile:
                         "Plotting x*y*f(x,y) instead of f(x,y)\
                         (xscale='log', yscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
             elif xscale == "log":
                 if info:
@@ -1003,8 +1020,9 @@ class SurfaceSourceFile:
                         "Plotting x*f(x,y) instead of f(x,y)\
                         (xscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
 
             elif yscale == "log":
@@ -1013,8 +1031,9 @@ class SurfaceSourceFile:
                         "Plotting y*f(x,y) instead of f(x,y)\
                         (yscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
 
             df.loc[df["erel"] >= tolerance, "mean"] = 0
@@ -1031,7 +1050,7 @@ class SurfaceSourceFile:
                     shading="auto",
                     vmin=vmin,
                     vmax=vmax,
-                    **kwargs
+                    **kwargs,
                 )
                 cbar = plt.colorbar(label=r"{:s}".format(Jlabel))
                 if zlevels > 0:
@@ -1043,7 +1062,7 @@ class SurfaceSourceFile:
                     z_mean,
                     shading="auto",
                     norm=LogNorm(vmin, vmax),
-                    **kwargs
+                    **kwargs,
                 )
                 cbar = plt.colorbar(label=r"{:s}".format(Jlabel))
                 if zlevels > 0:
@@ -1061,13 +1080,15 @@ class SurfaceSourceFile:
             plt.xscale(xscale)
             plt.yscale(yscale)
             if XUNITS[vars[0]] != "":
-                plt.xlabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[0]], XUNITS[vars[0]]))
+                plt.xlabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[0]], XUNITS[vars[0]])
+                )
             else:
                 plt.xlabel(r"${:s}$".format(XLATEX[vars[0]]))
             if XUNITS[vars[1]] != "":
-                plt.ylabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[1]], XUNITS[vars[1]]))
+                plt.ylabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[1]], XUNITS[vars[1]])
+                )
             else:
                 plt.ylabel(r"${:s}$".format(XLATEX[vars[1]]))
 
@@ -1084,8 +1105,9 @@ class SurfaceSourceFile:
                 cbar.add_lines(cntrs)
 
         if info:
-            plt.figtext(x=1.0, y=0.1, s=r"{:s}".format(
-                pinfo), fontdict={"size": 8})
+            plt.figtext(
+                x=1.0, y=0.1, s=r"{:s}".format(pinfo), fontdict={"size": 8}
+            )
 
     def save_source_file(self, filepath, **kwargs):
         """Save the particles list.

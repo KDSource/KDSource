@@ -33,7 +33,7 @@ __version__ = "0.1.0"
 __author__ = "KDSource"
 
 from .geom import Geometry, Metric
-from .kde import bw_silv, bw_methods
+from .kde import bw_methods, bw_silv
 from .kdsource import KDSource, load
 from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv
 from .surfsource import SurfaceSourceFile, create_source_file

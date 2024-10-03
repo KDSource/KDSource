@@ -227,8 +227,16 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     return bw_mlcv
 
 
-def bw_auto(data, weights, grid=None, Nmlcv=1E4, Nbatch=1E4, Nknn=10, show=True,
-    n_splits=10):
+def bw_auto(
+    data,
+    weights,
+    grid=None,
+    Nmlcv=1e4,
+    Nbatch=1e4,
+    Nknn=10,
+    show=True,
+    n_splits=10,
+):
 
     """
     Automatic bandwidth optimization with kNN and MLCV methods combined.
@@ -259,31 +267,35 @@ def bw_auto(data, weights, grid=None, Nmlcv=1E4, Nbatch=1E4, Nknn=10, show=True,
     N, dim = data.shape
 
     # First fit with kNN to generate a seed adaptative bandwidth
-    print('Fitting first with kNN method:')
+    print("Fitting first with kNN method:")
     if Nbatch == -1:
         print("No batch size for kNN selected. Using all the particles list.")
         Nbatch = N
     BW_knn = bw_knn(data, weights=weights, k=Nknn, batch_size=Nbatch)
-    print('')
+    print("")
 
     # Then fit with MLCV
-    print('Fitting now with MLCV using the previous fitting as seed:')
+    print("Fitting now with MLCV using the previous fitting as seed:")
     if Nmlcv == -1:
         print("No size for MLCV selected. Using all the particles list.")
         Nmlcv = N
     seed = BW_knn[:Nmlcv]
     print("If fitting takes too long, consider reducing Nmlcv.")
-    BW_mlcv = bw_mlcv(data[:Nmlcv], weights=weights, seed=seed, grid=grid,
-        show=show, n_splits=n_splits)
-    print('')
+    BW_mlcv = bw_mlcv(
+        data[:Nmlcv],
+        weights=weights,
+        seed=seed,
+        grid=grid,
+        show=show,
+        n_splits=n_splits,
+    )
+    print("")
 
-    print('Extending the MLCV optimization to full kNN bandwidth:')
+    print("Extending the MLCV optimization to full kNN bandwidth:")
     BW_knn_mlcv = BW_knn * BW_mlcv[0] / BW_knn[0]
     BW_knn_mlcv *= bw_silv(dim, len(BW_knn)) / bw_silv(dim, len(BW_mlcv))
-    print('Done.')
+    print("Done.")
     return BW_knn_mlcv
-
-    return s
 
 
 def optimize_bw(
@@ -343,8 +355,4 @@ def optimize_bw(
         raise Exception("Invalid bw_method. Available: {}".format(keys))
 
 
-bw_methods = {
-    "auto": bw_auto,
-    "silv": bw_silv,
-    "knn": bw_knn,
-    "mlcv": bw_mlcv}
+bw_methods = {"auto": bw_auto, "silv": bw_silv, "knn": bw_knn, "mlcv": bw_mlcv}
