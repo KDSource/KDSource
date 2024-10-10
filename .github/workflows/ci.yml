@@ -18,8 +18,8 @@ jobs:
             python-version: 3.9,
           }
           - {
-            name: "MacOS_13",
-            os: macos-13,
+            name: "MacOS_Latest",
+            os: macos-latest,
             python-version: 3.9,
           }
 
