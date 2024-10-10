@@ -183,7 +183,7 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
         Rule.
     grid: array-like
         Grid of factors for computing bandwidth grid. Default:
-        numpy.logspace(-1, 1, 20)
+        numpy.logspace(-1, 1, 10)
     show: bool
         Whether to show the scores plot.
 
@@ -200,7 +200,9 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
         )
         seed = bw_silv(np.shape(data)[1], N_eff)
     if grid is None:
-        grid = np.logspace(-1, 1, 20)
+        print("No grid specified. Using np.logspace(-0.1, 0.1, 10).")
+        print("If fitting fails, change the grid.")
+        grid = np.logspace(-0.1, 0.1, 10)
     bw_grid = np.reshape(grid, (-1, *np.ones(np.ndim(seed), dtype=int))) * seed
     if n_splits > len(data):
         n_splits = len(data)
@@ -223,6 +225,77 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
         )
     bw_mlcv = bw_grid[idx_best]
     return bw_mlcv
+
+
+def bw_auto(
+    data,
+    weights,
+    grid=None,
+    Nmlcv=1e4,
+    Nbatch=1e4,
+    Nknn=10,
+    show=True,
+    n_splits=10,
+):
+
+    """
+    Automatic bandwidth optimization with kNN and MLCV methods combined.
+
+    Parameters
+    ----------
+    data: array-like
+        Array of samples. Must have shape (obs, dim).
+    weights: array-like, optional
+        Array of sample weights. By default all weights are 1.
+    grid: array-like
+        Grid to be used for the MLCV bandwidth optimization. Default:
+        numpy.logspace(-1, 1, 10)
+    Nmlcv: int
+        Number of particles to use for the MLCV bandwidth optimization.
+    Nbatch: int
+        Number of particles per batch to use for the kNN bandwidth
+        optimization.
+    Nknn: int
+        Number of closest neighbors used for the kNN bandiwdth
+        optimization.
+    show: bool
+        Whether to show the scores plot of cross-validation.
+    n_splits: int, optional
+        Number of folds for cross-validation. Must be at least 2.
+    """
+
+    N, dim = data.shape
+
+    # First fit with kNN to generate a seed adaptative bandwidth
+    print("Fitting first with kNN method:")
+    if Nbatch == -1:
+        print("No batch size for kNN selected. Using all the particles list.")
+        Nbatch = N
+    BW_knn = bw_knn(data, weights=weights, k=Nknn, batch_size=Nbatch)
+    print("")
+
+    # Then fit with MLCV
+    print("Fitting now with MLCV using the previous fitting as seed:")
+    if Nmlcv == -1:
+        print("No size for MLCV selected. Using all the particles list.")
+        Nmlcv = N
+    seed = BW_knn[:Nmlcv]
+    print("If fitting takes too long, consider reducing Nmlcv.")
+    BW_mlcv = bw_mlcv(
+        data[:Nmlcv],
+        weights=weights,
+        seed=seed,
+        grid=grid,
+        show=show,
+        n_splits=n_splits,
+    )
+    print("")
+
+    print("Extending the MLCV optimization to full kNN bandwidth:")
+    BW_knn_mlcv = BW_knn * BW_mlcv[0] / BW_knn[0]
+    BW_knn_mlcv *= bw_silv(dim, len(BW_knn)) / bw_silv(dim, len(BW_mlcv))
+    print("Done.")
+    return BW_knn_mlcv
 
 
 def optimize_bw(
@@ -275,9 +348,11 @@ def optimize_bw(
         return bw_knn(vecs, weights=ws, **kwargs)
     elif bw_method == "mlcv":  # Maximum Likelihood Cross-Validation method
         return bw_mlcv(vecs, weights=ws, **kwargs)
+    elif bw_method == "auto":  # kNN and MLCV combination
+        return bw_auto(vecs, weights=ws, **kwargs)
     else:
         keys = list(bw_methods.keys())
         raise Exception("Invalid bw_method. Available: {}".format(keys))
 
 
-bw_methods = {"silv": bw_silv, "knn": bw_knn, "mlcv": bw_mlcv}
+bw_methods = {"auto": bw_auto, "silv": bw_silv, "knn": bw_knn, "mlcv": bw_mlcv}

@@ -30,7 +30,7 @@ setuptools.setup(
     description="Python API for KDSource package",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/inti-abbate/KDSource",
+    url="https://github.com/KDSource/KDSource",
     project_urls={},
     classifiers=[
         "Programming Language :: Python :: 3",

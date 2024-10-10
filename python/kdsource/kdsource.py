@@ -15,13 +15,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .geom import Geometry
-from .kde import bw_silv
+from .kde import bw_methods, bw_silv
 from .kde import optimize_bw
 from .plist import PList
 
-R = {'g': 1 / (2 * np.sqrt(np.pi)),
-     'e': 3 / 5,
-     'b': 1 / 3}   # Roughness of the kernel
+R = {
+    "g": 1 / (2 * np.sqrt(np.pi)),
+    "e": 3 / 5,
+    "b": 1 / 3,
+}  # Roughness of the kernel
 
 STD_DEFAULT = 1
 
@@ -57,13 +59,13 @@ def load(xmlfilename, N=-1):
         kern = kelem.text
     else:
         print("No kernel specified. Using gaussian as default.")
-        kern = 'g'
-    if kern == 'g':
-        kern = 'gaussian'
-    elif kern == 'e':
-        kern = 'epa'
-    elif kern == 'b':
-        kern = 'box'
+        kern = "g"
+    if kern == "g":
+        kern = "gaussian"
+    elif kern == "e":
+        kern = "epa"
+    elif kern == "b":
+        kern = "box"
     plist = PList.load(root.find("PList"))
     geom = Geometry.load(root.find("Geom"))
     scaling = np.array(root.find("scaling").text.split(), dtype="float64")
@@ -78,7 +80,7 @@ def load(xmlfilename, N=-1):
 
 
 class KDSource:
-    def __init__(self, plist, geom, bw="silv", J=1.0, kernel="gaussian"):
+    def __init__(self, plist, geom, bw="auto", J=1.0, kernel="gaussian"):
         """
         Object representing Kernel Density Estimation (KDE) sources.
 
@@ -109,6 +111,8 @@ class KDSource:
             The source total current, in [1/s]. If set, the density
             plots will have the correct units.
         kernel: string, optional
+            The function kernel to fit the variables. Available options
+            are 'gaussian', 'box', and 'epa'
         """
         self.plist = plist
         self.geom = geom
@@ -128,7 +132,15 @@ class KDSource:
         self.R = R[self.kernel[0]]
         self.fitted = False
 
-    def fit(self, N=-1, skip=0, scaling=None, **kwargs):
+    def fit(
+        self,
+        N=-1,
+        skip=0,
+        scaling=None,
+        importance=None,
+        bw_method=None,
+        **kwargs,
+    ):
         """
         Fit KDE model to particle list.
 
@@ -149,8 +161,18 @@ class KDSource:
         scaling: array-like, optional
             Scaling to be applied to each variable. This means each
             particle variable will be divided by the corresponding
-            scaling element before applying KDE. By default, the
-            standard deviation of each variable is used.
+            scaling element before applying KDE. If set, overrides
+            importance parameter. By default, the standard deviation of
+            each variable is used.
+        importance: array-like, optional
+            Scaling to be applied to each variable. This means each
+            particle variable standard deviation will be divided by
+            the corresponding scaling element before applying KDE.
+            By default, the importance is set to 1, i.e.
+            the standard deviation of each variable is used.
+        bw_method: str
+            Bandwidth selection method. See bw_methods for available
+            methods. If None, self.bw_method will be used.
         **kwargs: optional
             Parameters to be passed to bandwidth selection method. Refer
             corresponding method for docs (see bw_methods for method
@@ -165,10 +187,25 @@ class KDSource:
         self.N_eff = np.sum(ws) ** 2 / np.sum(ws ** 2)
         if scaling is None:
             scaling = self.geom.std(vecs=vecs, weights=ws)
+            # If an importance is specified, apply to the scaling factors
+            if importance is None:
+                importance = [1] * self.geom.dim
+            elif len(importance) != self.geom.dim:
+                raise Exception(
+                    "importance must have len = {}.".format(self.geom.dim)
+                )
+            scaling /= importance
         else:
             scaling = np.array(scaling)
         scaling[scaling == 0] = STD_DEFAULT
         self.scaling = scaling
+        if bw_method is not None:
+            keys = list(bw_methods.keys())
+            if bw_method not in keys:
+                raise Exception(
+                    "Invalid bw_method. Available: {}".format(keys)
+                )
+            self.bw_method = bw_method
         if self.bw_method is not None:
             print("Calculating bw ... ")
             bw = optimize_bw(self.bw_method, vecs / self.scaling, ws, **kwargs)
