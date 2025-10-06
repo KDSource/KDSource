@@ -4,6 +4,8 @@
 
 #include "kdsource.h"
 
+void KDS_log(const char *format, ...);
+
 // Sample with normal distribution (x0=0, s=1)
 double rand_norm() {
   double y1 = (double)(rand() + 1) / ((double)RAND_MAX + 1),
@@ -37,7 +39,7 @@ double rand_type(char kernel) {
   if (kernel == 'b')
     return rand_box();
   else {
-    fprintf(stderr, "Cannot perturbate with current kernel. \n");
+    KDS_log("Cannot perturbate with current kernel. \n");
     // KDS_error("Cannot perturbate with current kernel.");
     return 0;
   }
@@ -103,7 +105,7 @@ char pdg2pt(int pdgcode) {
 // Interpolation
 double interp(double x, const double *xs, const double *ys, int N) {
   if (x < xs[0] || x > xs[N - 1]) {
-    fprintf(stderr, "Error in interp: x outside range.\n");
+    KDS_log("Error in interp: x outside range.\n");
     return 0;
   }
   int i = 0;

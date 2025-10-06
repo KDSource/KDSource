@@ -49,6 +49,7 @@ int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
 int KDS_sample(KDSource *kds, mcpl_particle_t *part);
 double KDS_w_mean(KDSource *kds, int N, WeightFun bias);
 void KDS_destroy(KDSource *kds);
+void KDS_setlogfile(FILE *logfile);
 
 typedef struct MultiSource {
   int len;      // Number of sources

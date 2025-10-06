@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,12 +8,33 @@
 
 #include "kdsource.h"
 
+FILE *kds_logfile = NULL;
+int kds_logfile_set = 0;
+
+void KDS_setlogfile(FILE *logfile) {
+  kds_logfile = logfile;
+  kds_logfile_set = 1;
+}
+
+void KDS_log(const char *format, ...) {
+  if (!kds_logfile_set) {
+    kds_logfile = stderr;
+    kds_logfile_set = 1;
+  }
+  if (kds_logfile != NULL) {
+    va_list args;
+    va_start(args, format);
+    vfprintf(kds_logfile, format, args);
+    va_end(args);
+  }
+}
+
 void KDS_error(const char *msg) {
-  fprintf(stderr, "KDSource error: %s\n", msg);
+  KDS_log("KDSource error: %s\n", msg);
   exit(EXIT_FAILURE);
 }
 void KDS_end(const char *msg) {
-  fprintf(stderr, "KDSource terminate: %s\n", msg);
+  KDS_log("KDSource terminate: %s\n", msg);
   exit(EXIT_SUCCESS);
 }
 
@@ -45,15 +67,15 @@ KDSource *KDS_open(const char *xmlfilename) {
   char *content;
 
   // Read file
-  fprintf(stderr, "Reading xmlfile %s...\n", xmlfilename);
+  KDS_log("Reading xmlfile %s...\n", xmlfilename);
   xmlDocPtr doc = xmlReadFile(xmlfilename, NULL, 0);
   if (doc == NULL) {
-    fprintf(stderr, "Could not open file %s\n", xmlfilename);
+    KDS_log("Could not open file %s\n", xmlfilename);
     KDS_error("Error in KDS_open");
   }
   xmlNodePtr root = xmlDocGetRootElement(doc);
   if (strcmp((char *)root->name, "KDSource") != 0) {
-    fprintf(stderr, "Invalid format in source XML file %s\n", xmlfilename);
+    KDS_log("Invalid format in source XML file %s\n", xmlfilename);
     KDS_error("Error in KDS_open");
   }
   xmlNodePtr node = root->children; // Node: J
@@ -68,7 +90,7 @@ KDSource *KDS_open(const char *xmlfilename) {
     xmlFree(content);
     node = node->next;
   } else
-    fprintf(stderr, "No kernel specified. Using gaussian as default.\n");
+    KDS_log("No kernel specified. Using gaussian as default.\n");
 
   // PList
   xmlNodePtr pltree = node;
@@ -79,7 +101,7 @@ KDSource *KDS_open(const char *xmlfilename) {
   node = node->next; // Node: mcplname
   content = (char *)xmlNodeGetContent(node);
   if (strlen(content) > NAME_MAX_LEN) {
-    fprintf(stderr, "mcpl file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
+    KDS_log("mcpl file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
     KDS_error("Error in KDS_open");
   }
   strcpy(mcplfile, content); // Read mcpl file name
@@ -167,7 +189,7 @@ KDSource *KDS_open(const char *xmlfilename) {
   if (variable_bw) {
     bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
     if (strlen(content) > NAME_MAX_LEN) {
-      fprintf(stderr, "BW file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
+      KDS_log("BW file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
       KDS_error("Error in KDS_open");
     }
     strcpy(bwfilename, content); // Read BW file name
@@ -187,7 +209,7 @@ KDSource *KDS_open(const char *xmlfilename) {
       }
     }
     if (j == _n_metrics) {
-      fprintf(stderr, "Invalid %s metric.\n", metricnames[i]);
+      KDS_log("Invalid %s metric.\n", metricnames[i]);
       KDS_error("Error in KDS_open");
     }
   }
@@ -200,7 +222,7 @@ KDSource *KDS_open(const char *xmlfilename) {
   // Create KDSource
   KDSource *s = KDS_create(J, kernel, plist, geom);
 
-  fprintf(stderr, "Done.\n");
+  KDS_log("Done.\n");
 
   // Free allocated variables
   free(trasl_plist);
@@ -263,7 +285,7 @@ int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
     part->weight = 1 / bs;
   }
   if (ret == 1 && kds->geom->bwfile)
-    fprintf(stderr, "Warning: Particle list and bandwidths file have different size.\n");
+    KDS_log("Warning: Particle list and bandwidths file have different size.\n");
   return ret;
 }
 
