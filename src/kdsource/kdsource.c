@@ -42,6 +42,7 @@ KDSource *KDS_open(const char *xmlfilename) {
   int switch_x2z, variable_bw;
   char *bwfilename = NULL;
   double bw = 0;
+  char *content;
 
   // Read file
   fprintf(stderr, "Reading xmlfile %s...\n", xmlfilename);
@@ -55,46 +56,58 @@ KDSource *KDS_open(const char *xmlfilename) {
     fprintf(stderr, "Invalid format in source XML file %s\n", xmlfilename);
     KDS_error("Error in KDS_open");
   }
-  xmlNodePtr node = root->children;                   // Node: J
-  sscanf((char *)xmlNodeGetContent(node), "%lf", &J); // Read J
+  xmlNodePtr node = root->children; // Node: J
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%lf", &J); // Read J
+  xmlFree(content);
 
   node = node->next; // Node: kernel
   if (strcmp((char *)node->name, "kernel") == 0) {
-    sscanf((char *)xmlNodeGetContent(node), "%s", &kernel); // Read kernel
+    content = (char *)xmlNodeGetContent(node);
+    sscanf(content, "%s", &kernel); // Read kernel
+    xmlFree(content);
     node = node->next;
   } else
     fprintf(stderr, "No kernel specified. Using gaussian as default.\n");
 
   // PList
   xmlNodePtr pltree = node;
-  node = pltree->children;                            // Node: pt
-  sscanf((char *)xmlNodeGetContent(node), "%c", &pt); // Read pt
-  node = node->next;                                  // Node: mcplname
-  if (strlen((char *)xmlNodeGetContent(node)) > NAME_MAX_LEN) {
-    fprintf(stderr, "mcpl file name %s exceeds NAME_MAX_LEN=%d",
-           (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
+  node = pltree->children; // Node: pt
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%c", &pt); // Read pt
+  xmlFree(content);
+  node = node->next; // Node: mcplname
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > NAME_MAX_LEN) {
+    fprintf(stderr, "mcpl file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
     KDS_error("Error in KDS_open");
   }
-  strcpy(mcplfile, (char *)xmlNodeGetContent(node)); // Read mcpl file name
-  node = node->next;                                 // Node: trasl
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  strcpy(mcplfile, content); // Read mcpl file name
+  xmlFree(content);
+  node = node->next; // Node: trasl
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     trasl_plist = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0],
-           &trasl_plist[1], &trasl_plist[2]);
+    sscanf(content, "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
   }
+  xmlFree(content);
   node = node->next; // Node: rot
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     rot_plist = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &rot_plist[0],
-           &rot_plist[1], &rot_plist[2]);
+    sscanf(content, "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
   }
-  node = node->next;                                          // Node: x2z
-  sscanf((char *)xmlNodeGetContent(node), "%d", &switch_x2z); // Read switch_x2z
+  xmlFree(content);
+  node = node->next; // Node: x2z
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%d", &switch_x2z); // Read switch_x2z
+  xmlFree(content);
 
   // Geometry
   xmlNodePtr gtree = pltree->next;
-  sscanf((char *)xmlGetProp(gtree, (const xmlChar *)"order"), "%d",
-         &order); // Read order
+  content = (char *)xmlGetProp(gtree, (const xmlChar *)"order");
+  sscanf(content, "%d", &order); // Read order
+  xmlFree(content);
   int dims[order], nps[order];
   char metricnames[order][NAME_MAX_LEN];
   double *params[order];
@@ -102,54 +115,66 @@ KDSource *KDS_open(const char *xmlfilename) {
   PerturbFun perturbs[order];
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
-    strcpy(metricnames[i], (char *)mtree->name);             // Read metricname
-    node = mtree->children;                                  // Node: dim
-    sscanf((char *)xmlNodeGetContent(node), "%d", &dims[i]); // Read dim
+    strcpy(metricnames[i], (char *)mtree->name); // Read metricname
+    node = mtree->children;                      // Node: dim
+    content = (char *)xmlNodeGetContent(node);
+    sscanf(content, "%d", &dims[i]); // Read dim
+    xmlFree(content);
     scalings[i] = (double *)malloc(dims[i] * sizeof(double));
     node = node->next; // Node: params
-    sscanf((char *)xmlGetProp(node, (const xmlChar *)"nps"), "%d",
-           &nps[i]); // Read ngp
+    content = (char *)xmlGetProp(node, (const xmlChar *)"nps");
+    sscanf(content, "%d", &nps[i]); // Read ngp
+    xmlFree(content);
     params[i] = (double *)malloc(nps[i] * sizeof(double));
-    buf = (char *)xmlNodeGetContent(node);
+    content = (char *)xmlNodeGetContent(node);
+    buf = content;
     for (j = 0; j < nps[i]; j++) { // Read params
       sscanf(buf, "%lf %n", &params[i][j], &n);
       buf += n;
     }
+    xmlFree(content);
     mtree = mtree->next;
   }
   node = mtree; // Node: trasl
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     trasl_geom = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_geom[0],
-           &trasl_geom[1], &trasl_geom[2]);
+    sscanf(content, "%lf %lf %lf", &trasl_geom[0], &trasl_geom[1], &trasl_geom[2]);
   }
+  xmlFree(content);
   node = node->next; // Node: rot
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     rot_geom = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &rot_geom[0],
-           &rot_geom[1], &rot_geom[2]);
+    sscanf(content, "%lf %lf %lf", &rot_geom[0], &rot_geom[1], &rot_geom[2]);
   }
+  xmlFree(content);
   node = gtree->next; // Node: scaling
-  buf = (char *)xmlNodeGetContent(node);
+  content = (char *)xmlNodeGetContent(node);
+  buf = content;
   for (i = 0; i < order; i++) { // Read scalings
     for (j = 0; j < dims[i]; j++) {
       sscanf(buf, "%lf %n", &scalings[i][j], &n);
       buf += n;
     }
   }
+  xmlFree(content);
   node = node->next; // Node: BW
-  sscanf((char *)xmlGetProp(node, (const xmlChar *)"variable"), "%d",
-         &variable_bw); // Read variable_bw
+  content = (char *)xmlGetProp(node, (const xmlChar *)"variable");
+  sscanf(content, "%d", &variable_bw); // Read variable_bw
+  xmlFree(content);
+  content = (char *)xmlNodeGetContent(node);
   if (variable_bw) {
     bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
-    if (strlen((char *)xmlNodeGetContent(node)) > NAME_MAX_LEN) {
-      fprintf(stderr, "BW file name %s exceeds NAME_MAX_LEN=%d",
-             (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
+    if (strlen(content) > NAME_MAX_LEN) {
+      fprintf(stderr, "BW file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
       KDS_error("Error in KDS_open");
     }
-    strcpy(bwfilename, (char *)xmlNodeGetContent(node)); // Read BW file name
-  } else
-    sscanf((char *)xmlNodeGetContent(node), "%lf", &bw); // Read BW
+    strcpy(bwfilename, content); // Read BW file name
+  } else {
+    sscanf(content, "%lf", &bw); // Read BW
+  }
+  xmlFree(content);
 
   // Create PList
   PList *plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);

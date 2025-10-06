@@ -44,6 +44,7 @@ Metric *Metric_copy(const Metric *from) {
 
 void Metric_destroy(Metric *metric) {
   free(metric->scaling);
+  free(metric->params);
   free(metric);
 }
 
@@ -162,6 +163,10 @@ void Geom_destroy(Geometry *geom) {
   free(geom->ms);
   free(geom->trasl);
   free(geom->rot);
+  if (geom->bwfile != NULL) {
+    fclose(geom->bwfile);
+  }
+  free(geom->bwfilename);
   free(geom);
 }
 
