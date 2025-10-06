@@ -8,6 +8,8 @@
 
 #include "kdsource.h"
 
+#define MAX_ORDER 100
+
 FILE *kds_logfile = NULL;
 int kds_logfile_set = 0;
 
@@ -130,11 +132,11 @@ KDSource *KDS_open(const char *xmlfilename) {
   content = (char *)xmlGetProp(gtree, (const xmlChar *)"order");
   sscanf(content, "%d", &order); // Read order
   xmlFree(content);
-  int dims[order], nps[order];
-  char metricnames[order][NAME_MAX_LEN];
-  double *params[order];
-  double *scalings[order];
-  PerturbFun perturbs[order];
+  int dims[MAX_ORDER], nps[MAX_ORDER];
+  char metricnames[MAX_ORDER][NAME_MAX_LEN];
+  double *params[MAX_ORDER];
+  double *scalings[MAX_ORDER];
+  PerturbFun perturbs[MAX_ORDER];
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
     strcpy(metricnames[i], (char *)mtree->name); // Read metricname
@@ -213,7 +215,7 @@ KDSource *KDS_open(const char *xmlfilename) {
       KDS_error("Error in KDS_open");
     }
   }
-  Metric *metrics[order];
+  Metric *metrics[MAX_ORDER];
   for (i = 0; i < order; i++)
     metrics[i] =
         Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
@@ -336,11 +338,13 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
 }
 
 MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
-  KDSource *s[len];
+  KDSource** s = calloc(len, sizeof(KDSource *));
   int i;
   for (i = 0; i < len; i++)
     s[i] = KDS_open(xmlfilenames[i]);
-  return MS_create(len, s, ws);
+  MultiSource *ms = MS_create(len, s, ws);
+  free(s);
+  return ms;
 }
 
 int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,

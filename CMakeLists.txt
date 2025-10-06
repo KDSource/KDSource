@@ -37,7 +37,12 @@ add_library(kdsource "${SRC}/kdsource/kdsource.c"
                      "${SRC}/kdsource/geom.c"
                      "${SRC}/kdsource/utils.c")
 target_include_directories(kdsource PUBLIC "${SRC}/kdsource" "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(kdsource PUBLIC m LibXml2::LibXml2 mcpl)
+target_link_libraries(kdsource PUBLIC LibXml2::LibXml2 mcpl)
+if(MSVC)
+  target_compile_definitions(kdsource PRIVATE "-D_USE_MATH_DEFINES")
+else()
+  target_link_libraries(kdsource PUBLIC m)
+endif()
 install(TARGETS kdsource DESTINATION lib)
 install(FILES "${SRC}/kdsource/kdsource.h"
               "${SRC}/kdsource/plist.h"
