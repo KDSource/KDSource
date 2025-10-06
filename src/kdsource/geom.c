@@ -64,7 +64,7 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
     if (strlen(bwfilename)) {
       FILE *bwfile;
       if ((bwfile = fopen(bwfilename, "rb")) == 0) {
-        printf("Could not open file %s\n", bwfilename);
+        fprintf(stderr, "Could not open file %s\n", bwfilename);
         KDS_error("Error in Geom_create");
       }
       geom->bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
