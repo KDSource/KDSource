@@ -8,7 +8,21 @@
 
 #include "kdsource.h"
 
+#ifdef WIN32
+#define PATHSEP '\\'
+#else
+#define PATHSEP '/'
+#include <unistd.h>
+#endif
+
 #define MAX_ORDER 100
+
+static int isabsolute(const char *path);
+static size_t dirname(char *target, const char *path);
+static int readable(const char *path);
+/* find the MCPL or BW file in the current directory or relative to the xml file */
+static void find_file(char *restrict target, const char *restrict mcplfile,
+                      const char *restrict xmlfile);
 
 FILE *kds_logfile = NULL;
 int kds_logfile_set = 0;
@@ -58,13 +72,13 @@ KDSource *KDS_open(const char *xmlfilename) {
   char *buf;
 
   char pt;
-  char mcplfile[NAME_MAX_LEN];
+  char mcplfile[2 * NAME_MAX_LEN] = "";
   double *trasl_plist = NULL, *rot_plist = NULL;
 
   int order;
   double *trasl_geom = NULL, *rot_geom = NULL;
   int switch_x2z, variable_bw;
-  char *bwfilename = NULL;
+  char bwfilename[2 * NAME_MAX_LEN] = "";
   double bw = 0;
   char *content;
 
@@ -106,7 +120,7 @@ KDSource *KDS_open(const char *xmlfilename) {
     KDS_log("mcpl file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
     KDS_error("Error in KDS_open");
   }
-  strcpy(mcplfile, content); // Read mcpl file name
+  find_file(mcplfile, content, xmlfilename); // Read mcpl file name
   xmlFree(content);
   node = node->next; // Node: trasl
   content = (char *)xmlNodeGetContent(node);
@@ -189,12 +203,11 @@ KDSource *KDS_open(const char *xmlfilename) {
   xmlFree(content);
   content = (char *)xmlNodeGetContent(node);
   if (variable_bw) {
-    bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
     if (strlen(content) > NAME_MAX_LEN) {
       KDS_log("BW file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
       KDS_error("Error in KDS_open");
     }
-    strcpy(bwfilename, content); // Read BW file name
+    find_file(bwfilename, content, xmlfilename); // Read BW file name
   } else {
     sscanf(content, "%lf", &bw); // Read BW
   }
@@ -231,7 +244,6 @@ KDSource *KDS_open(const char *xmlfilename) {
   free(rot_plist);
   free(trasl_geom);
   free(rot_geom);
-  free(bwfilename);
   for (i = 0; i < order; i++) {
     free(params[i]);
     free(scalings[i]);
@@ -384,4 +396,91 @@ void MS_destroy(MultiSource *ms) {
   free(ms->ws);
   free(ms->cdf);
   free(ms);
+}
+
+static int isabsolute(const char *path) {
+  size_t len;
+
+  if (path == NULL) {
+    return 0;
+  }
+
+  len = strlen(path);
+  if (len < 2) {
+    return 0;
+  }
+#ifdef WIN32
+  if (path[1] == ':') {
+    return 1;
+  }
+#endif
+  return path[0] == PATHSEP;
+}
+
+static size_t dirname(char *target, const char *path) {
+  char *lastsep;
+  size_t len;
+
+  if (target == NULL) {
+    return 0;
+  }
+  if (path == NULL) {
+    target[0] = '\0';
+    return 0;
+  }
+
+  len = strlen(path);
+  /* copy to writable memory to modify */
+  memmove(target, path, len + 1);
+  /* strip trailing separators */
+  while (len > 0 && target[len - 1] == PATHSEP) {
+    target[len - 1] = '\0';
+    len--;
+  }
+  /* end string at last separator */
+  lastsep = strrchr(target, PATHSEP);
+  if (lastsep == NULL) {
+    target[0] = '\0';
+    return 0;
+  }
+  *lastsep = '\0';
+  return lastsep - target;
+}
+
+static int readable(const char *path) {
+#ifdef WIN32
+  return _access(path, 4) == 0;
+#else
+  return access(path, R_OK) == 0;
+#endif
+}
+
+static void find_file(char *restrict target, const char *restrict filename,
+                      const char *restrict xmlfile) {
+  size_t len;
+
+  if (target == NULL) {
+    return;
+  }
+  if (filename == NULL) {
+    target[0] = '\0';
+    return;
+  }
+  if (xmlfile == NULL || isabsolute(filename)) {
+    strcpy(target, filename);
+    return;
+  }
+
+  /* try relative to the xml file */
+  len = dirname(target, xmlfile);
+  if (len > 0) {
+    target[len] = PATHSEP;
+    target[len + 1] = '\0';
+    strcat(target, filename);
+    if (readable(target)) {
+      return;
+    }
+  }
+  /* default: relative to current working directory */
+  strcpy(target, filename);
 }
