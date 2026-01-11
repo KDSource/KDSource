@@ -9,7 +9,7 @@
 #                                                                                #
 ##################################################################################
 
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.10...3.27)
 
 project(KDSource VERSION 0.1.0)
 configure_file(KDSourceConfig.h.in KDSourceConfig.h)
@@ -30,12 +30,19 @@ add_subdirectory(mcpl)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
-add_library(kdsource SHARED "${SRC}/kdsource/kdsource.c"
-                            "${SRC}/kdsource/plist.c"
-                            "${SRC}/kdsource/geom.c"
-                            "${SRC}/kdsource/utils.c")
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+add_library(kdsource "${SRC}/kdsource/kdsource.c"
+                     "${SRC}/kdsource/plist.c"
+                     "${SRC}/kdsource/geom.c"
+                     "${SRC}/kdsource/utils.c")
 target_include_directories(kdsource PUBLIC "${SRC}/kdsource" "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(kdsource PUBLIC m LibXml2::LibXml2 mcpl)
+target_link_libraries(kdsource PUBLIC LibXml2::LibXml2 mcpl)
+if(MSVC)
+  target_compile_definitions(kdsource PRIVATE "-D_USE_MATH_DEFINES")
+else()
+  target_link_libraries(kdsource PUBLIC m)
+endif()
 install(TARGETS kdsource DESTINATION lib)
 install(FILES "${SRC}/kdsource/kdsource.h"
               "${SRC}/kdsource/plist.h"

@@ -8,6 +8,7 @@
 
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
+void KDS_log(const char *format, ...);
 
 PList *PList_create(char pt, const char *filename, const double *trasl,
                     const double *rot, int switch_x2z) {

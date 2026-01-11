@@ -8,6 +8,7 @@
 
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
+void KDS_log(const char *format, ...);
 
 Metric *Metric_create(int dim, const double *scaling, PerturbFun perturb,
                       int nps, const double *params) {
@@ -44,6 +45,7 @@ Metric *Metric_copy(const Metric *from) {
 
 void Metric_destroy(Metric *metric) {
   free(metric->scaling);
+  free(metric->params);
   free(metric);
 }
 
@@ -64,7 +66,7 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
     if (strlen(bwfilename)) {
       FILE *bwfile;
       if ((bwfile = fopen(bwfilename, "rb")) == 0) {
-        printf("Could not open file %s\n", bwfilename);
+        KDS_log("Could not open file %s\n", bwfilename);
         KDS_error("Error in Geom_create");
       }
       geom->bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
@@ -162,6 +164,10 @@ void Geom_destroy(Geometry *geom) {
   free(geom->ms);
   free(geom->trasl);
   free(geom->rot);
+  if (geom->bwfile != NULL) {
+    fclose(geom->bwfile);
+  }
+  free(geom->bwfilename);
   free(geom);
 }
 

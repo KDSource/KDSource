@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,12 +8,49 @@
 
 #include "kdsource.h"
 
+#ifdef WIN32
+#define PATHSEP '\\'
+#else
+#define PATHSEP '/'
+#include <unistd.h>
+#endif
+
+#define MAX_ORDER 100
+
+static int isabsolute(const char *path);
+static size_t dirname(char *target, const char *path);
+static int readable(const char *path);
+/* find the MCPL or BW file in the current directory or relative to the xml file */
+static void find_file(char *restrict target, const char *restrict mcplfile,
+                      const char *restrict xmlfile);
+
+FILE *kds_logfile = NULL;
+int kds_logfile_set = 0;
+
+void KDS_setlogfile(FILE *logfile) {
+  kds_logfile = logfile;
+  kds_logfile_set = 1;
+}
+
+void KDS_log(const char *format, ...) {
+  if (!kds_logfile_set) {
+    kds_logfile = stderr;
+    kds_logfile_set = 1;
+  }
+  if (kds_logfile != NULL) {
+    va_list args;
+    va_start(args, format);
+    vfprintf(kds_logfile, format, args);
+    va_end(args);
+  }
+}
+
 void KDS_error(const char *msg) {
-  printf("KDSource error: %s\n", msg);
+  KDS_log("KDSource error: %s\n", msg);
   exit(EXIT_FAILURE);
 }
 void KDS_end(const char *msg) {
-  printf("KDSource terminate: %s\n", msg);
+  KDS_log("KDSource terminate: %s\n", msg);
   exit(EXIT_SUCCESS);
 }
 
@@ -34,122 +72,146 @@ KDSource *KDS_open(const char *xmlfilename) {
   char *buf;
 
   char pt;
-  char mcplfile[NAME_MAX_LEN];
+  char mcplfile[2 * NAME_MAX_LEN] = "";
   double *trasl_plist = NULL, *rot_plist = NULL;
 
   int order;
   double *trasl_geom = NULL, *rot_geom = NULL;
   int switch_x2z, variable_bw;
-  char *bwfilename = NULL;
+  char bwfilename[2 * NAME_MAX_LEN] = "";
   double bw = 0;
+  char *content;
 
   // Read file
-  printf("Reading xmlfile %s...\n", xmlfilename);
+  KDS_log("Reading xmlfile %s...\n", xmlfilename);
   xmlDocPtr doc = xmlReadFile(xmlfilename, NULL, 0);
   if (doc == NULL) {
-    printf("Could not open file %s\n", xmlfilename);
+    KDS_log("Could not open file %s\n", xmlfilename);
     KDS_error("Error in KDS_open");
   }
   xmlNodePtr root = xmlDocGetRootElement(doc);
   if (strcmp((char *)root->name, "KDSource") != 0) {
-    printf("Invalid format in source XML file %s\n", xmlfilename);
+    KDS_log("Invalid format in source XML file %s\n", xmlfilename);
     KDS_error("Error in KDS_open");
   }
-  xmlNodePtr node = root->children;                   // Node: J
-  sscanf((char *)xmlNodeGetContent(node), "%lf", &J); // Read J
+  xmlNodePtr node = root->children; // Node: J
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%lf", &J); // Read J
+  xmlFree(content);
 
   node = node->next; // Node: kernel
   if (strcmp((char *)node->name, "kernel") == 0) {
-    sscanf((char *)xmlNodeGetContent(node), "%s", &kernel); // Read kernel
+    content = (char *)xmlNodeGetContent(node);
+    sscanf(content, "%s", &kernel); // Read kernel
+    xmlFree(content);
     node = node->next;
   } else
-    printf("No kernel specified. Using gaussian as default.\n");
+    KDS_log("No kernel specified. Using gaussian as default.\n");
 
   // PList
   xmlNodePtr pltree = node;
-  node = pltree->children;                            // Node: pt
-  sscanf((char *)xmlNodeGetContent(node), "%c", &pt); // Read pt
-  node = node->next;                                  // Node: mcplname
-  if (strlen((char *)xmlNodeGetContent(node)) > NAME_MAX_LEN) {
-    printf("mcpl file name %s exceeds NAME_MAX_LEN=%d",
-           (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
+  node = pltree->children; // Node: pt
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%c", &pt); // Read pt
+  xmlFree(content);
+  node = node->next; // Node: mcplname
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > NAME_MAX_LEN) {
+    KDS_log("mcpl file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
     KDS_error("Error in KDS_open");
   }
-  strcpy(mcplfile, (char *)xmlNodeGetContent(node)); // Read mcpl file name
-  node = node->next;                                 // Node: trasl
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  find_file(mcplfile, content, xmlfilename); // Read mcpl file name
+  xmlFree(content);
+  node = node->next; // Node: trasl
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     trasl_plist = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0],
-           &trasl_plist[1], &trasl_plist[2]);
+    sscanf(content, "%lf %lf %lf", &trasl_plist[0], &trasl_plist[1], &trasl_plist[2]);
   }
+  xmlFree(content);
   node = node->next; // Node: rot
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     rot_plist = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &rot_plist[0],
-           &rot_plist[1], &rot_plist[2]);
+    sscanf(content, "%lf %lf %lf", &rot_plist[0], &rot_plist[1], &rot_plist[2]);
   }
-  node = node->next;                                          // Node: x2z
-  sscanf((char *)xmlNodeGetContent(node), "%d", &switch_x2z); // Read switch_x2z
+  xmlFree(content);
+  node = node->next; // Node: x2z
+  content = (char *)xmlNodeGetContent(node);
+  sscanf(content, "%d", &switch_x2z); // Read switch_x2z
+  xmlFree(content);
 
   // Geometry
   xmlNodePtr gtree = pltree->next;
-  sscanf((char *)xmlGetProp(gtree, (const xmlChar *)"order"), "%d",
-         &order); // Read order
-  int dims[order], nps[order];
-  char metricnames[order][NAME_MAX_LEN];
-  double *params[order];
-  double *scalings[order];
-  PerturbFun perturbs[order];
+  content = (char *)xmlGetProp(gtree, (const xmlChar *)"order");
+  sscanf(content, "%d", &order); // Read order
+  xmlFree(content);
+  int dims[MAX_ORDER], nps[MAX_ORDER];
+  char metricnames[MAX_ORDER][NAME_MAX_LEN];
+  double *params[MAX_ORDER];
+  double *scalings[MAX_ORDER];
+  PerturbFun perturbs[MAX_ORDER];
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
-    strcpy(metricnames[i], (char *)mtree->name);             // Read metricname
-    node = mtree->children;                                  // Node: dim
-    sscanf((char *)xmlNodeGetContent(node), "%d", &dims[i]); // Read dim
+    strcpy(metricnames[i], (char *)mtree->name); // Read metricname
+    node = mtree->children;                      // Node: dim
+    content = (char *)xmlNodeGetContent(node);
+    sscanf(content, "%d", &dims[i]); // Read dim
+    xmlFree(content);
     scalings[i] = (double *)malloc(dims[i] * sizeof(double));
     node = node->next; // Node: params
-    sscanf((char *)xmlGetProp(node, (const xmlChar *)"nps"), "%d",
-           &nps[i]); // Read ngp
+    content = (char *)xmlGetProp(node, (const xmlChar *)"nps");
+    sscanf(content, "%d", &nps[i]); // Read ngp
+    xmlFree(content);
     params[i] = (double *)malloc(nps[i] * sizeof(double));
-    buf = (char *)xmlNodeGetContent(node);
+    content = (char *)xmlNodeGetContent(node);
+    buf = content;
     for (j = 0; j < nps[i]; j++) { // Read params
       sscanf(buf, "%lf %n", &params[i][j], &n);
       buf += n;
     }
+    xmlFree(content);
     mtree = mtree->next;
   }
   node = mtree; // Node: trasl
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     trasl_geom = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_geom[0],
-           &trasl_geom[1], &trasl_geom[2]);
+    sscanf(content, "%lf %lf %lf", &trasl_geom[0], &trasl_geom[1], &trasl_geom[2]);
   }
+  xmlFree(content);
   node = node->next; // Node: rot
-  if (strlen((char *)xmlNodeGetContent(node)) > 1) {
+  content = (char *)xmlNodeGetContent(node);
+  if (strlen(content) > 1) {
     rot_geom = (double *)malloc(3 * sizeof(double));
-    sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &rot_geom[0],
-           &rot_geom[1], &rot_geom[2]);
+    sscanf(content, "%lf %lf %lf", &rot_geom[0], &rot_geom[1], &rot_geom[2]);
   }
+  xmlFree(content);
   node = gtree->next; // Node: scaling
-  buf = (char *)xmlNodeGetContent(node);
+  content = (char *)xmlNodeGetContent(node);
+  buf = content;
   for (i = 0; i < order; i++) { // Read scalings
     for (j = 0; j < dims[i]; j++) {
       sscanf(buf, "%lf %n", &scalings[i][j], &n);
       buf += n;
     }
   }
+  xmlFree(content);
   node = node->next; // Node: BW
-  sscanf((char *)xmlGetProp(node, (const xmlChar *)"variable"), "%d",
-         &variable_bw); // Read variable_bw
+  content = (char *)xmlGetProp(node, (const xmlChar *)"variable");
+  sscanf(content, "%d", &variable_bw); // Read variable_bw
+  xmlFree(content);
+  content = (char *)xmlNodeGetContent(node);
   if (variable_bw) {
-    bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
-    if (strlen((char *)xmlNodeGetContent(node)) > NAME_MAX_LEN) {
-      printf("BW file name %s exceeds NAME_MAX_LEN=%d",
-             (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
+    if (strlen(content) > NAME_MAX_LEN) {
+      KDS_log("BW file name %s exceeds NAME_MAX_LEN=%d", content, NAME_MAX_LEN);
       KDS_error("Error in KDS_open");
     }
-    strcpy(bwfilename, (char *)xmlNodeGetContent(node)); // Read BW file name
-  } else
-    sscanf((char *)xmlNodeGetContent(node), "%lf", &bw); // Read BW
+    find_file(bwfilename, content, xmlfilename); // Read BW file name
+  } else {
+    sscanf(content, "%lf", &bw); // Read BW
+  }
+  xmlFree(content);
 
   // Create PList
   PList *plist = PList_create(pt, mcplfile, trasl_plist, rot_plist, switch_x2z);
@@ -162,11 +224,11 @@ KDSource *KDS_open(const char *xmlfilename) {
       }
     }
     if (j == _n_metrics) {
-      printf("Invalid %s metric.\n", metricnames[i]);
+      KDS_log("Invalid %s metric.\n", metricnames[i]);
       KDS_error("Error in KDS_open");
     }
   }
-  Metric *metrics[order];
+  Metric *metrics[MAX_ORDER];
   for (i = 0; i < order; i++)
     metrics[i] =
         Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
@@ -175,14 +237,13 @@ KDSource *KDS_open(const char *xmlfilename) {
   // Create KDSource
   KDSource *s = KDS_create(J, kernel, plist, geom);
 
-  printf("Done.\n");
+  KDS_log("Done.\n");
 
   // Free allocated variables
   free(trasl_plist);
   free(rot_plist);
   free(trasl_geom);
   free(rot_geom);
-  free(bwfilename);
   for (i = 0; i < order; i++) {
     free(params[i]);
     free(scalings[i]);
@@ -238,7 +299,7 @@ int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
     part->weight = 1 / bs;
   }
   if (ret == 1 && kds->geom->bwfile)
-    printf("Warning: Particle list and bandwidths file have different size.\n");
+    KDS_log("Warning: Particle list and bandwidths file have different size.\n");
   return ret;
 }
 
@@ -289,11 +350,13 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
 }
 
 MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
-  KDSource *s[len];
+  KDSource** s = calloc(len, sizeof(KDSource *));
   int i;
   for (i = 0; i < len; i++)
     s[i] = KDS_open(xmlfilenames[i]);
-  return MS_create(len, s, ws);
+  MultiSource *ms = MS_create(len, s, ws);
+  free(s);
+  return ms;
 }
 
 int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
@@ -333,4 +396,91 @@ void MS_destroy(MultiSource *ms) {
   free(ms->ws);
   free(ms->cdf);
   free(ms);
+}
+
+static int isabsolute(const char *path) {
+  size_t len;
+
+  if (path == NULL) {
+    return 0;
+  }
+
+  len = strlen(path);
+  if (len < 2) {
+    return 0;
+  }
+#ifdef WIN32
+  if (path[1] == ':') {
+    return 1;
+  }
+#endif
+  return path[0] == PATHSEP;
+}
+
+static size_t dirname(char *target, const char *path) {
+  char *lastsep;
+  size_t len;
+
+  if (target == NULL) {
+    return 0;
+  }
+  if (path == NULL) {
+    target[0] = '\0';
+    return 0;
+  }
+
+  len = strlen(path);
+  /* copy to writable memory to modify */
+  memmove(target, path, len + 1);
+  /* strip trailing separators */
+  while (len > 0 && target[len - 1] == PATHSEP) {
+    target[len - 1] = '\0';
+    len--;
+  }
+  /* end string at last separator */
+  lastsep = strrchr(target, PATHSEP);
+  if (lastsep == NULL) {
+    target[0] = '\0';
+    return 0;
+  }
+  *lastsep = '\0';
+  return lastsep - target;
+}
+
+static int readable(const char *path) {
+#ifdef WIN32
+  return _access(path, 4) == 0;
+#else
+  return access(path, R_OK) == 0;
+#endif
+}
+
+static void find_file(char *restrict target, const char *restrict filename,
+                      const char *restrict xmlfile) {
+  size_t len;
+
+  if (target == NULL) {
+    return;
+  }
+  if (filename == NULL) {
+    target[0] = '\0';
+    return;
+  }
+  if (xmlfile == NULL || isabsolute(filename)) {
+    strcpy(target, filename);
+    return;
+  }
+
+  /* try relative to the xml file */
+  len = dirname(target, xmlfile);
+  if (len > 0) {
+    target[len] = PATHSEP;
+    target[len + 1] = '\0';
+    strcat(target, filename);
+    if (readable(target)) {
+      return;
+    }
+  }
+  /* default: relative to current working directory */
+  strcpy(target, filename);
 }
