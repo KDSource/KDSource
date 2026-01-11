@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <math.h>
 
@@ -15,14 +16,17 @@ void display_usage() {
   printf("\t-o outfile: Name of MCPL file with new samples\n");
   printf("\t            (default: \"resampled.mcpl\").\n");
   printf("\t-n N:       Number of new samples (default: 1E5).\n");
+  printf("\t-s SEED:    Seed for RNG (default: current time).\n");
   printf("\t-h, --help: Display usage instructions.\n");
 }
 
 int resample_parse_args(int argc, char **argv, const char **filename,
-                        const char **outfilename, long int *N) {
+                        const char **outfilename, long int *N,
+                        unsigned int *seed) {
   *filename = 0;
   *outfilename = 0;
   *N = 1E5;
+  *seed = (unsigned int)time(NULL);
   int i;
   for (i = 1; i < argc; i++) {
     if (argv[i][0] == '\0')
@@ -37,6 +41,10 @@ int resample_parse_args(int argc, char **argv, const char **filename,
     }
     if (strcmp(argv[i], "-n") == 0) {
       *N = atof(argv[++i]);
+      continue;
+    }
+    if (strcmp(argv[i], "-s") == 0) {
+      *seed = (unsigned int)atoi(argv[++i]);
       continue;
     }
     if (argv[i][0] == '-') {
@@ -63,9 +71,13 @@ int main(int argc, char *argv[]) {
   const char *filename;
   const char *outfilename;
   long int N;
+  unsigned int seed;
 
-  if (resample_parse_args(argc, argv, &filename, &outfilename, &N))
+  if (resample_parse_args(argc, argv, &filename, &outfilename, &N, &seed))
     return 1;
+
+  srand(seed);
+  printf("Using RNG seed: %u\n", seed);
 
   KDSource *kds = KDS_open(filename);
   mcpl_particle_t part;
