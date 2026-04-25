@@ -7,9 +7,6 @@ import os
 
 from PIL import Image as Im
 
-import matplotlib.colors as col
-import matplotlib.pyplot as plt
-
 import numpy as np
 
 from .plist import appendssv, convert2mcpl, savessv
@@ -371,6 +368,7 @@ class T4Tally:
                     + str(self.grids[vrs[1]][cells[1] + 1])
                 )
         grid = (self.grids[var][:-1] + self.grids[var][1:]) / 2
+        import matplotlib.pyplot as plt
         plt.errorbar(grid, scores, errs, label=lbl)
         plt.xscale(kwargs["xscale"])
         plt.yscale(kwargs["yscale"])
@@ -443,6 +441,7 @@ class T4Tally:
             errs = np.transpose(errs)
         #
         if kwargs["scale"] == "log":
+            import matplotlib.colors as col
             norm = col.LogNorm()
         else:
             norm = None
@@ -452,6 +451,7 @@ class T4Tally:
             self.grids[vrs[1]][0],
             self.grids[vrs[1]][-1],
         )
+        import matplotlib.pyplot as plt
         plt.pcolormesh(
             self.grids[vrs[0]],
             self.grids[vrs[1]],
@@ -480,6 +480,7 @@ class T4Tally:
                 + " <= "
                 + str(self.grids[var][cell + 1])
             )
+        import matplotlib.pyplot as plt
         plt.title(title)
         plt.xlabel(
             r"${}\ [{}]$".format(self.varnames[vrs[0]], self.units[vrs[0]])

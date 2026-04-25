@@ -9,9 +9,6 @@ from xml.etree.ElementTree import Element, SubElement, parse, tostring
 
 from KDEpy import TreeKDE
 
-import matplotlib.colors as col
-import matplotlib.pyplot as plt
-
 import numpy as np
 
 from .geom import Geometry
@@ -379,6 +376,7 @@ class KDSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
 
+        import matplotlib.pyplot as plt
         plt.errorbar(
             grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
         )
@@ -487,6 +485,7 @@ class KDSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
 
+        import matplotlib.pyplot as plt
         plt.errorbar(
             grid, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
         )
@@ -587,6 +586,7 @@ class KDSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
 
+        import matplotlib.pyplot as plt
         plt.errorbar(
             grid_E, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
         )
@@ -683,6 +683,7 @@ class KDSource:
             scores *= kwargs["fact"]
             errs *= kwargs["fact"]
 
+        import matplotlib.pyplot as plt
         plt.errorbar(
             grid_t, scores, errs, label=kwargs["label"], capsize=1, linewidth=1
         )
@@ -758,9 +759,11 @@ class KDSource:
             (grids[1][:1], (grids[1][1:] + grids[1][:-1]) / 2, grids[1][-1:])
         )
         if kwargs["scale"] == "log":
+            import matplotlib.colors as col
             norm = col.LogNorm()
         else:
             norm = None
+        import matplotlib.pyplot as plt
         plt.pcolormesh(
             xx,
             yy,
@@ -882,9 +885,11 @@ class KDSource:
             (grids[1][:1], (grids[1][1:] + grids[1][:-1]) / 2, grids[1][-1:])
         )
         if kwargs["scale"] == "log":
+            import matplotlib.colors as col
             norm = col.LogNorm()
         else:
             norm = None
+        import matplotlib.pyplot as plt
         plt.pcolormesh(
             xx,
             yy,
