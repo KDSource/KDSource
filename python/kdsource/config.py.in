@@ -1,0 +1,49 @@
+import pathlib as _p
+_datadir = _p.Path(__file__).parent.joinpath('data').absolute()
+config_items = [
+    'version',
+    'intversion',
+    'includedir',
+    'libdir',
+    'libpath',
+    'libname',
+    'shlibdir',
+    'shlibpath',
+    'shlibname',
+    'buildflags',
+]
+
+def summary():
+    """Print summary of all config items"""
+    print("KDSource v%s with configuration:"%config('version'))
+    print()
+    maxlen = max(len(item) for item in config_items)
+    for item in config_items:
+        print('  %s : %s'%(item.rjust(maxlen),config(item)))
+
+def config(item):
+    """Return configuration item (available are those in the config_item list).
+    """
+    assert item in config_items, "unknown config item"
+    if 'lib' not in item:
+        if item=='includedir':
+            return _datadir.joinpath('include')
+        if item=='buildflags':
+            import shlex
+            return shlex.join(
+                shlex.quote(e)
+                for e in [ "-Wl,-rpath,%s"%config('libdir'),
+                           "-Wl,%s"%config('libpath'),
+                           "-I%s"%config('includedir') ]
+            )
+        if item=='intversion':
+            return "@KDSource_version_int@"
+        if item=='version':
+            return "@KDSource_VERSION@"
+    if item.startswith('sh'):
+        item = item[2:]
+    if item=='libdir':
+        return _datadir.joinpath('lib')
+    libs = list( _datadir.joinpath('lib').glob('*kdsource*') )
+    assert len(libs)==1, "inconsistent installation"
+    return libs[0].name if item=='libname' else libs[0]
