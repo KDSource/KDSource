@@ -30,19 +30,21 @@ reference:
 """
 
 __version__ = "@KDSource_VERSION@"
-versionint = @KDSource_version_int@
-version = ( @KDSource_VERSION_MAJOR@, @KDSource_VERSION_MINOR@, @KDSource_VERSION_PATCH@ )
+versionint = int('@KDSource_version_int@')
+version = ( int('@KDSource_VERSION_MAJOR@'),
+            int('@KDSource_VERSION_MINOR@'),
+            int('@KDSource_VERSION_PATCH@') )
 __author__ = "KDSource"
 
 #Convenience module with ~all imports (leaving __init__.py empty as per
 #best-practice, and to not make e.g. CLI scripts fail due to missing un-needed
 #dependency)
-from . import geom
-from . import kde
-from . import plist
-from .geom import Geometry, Metric
-from .kde import bw_silv
-from .kdsource import KDSource, load
-from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv
-from .writemcpl import write_mcpl
-from .resample import resample_to_mcpl
+from . import geom  #noqa F401
+from . import kde  #noqa F401
+from . import plist  #noqa F401
+from .geom import Geometry, Metric  #noqa F401
+from .kde import bw_silv  #noqa F401
+from .kdsource import KDSource, load  #noqa F401
+from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv  #noqa F401
+from .writemcpl import write_mcpl #noqa F401
+from .resample import resample_to_mcpl #noqa F401

@@ -44,7 +44,7 @@ def read_spectrum(spectrum=None):
                     line = line.split(sep=",")
                     Es.append(np.double(line[0]) / 1000.0)
                     ws.append(np.double(line[2]))
-                except:
+                except Exception:
                     pass
         if len(Es) == 0:
             raise Exception("Empty decay spectrum.")

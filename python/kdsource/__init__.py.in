@@ -30,6 +30,8 @@ reference:
 """
 
 __version__ = "@KDSource_VERSION@"
-versionint = @KDSource_version_int@
-version = ( @KDSource_VERSION_MAJOR@, @KDSource_VERSION_MINOR@, @KDSource_VERSION_PATCH@ )
+versionint = int('@KDSource_version_int@')
+version = ( int('@KDSource_VERSION_MAJOR@'),
+            int('@KDSource_VERSION_MINOR@'),
+            int('@KDSource_VERSION_PATCH@') )
 __author__ = "KDSource"
