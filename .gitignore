@@ -1,5 +1,3 @@
-build
-mcpl
 dependencies
 
 *.sublime-workspace
@@ -10,10 +8,6 @@ dependencies
 **/__pycache__
 *.pyc
 **/dist/
-python/*.egg-info
-python/build
-python/.tox
-python/python/*
 python/.coverage
 
 
@@ -51,7 +45,7 @@ python/.coverage
 *~
 \#*\#
 .\#*
-mcpl
+
 .vscode/settings.json
 docs/examples/samples.ssv
 docs/examples/Verification.ipynb
@@ -61,3 +55,10 @@ docs/examples/*.xml
 docs/examples/*_bws
 docs/html
 CMakeLists_for_wsl2.txt
+
+_site
+.DS_Store
+skbld_autogen/
+*.egg-info/
+.ruff_cache/
+/venv/
