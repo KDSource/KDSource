@@ -1,4 +1,3 @@
-
 ##################################################################################
 #                                                                                #
 # CMake file to be used to install KDSource distribution.                        #
@@ -9,93 +8,157 @@
 #                                                                                #
 ##################################################################################
 
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.26.1...3.31)
 
-project(KDSource VERSION 0.1.0)
-configure_file(include/kdsource/KDSourceConfig.h.in KDSourceConfig.h)
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+project(KDSource VERSION "${PROJECT_VERSION}" LANGUAGES C )
 
-enable_testing()
+set( KDS_PYMODNAME "kdsource" )
 
-set(INSTALL_PY OFF CACHE STRING "Whether to also install kdsource and mcpl python files.")
+###################################################################
+#Find dependencies:
+###################################################################
 
-
-set(CMAKE_C_STANDARD 99)
-
-set(SRC "${PROJECT_SOURCE_DIR}/src")
-set(INC "${PROJECT_SOURCE_DIR}/include")
-
+if( NOT DEFINED "MCPL_DIR" )
+  #Need to invoke "mcpl-config --show cmakedir" if we want to be able to
+  #work with mcpl-core installed via python wheels:
+  execute_process(
+    COMMAND mcpl-config --show cmakedir
+    OUTPUT_VARIABLE "MCPL_DIR" OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+find_package(MCPL REQUIRED)
 find_package(LibXml2 REQUIRED)
 
-set(BUILD_WITHG4 OFF CACHE STRING "Whether to build Geant4 plugins if Geant4 is available.")
-add_subdirectory(mcpl)
+###################################################################
+#Prepare autogen dir for processed files (possibly in-source if
+#creating a python sdist)
+###################################################################
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-
-# Set installation paths
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-set(KDSource_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/KDSource")
-set(KDSource_BINDIR "${CMAKE_INSTALL_BINDIR}")
-set(KDSource_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
-set(KDSource_INCDIR "${CMAKE_INSTALL_INCLUDEDIR}")
-
-# Install destination setting
-set(INSTDEST "RUNTIME;DESTINATION;${KDSource_BINDIR};LIBRARY;DESTINATION;${KDSource_LIBDIR};ARCHIVE;DESTINATION;${KDSource_LIBDIR}")
-
-# Define kdsource shared library and sources
-add_library(kdsource SHARED "${SRC}/kdsource/kdsource.c"
-                            "${SRC}/kdsource/plist.c"
-                            "${SRC}/kdsource/geom.c"
-                            "${SRC}/kdsource/utils.c")
-
-# Include directories for kdsource library
-target_include_directories(kdsource
-    PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-        $<INSTALL_INTERFACE:${KDSource_INCDIR}>
-)
-
-# Include directory for the configured version file
-target_include_directories(kdsource
-PUBLIC $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>)
-
-# Link necessary libraries
-target_link_libraries(kdsource PUBLIC m LibXml2::LibXml2 mcpl)
-
-
-# Install kdsource library and export targets for other projects
-install(TARGETS kdsource EXPORT KDSourceTargets ${INSTDEST} )
-install(EXPORT KDSourceTargets FILE KDSourceTargets.cmake NAMESPACE KDSource:: DESTINATION ${KDSource_CMAKEDIR} )
-
-add_library(KDSource::kdsource ALIAS kdsource)#always alias namespaces locally
-
-# Install kdsource headers
-install(FILES "${INC}/kdsource/kdsource.h"
-              "${INC}/kdsource/plist.h"
-              "${INC}/kdsource/geom.h"
-              "${INC}/kdsource/utils.h"
-              "${CMAKE_CURRENT_BINARY_DIR}/KDSourceConfig.h"
-              DESTINATION ${KDSource_INCDIR}/kdsource)
-
-# Install scripts for kdtool and kdtool's utilities
-install(PROGRAMS "${SRC}/kdtool/kdtool.sh" DESTINATION ${KDSource_BINDIR} RENAME kdtool)
-install(PROGRAMS "${SRC}/kdtool/templates.sh" DESTINATION ${KDSource_BINDIR} RENAME kdtool-templates)
-add_executable(kdtool-resample "${SRC}/kdtool/resample.c")
-add_executable(kdtool-beamtest "${SRC}/kdtool/beamtest.c")
-target_link_libraries(kdtool-resample PUBLIC kdsource)
-target_link_libraries(kdtool-beamtest PUBLIC kdsource)
-install(TARGETS kdtool-resample kdtool-beamtest ${INSTDEST} )
-
-# Install tests
-add_subdirectory(tests)
-
-# Install additional directories
-install(DIRECTORY docs mcstas templates DESTINATION .)
-
-if (INSTALL_PY)
-	install(DIRECTORY "python/kdsource" DESTINATION python)
+set( KDS_FROM_SDIST OFF )
+if ( NOT DEFINED SKBUILD_PROJECT_NAME )
+  set( kdsc_autogendir "${CMAKE_CURRENT_BINARY_DIR}/kdsc_autogen" )
+  #Always cleanup autogendir
+  if ( IS_DIRECTORY "${kdsc_autogendir}" )
+    message( STATUS "Cleaning out ${kdsc_autogendir}" )
+    file( REMOVE_RECURSE "${kdsc_autogendir}" )
+  endif()
+  file( MAKE_DIRECTORY "${kdsc_autogendir}" )
+else()
+  message( STATUS "scikit-build mode detected." )
+  set ( kdsc_autogendir "${PROJECT_SOURCE_DIR}/skbld_autogen" )
+  #Cleanup autogendir unless we are building FROM an sdist or creating one:
+  if ( EXISTS "${kdsc_autogendir}/is_sdist.txt"
+      AND NOT "${SKBUILD_STATE}" STREQUAL "sdist" )
+    message(STATUS "Running from sdist - will not clean autogenerated files")
+    set( KDS_FROM_SDIST ON )
+  else()
+    if ( IS_DIRECTORY "${kdsc_autogendir}" )
+      message( STATUS "Cleaning out ${kdsc_autogendir}" )
+      file( REMOVE_RECURSE "${kdsc_autogendir}" )
+    endif()
+    file( MAKE_DIRECTORY "${kdsc_autogendir}" )
+    if ( "${SKBUILD_STATE}" STREQUAL "sdist" )
+      file(TOUCH "${kdsc_autogendir}/is_sdist.txt")
+    endif()
+  endif()
 endif()
 
-# Configure and install KDSource CMake configuration file
-configure_file(cmake/KDSourceConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/KDSourceConfig.cmake" @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/KDSourceConfig.cmake" DESTINATION ${KDSource_CMAKEDIR})
+###################################################################
+#Find source files and prepare in autogen dir, including
+#processed .in files:
+###################################################################
+
+if ( NOT KDS_FROM_SDIST )
+  file(GLOB KDS_C CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/clib/src/*.c")
+  file(GLOB KDS_H CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/clib/include/kdsource/*.h")
+  file(GLOB KDS_HIN CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/clib/include/kdsource/*.h.in")
+  file(GLOB KDS_PY CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/python/${KDS_PYMODNAME}/*.py")
+  file(GLOB KDS_PYIN CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/python/${KDS_PYMODNAME}/*.py.in")
+
+  set( t1 "1000000 * ${PROJECT_VERSION_MAJOR}" )
+  set( t2 "1000 * ${PROJECT_VERSION_MINOR}" )
+  set( t3 "${PROJECT_VERSION_PATCH}" )
+  math(EXPR "${PROJECT_NAME}_version_int" "(${t1})+(${t2})+(${t3})" )
+
+  file( COPY ${KDS_PY} DESTINATION "${kdsc_autogendir}/python/kdsource/" )
+  foreach( infile ${KDS_PYIN} )
+    get_filename_component(infilebn "${infile}" NAME_WE)
+    configure_file(
+      "${infile}"
+      "${kdsc_autogendir}/python/kdsource/${infilebn}.py"
+      @ONLY
+    )
+  endforeach()
+
+  file( COPY ${KDS_C} DESTINATION "${kdsc_autogendir}/clib/src" )
+  file( COPY ${KDS_H} DESTINATION "${kdsc_autogendir}/clib/include/kdsource" )
+  foreach( infile ${KDS_HIN} )
+    get_filename_component( infilebn "${infile}" NAME_WE )
+    configure_file(
+      "${infile}"
+      "${kdsc_autogendir}/clib/include/kdsource/${infilebn}.h"
+      @ONLY
+    )
+  endforeach()
+endif()
+
+###################################################################
+# Installation destinations:
+###################################################################
+
+include(GNUInstallDirs)
+if ( DEFINED SKBUILD_PROJECT_NAME )
+  message( STATUS "scikit-build mode detected: clib will be placed in python module." )
+  set( KDS_INSTALL_LIBDIR "${KDS_PYMODNAME}/data/lib" )
+  set( KDS_INSTALL_INCLUDEDIR "${KDS_PYMODNAME}/data/include" )
+else()
+  set( KDS_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}" )
+  set( KDS_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}" )
+endif()
+
+###################################################################
+# Build library (entirely from autogendir)
+###################################################################
+
+file(GLOB KDS_SOURCES CONFIGURE_DEPENDS "${kdsc_autogendir}/clib/src/*.c")
+file(GLOB KDS_HEADERS CONFIGURE_DEPENDS "${kdsc_autogendir}/clib/include/kdsource/*.h")
+
+add_library(kdsource SHARED ${KDS_SOURCES} )
+
+set_target_properties(
+  kdsource
+  PROPERTIES C_STANDARD 99
+  C_STANDARD_REQUIRED ON C_EXTENSIONS OFF
+)
+
+target_include_directories(
+  kdsource
+  PRIVATE "${kdsc_autogendir}/clib/src"
+  PUBLIC
+  $<BUILD_INTERFACE:${kdsc_autogendir}/clib/include>
+  $<INSTALL_INTERFACE:${KDS_INCLUDEDIR}>
+)
+
+target_link_libraries(
+  kdsource
+  PUBLIC LibXml2::LibXml2 MCPL::MCPL
+)
+
+install(
+  FILES ${KDS_HEADERS}
+  DESTINATION "${KDS_INSTALL_INCLUDEDIR}/kdsource/"
+)
+
+#FIXME TODO:
+#if ( NOT MSVC )
+#  target_compile_options(
+#    kdsource PRIVATE
+#    -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion -Wsign-conversion -Wnull-dereference
+#  )
+#  #fixme: ?
+#  target_compile_options( kdsource INTERFACE -Werror )
+#endif()
+
+install( TARGETS kdsource DESTINATION "${KDS_INSTALL_LIBDIR}" )
