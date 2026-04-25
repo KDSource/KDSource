@@ -1,8 +1,51 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
 
 [project]
-name = "KDSource"
-authors = [{name = "Osiris Inti Abbate", email = "intiabbate@gmail.com"}]
-dynamic = ["version", "description"]
+name = "kdsource"
+dynamic = ["version"]
+requires-python = ">=3.10"
+#Dependency which unfortunately can not be installed via pypi: libxml2
+dependencies = [ "mcpl>=2.2.8","scipy","KDEpy","joblib","matplotlib","scikit-learn","astropy","h5py","pandas","uncertainties"]
+readme = "README.md"
+license = "GPL-3.0"
+license-files = [ "LICENSE" ]
+#TODO: Clarify what to put in the authors and maintainers fields. At least the maintainers field should provide current contacts.
+authors = [
+  {name = "Osiris Inti Abbate", email = "intiabbate@gmail.com"},
+]
+maintainers = [
+  { name = "KDSource developers" },
+]
+description = "Tool for modeling distributional particle sources for Monte Carlo simulations, with Kernel Density Estimation."
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+"Homepage" = "https://kdsource.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/KDSource/KDSource/issues"
+
+[build-system]
+requires = ["scikit-build-core>=0.12","mcpl-core>=2.2.8"]
+build-backend = "scikit_build_core.build"
+
+[project.scripts]
+kdsource-config = "kdsource._cli_config:main"
+kdsource-resample = "kdsource._cli_resample:main"
+
+[tool.scikit-build]
+#build.verbose = true
+#cmake.build-type = "Debug"
+logging.level = "INFO"
+metadata.version.provider = "scikit_build_core.metadata.regex"
+metadata.version.input = "VERSION"
+metadata.version.regex = '(?P<value>\d+\.\d+\.\d+)'
+minimum-version = "build-system.requires"
+cmake.version = ">=3.26.1"
+wheel.packages = ["skbld_autogen/python/kdsource"]
+wheel.py-api = "py3"
+sdist.cmake = true
+sdist.inclusion-mode = "manual"
+sdist.exclude = ["**"]
+sdist.include = ["/VERSION","/LICENSE","/README.md",
+                 "/CMakeLists.txt","/pyproject.toml",
+                 "/skbld_autogen/"]
