@@ -1,5 +1,5 @@
-#ifndef METRICS_H
-#define METRICS_H
+#ifndef KDSOURCE_GEOM_H
+#define KDSOURCE_GEOM_H
 
 #include <stdio.h>
 #include <stdlib.h>

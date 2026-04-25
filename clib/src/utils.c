@@ -4,11 +4,13 @@
 
 #include "kdsource/kdsource.h"
 
+#define KDS_PI 3.1415926535897932384626433832795028841971694
+
 // Sample with normal distribution (x0=0, s=1)
 double rand_norm() {
   double y1 = (double)(rand() + 1) / ((double)RAND_MAX + 1),
          y2 = rand() / (double)RAND_MAX;
-  return sqrt(-2 * log(y1)) * cos(2 * M_PI * y2);
+  return sqrt(-2 * log(y1)) * cos(2 * KDS_PI * y2);
 }
 
 // Sample with Epanechnikov distribution (x0=0, s=1)

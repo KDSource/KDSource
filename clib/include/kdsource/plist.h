@@ -1,5 +1,5 @@
-#ifndef PLISTS_H
-#define PLISTS_H
+#ifndef KDSOURCE_PLIST_H
+#define KDSOURCE_PLIST_H
 
 #include <stdio.h>
 #include <stdlib.h>
