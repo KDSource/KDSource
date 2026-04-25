@@ -4,7 +4,7 @@ name = "kdsource"
 dynamic = ["version"]
 requires-python = ">=3.10"
 #Dependency which unfortunately can not be installed via pypi: libxml2
-dependencies = [ "mcpl>=2.2.8","scipy","KDEpy","joblib","matplotlib","scikit-learn","astropy","h5py","pandas","uncertainties"]
+dependencies = [ "mcpl>=2.2.8","scipy","KDEpy","joblib","matplotlib","scikit-learn","pandas"]
 readme = "README.md"
 license = "GPL-3.0"
 license-files = [ "LICENSE" ]
