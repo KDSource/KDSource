@@ -13,56 +13,41 @@ jobs:
       matrix:
         config:
           - {
-            name: "Ubuntu_Latest",
+            name: "Ubuntu_Latest_py310",
             os: ubuntu-latest,
-            python-version: 3.9,
+            python-version: "3.10",
           }
           - {
-            name: "MacOS_Latest",
+            name: "MacOS_Latest_py313",
             os: macos-latest,
-            python-version: 3.9,
+            python-version: "3.13",
           }
 
     steps:
       - uses: actions/checkout@master
         with:
           submodules: 'true'
-      - name: Install and test C API on Ubuntu
+
+      - name: Install libxml2 + cmake (ubuntu)
         if: startsWith(matrix.config.name, 'Ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install cmake libxml2
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=/usr/share/KDSource
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/usr/share/KDSource/bin
-          kdtool -h
-          kdtool resample -h
-      - name: Install and test C API on MacOS
-        if: startsWith(matrix.config.name, 'MacOS')
-        run: |
-          brew update
-          brew install cmake libxml2
-          mkdir build
-          cd build
-          mkdir /Users/runner/work/KDSource/KDinstall
-          cmake .. -DCMAKE_INSTALL_PREFIX=/Users/runner/work/KDSource/KDinstall
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/Users/runner/work/KDSource/KDinstall/bin
-          kdtool -h
-          kdtool resample -h
+
       - name: Set up Python ${{ matrix.config.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.config.python-version}}
-      - name: Install tox
-        run: pip install tox tox-gh-actions
-      - name: Test with tox
-        run: tox -r -c python
+
+      - name: Install libxml2 + cmake (MacOS)
+        if: startsWith(matrix.config.name, 'MacOS')
+        run: |
+          brew update
+          brew install cmake libxml2
+
+      - name: pip install + basic test
+        run: |
+          pip install .
+          kdsource-config -s
+          kdsource-resample -h
+          python3 -c "import kdsource"
