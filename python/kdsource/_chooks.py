@@ -38,11 +38,13 @@ def _load_fcts():
     ###### write_mcpl
     dblptr = ctypes.POINTER(ctypes.c_double)
     int32ptr = ctypes.POINTER(ctypes.c_int32)
+    uint32ptr = ctypes.POINTER(ctypes.c_uint32)
     rawfct_wm = lib.kdsource_write_mcpl
     rawfct_wm.restype = None
     rawfct_wm.argtypes=( ctypes.c_char_p,ctypes.c_uint64,ctypes.c_uint,
                          dblptr,dblptr,dblptr,
-                         dblptr,dblptr,dblptr,dblptr,dblptr,dblptr,int32ptr )
+                         dblptr,dblptr,dblptr,dblptr,dblptr,dblptr,int32ptr,
+                         dblptr,dblptr,dblptr, uint32ptr)
     def get_ndarray_to_cptr():
         import numpy as np
         def ndarray_fix_type(arr, dtypename):
@@ -57,7 +59,7 @@ def _load_fcts():
         return ndarray_to_cptr
     def fct( filename, nparticles,
              ekin, x, y, z, ux, uy, uz, time, weight, pdgcode,
-             double_prec ):
+             polx, poly, polz, userflags, double_prec ):
         import numbers
         flags = 1 if double_prec else 0
         keepalive=[]
@@ -74,13 +76,20 @@ def _load_fcts():
             weight_arg = ctypes.cast(weight_array, dblptr)
         else:
             weight_arg = a2c(keepalive,weight)
+
+        c_polx = a2c(keepalive,polx) if polx is not None else None
+        c_poly = a2c(keepalive,poly) if poly is not None else None
+        c_polz = a2c(keepalive,polz) if polz is not None else None
+        c_userflags = ( a2c(keepalive,pdgcode,'uint32',uint32ptr)
+                        if userflags is not None else None )
         rawfct_wm( _str2cstr(filename),
                    ctypes.c_uint64(nparticles),
                    ctypes.c_uint(flags),
                    a2c(keepalive,ekin),
                    a2c(keepalive,x), a2c(keepalive,y), a2c(keepalive,z),
                    a2c(keepalive,ux), a2c(keepalive,uy), a2c(keepalive,uz),
-                   a2c(keepalive,time), weight_arg, pdgcode_arg )
+                   a2c(keepalive,time), weight_arg, pdgcode_arg,
+                   c_polx, c_poly, c_polz, c_userflags )
     allfcts['write_mcpl'] = fct
 
     __cache_fcts[0]=allfcts
