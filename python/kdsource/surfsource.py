@@ -3,20 +3,15 @@ import subprocess
 from enum import Enum
 from math import cos, pi, sin
 
-from astropy.stats import knuth_bin_width
-
-import h5py
-
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
+try:
+    from uncertainties import ufloat
+except ModuleNotFoundError as e:
+    raise RuntimeError('The "uncertainties" package is required to use the'
+                       ' surfsurface module') from e
 
 import mcpl
-
 import numpy as np
-
 import pandas as pd
-
-from uncertainties import ufloat
 
 c2 = 8.98755e16  # m2 / s2
 hc = 1.23984186e-12  # MeV m
@@ -278,6 +273,12 @@ class SurfaceSourceFile:
     def __read__(self):
         # OpenMC .h5 format
         if self._extension == ".h5":
+            try:
+                import h5py
+            except ModuleNotFoundError as e:
+                raise RuntimeError('The "h5py" package is required to read'
+                                   ' OpenMC .h5 files') from e
+
             with h5py.File(self._filepath, "r") as fh:
                 df = pd.DataFrame(columns=MCPLColumns)
                 # Change from OpenMC ParticleType type to MCPL PDGCode
@@ -728,6 +729,14 @@ class SurfaceSourceFile:
             # If bins is int, create a mesh from var-min to var-max
             if type(bin) is int:
                 if bin == 0:
+                    try:
+                        import astropy # noqa F401
+                    except ModuleNotFoundError as e:
+                        raise RuntimeError('The "astropy" package is required'
+                                           ' when bin=0 (to use the'
+                                           ' knuth_bin_width function)') from e
+                    from astropy.stats import knuth_bin_width
+
                     if scale == "log":
                         bins[i] = knuth_bin_width(
                             np.log10(df[var].to_numpy()), return_bins=True
@@ -934,6 +943,10 @@ class SurfaceSourceFile:
         matplotlib 1-D or 2-D plot for the required variables with the proper
         normalization.
         """
+
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import LogNorm
+
         xscale, yscale = scales
         scales = [scales[i] for i in range(0, len(bins))]
         df, bins, pinfo = self.get_distribution(
@@ -1142,6 +1155,12 @@ def create_source_file(df, filepath, **kwargs):
     # Write in the OpenMC .h5 format
     if new_extension == ".h5":
         print("Saving into OpenMC format (HDF5)")
+        try:
+            import h5py
+        except ModuleNotFoundError as e:
+            raise RuntimeError('The "h5py" package is required to write'
+                               ' OpenMC .h5 files') from e
+
         for pin, pout in zip((PDGCode), (OpenMCCode)):
             df.loc[df["type"] == pin.value, "type"] = pout.value
 
