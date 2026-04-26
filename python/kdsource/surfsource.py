@@ -1,5 +1,5 @@
 import os
-import subprocess
+
 from enum import Enum
 from math import cos, pi, sin
 
@@ -165,7 +165,7 @@ class VitessCode(Enum):
 
 class SurfaceSourceFile:
     """Read a surface source file.
-    Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+    Possible formats: MCPL, HDF5 (OpenMC)
 
     Parameters
     ----------
@@ -1124,7 +1124,7 @@ class SurfaceSourceFile:
 
     def save_source_file(self, filepath, **kwargs):
         """Save the particles list.
-        Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+        Possible formats: MCPL, HDF5 (OpenMC)
 
         Parameters
         ----------
@@ -1139,7 +1139,7 @@ class SurfaceSourceFile:
 
 def create_source_file(df, filepath, **kwargs):
     """Generate a source file from a Pandas DataFrame.
-    Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+    Possible formats: MCPL, HDF5 (OpenMC)
 
     Parameters
     ----------
@@ -1149,11 +1149,11 @@ def create_source_file(df, filepath, **kwargs):
         Path to surface source file.
     """
 
-    new_extension = os.path.splitext(filepath)[-1]
+    basename = os.path.basename(filepath)
     df = df[MCPLColumns]
 
     # Write in the OpenMC .h5 format
-    if new_extension == ".h5":
+    if basename.endswith(".h5"):
         print("Saving into OpenMC format (HDF5)")
         try:
             import h5py
@@ -1195,67 +1195,29 @@ def create_source_file(df, filepath, **kwargs):
         )
         kwargs.setdefault("mode", "w")
         with h5py.File(filepath, **kwargs) as fh:
-            fh.attrs["filetype"] = np.string_("source")
+            fh.attrs["filetype"] = np.bytes_("source")
             fh.create_dataset("source_bank", data=arr, dtype=source_dtype)
 
     # Write in MCPL format
-    elif new_extension == ".mcpl" or new_extension == ".gz":
-        new_extension = ".mcpl"
+    elif basename.endswith(".mcpl") or basename.endswith(".mcpl.gz"):
+        import pathlib
+        filepath = pathlib.Path(filepath)
+        if filepath.name.endswith(".mcpl"):
+            filepath = filepath.parent.joinpath(basename+'.gz')
         print("Saving into MCPL format")
-        create_source_file(df, "temp.txt")
-        subprocess.call(["ssv2mcpl", "temp.txt", filepath])
-        subprocess.call(["rm", "temp.txt"])
-
-    # Write the ASCII-based format file in the other cases
+        from .writemcpl import write_mcpl
+        write_mcpl( filepath,
+                    ekin = df.E.values,
+                    x = df.x.values, y = df.y.values, z = df.z.values,
+                    ux = df.u.values, uy = df.v.values, uz = df.w.values,
+                    time = df.t.values, weight = df.wgt.values,
+                    pdgcode = df['type'].values,
+                    polx = df.px.values,
+                    poly = df.py.values,
+                    polz = df.pz.values,
+                    userflags = df.userflags.values,
+                    **kwargs )
     else:
-        print("Saving into SSV format (ASCII)")
-        with open(filepath, "w") as fo:
-            sheader = ""
-            fmtstr = ""
+        raise RuntimeError("filepath must end with .mcpl, .mcpl.gz, or .h5")
 
-            sheader += "#MCPL-ASCII\n"
-            sheader += "#GENERATED FROM KDSOURCE\n"
-            sheader += "#NPARTICLES: {:d}\n".format(len(df))
-            sheader += "#END-HEADER\n"
-            sheader += "index     "
-            sheader += "pdgcode               "
-            sheader += "ekin[MeV]                   "
-            sheader += "x[cm]                   "
-            sheader += "y[cm]                   "
-            sheader += "z[cm]                      "
-            sheader += "ux                      "
-            sheader += "uy                      "
-            sheader += "uz                "
-            sheader += "time[ms]                  "
-            sheader += "weight                   "
-            sheader += "pol-x                   "
-            sheader += "pol-y                   "
-            sheader += "pol-z  "
-            sheader += "userflags\n"
-            fo.write(sheader)
-
-            fmtstr += "%5i %11i %23.18g %23.18g %23.18g %23.18g "
-            fmtstr += "%23.18g %23.18g %23.18g %23.18g %23.18g "
-            fmtstr += "%23.18g %23.18g %23.18g 0x%08x\n"
-            for s in df.values:
-                fo.write(
-                    fmtstr
-                    % (
-                        s[0],
-                        s[1],
-                        s[2],
-                        s[3],
-                        s[4],
-                        s[5],
-                        s[6],
-                        s[7],
-                        s[8],
-                        s[9],
-                        s[10],
-                        s[11],
-                        s[12],
-                        s[13],
-                        int(s[14]),
-                    )
-                )
-    print("Done, saved into {:s} file".format(filepath))
+    print(f"Done, saved into {filepath} file")
