@@ -50,4 +50,5 @@ jobs:
           pip install .
           kdsource-config -s
           kdsource-resample -h
+          kdsource-test
           python3 -c "import kdsource"
