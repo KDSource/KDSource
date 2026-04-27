@@ -159,11 +159,14 @@ int Geom_next(Geometry *geom, int loop) {
 
 void Geom_destroy(Geometry *geom) {
   int i;
+  if ( geom->bwfile )
+    fclose(geom->bwfile);
   for (i = 0; i < geom->ord; i++)
     Metric_destroy(geom->ms[i]);
   free(geom->ms);
   free(geom->trasl);
   free(geom->rot);
+  free(geom->bwfilename);
   free(geom);
 }
 
