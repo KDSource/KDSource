@@ -1,5 +1,6 @@
 
 #include "kdsource/kdsource.h"
+#include <stdint.h>
 
 void kdsource_resample_to_mcpl( const char * kds_sourcefile,
                                 const char * destination_mcpl,
@@ -25,5 +26,6 @@ void kdsource_resample_to_mcpl( const char * kds_sourcefile,
     mcpl_add_particle(file, part);
   }
   mcpl_closeandgzip_outfile(file);
+  KDS_destroy(kds);
   printf("Successfully sampled %llu particles.\n", (unsigned long long)nout);
 }
