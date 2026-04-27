@@ -16,6 +16,7 @@ string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(KDSource VERSION "${PROJECT_VERSION}" LANGUAGES C )
 
 option( KDS_EMBED_LIBXML2 "Download and embed libxml2 statically" OFF)
+option( KDS_STRICT "Stricter compilation " OFF)
 
 ###################################################################
 #Find dependencies (skip when generating sdist):
@@ -189,14 +190,17 @@ install(
   DESTINATION "${KDS_INSTALL_INCLUDEDIR}/kdsource/"
 )
 
-#FIXME TODO:
-#if ( NOT MSVC )
-#  target_compile_options(
-#    kdsource PRIVATE
-#    -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion -Wsign-conversion -Wnull-dereference
-#  )
-#  #fixme: ?
-#  target_compile_options( kdsource INTERFACE -Werror )
-#endif()
+if ( KDS_STRICT )
+  if ( MSVC )
+    message(FATAL_ERROR "KDS_STRICT not implemented for MSVC" )
+  endif()
+  target_compile_options(
+    kdsource PRIVATE
+    -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion
+    -Wsign-conversion -Wnull-dereference
+    #-Wno-unused-variable
+  )
+  target_compile_options( kdsource PRIVATE -Werror )
+endif()
 
 install( TARGETS kdsource DESTINATION "${KDS_INSTALL_LIBDIR}" )
