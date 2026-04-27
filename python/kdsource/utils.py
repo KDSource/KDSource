@@ -3,12 +3,7 @@
 """Module for utility functions
 """
 
-import os
-
 import numpy as np
-
-from scipy import interpolate
-
 
 # Conversion entre tipo de part (char) y pdgcode
 def pt2pdg(pt):
@@ -81,6 +76,7 @@ def H10(pt="n", ref="ICRP"):
         - 'ARN': Nuclear Regulatory Authority of Argentina.
     """
     from ._fact_dos_data import load as loadfd
+    from scipy import interpolate
     if ref == "ARN":
         if pt == "n":
             E, H10 = loadfd('ARN_neutron')

@@ -35,3 +35,6 @@ version = ( int('@KDSource_VERSION_MAJOR@'),
             int('@KDSource_VERSION_MINOR@'),
             int('@KDSource_VERSION_PATCH@') )
 __author__ = "KDSource"
+
+#NOTE: Keep __init__.py essentially empty. In particular, no import statements
+#here.
