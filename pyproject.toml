@@ -1,20 +1,22 @@
-
 [project]
 name = "kdsource"
 dynamic = ["version"]
 requires-python = ">=3.10"
-# Note: the libxml2 dependency is not available via PyPI, so we fetch and embed
-# libxml2 code dynamically
+# A few notes about dependencies:
+# 1) Some dependencies are put in the optional-dependencies group below, to be
+#    installed like "pip install kdsource[all]".
 #
-# To build against a system-installed libxml2, use:
-#    pip install --config-settings=cmake.define.KDS_EMBED_LIBXML2=ON .
-dependencies = [ "mcpl>=2.2.8","scipy","KDEpy","joblib","matplotlib","scikit-learn","pandas"]
+# 2) The libxml2 dependency is not available via PyPI, so we fetch and embed
+#    libxml2 code dynamically. To build against a system-installed libxml2, use:
+#       pip install --config-settings=cmake.define.KDS_EMBED_LIBXML2=ON .
+dependencies = [ "mcpl>=2.2.8",
+                 "scipy>=1.15.3", "KDEpy>=1.1.12", "joblib>=1.5.1",
+                 "matplotlib>=3.9.4", "scikit-learn>=1.7.2", "pandas>=2.3.1" ]
 readme = "README.md"
 license = "GPL-3.0"
 license-files = [ "LICENSE" ]
-#TODO: Clarify what to put in the authors and maintainers fields. At least the maintainers field should provide current contacts.
 authors = [
-  {name = "Osiris Inti Abbate", email = "intiabbate@gmail.com"},
+  { name = "Osiris Inti Abbate", email = "intiabbate@gmail.com" },
 ]
 maintainers = [
   { name = "KDSource developers" },
@@ -24,8 +26,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 
+[project.optional-dependencies]
+surfsource = ["h5py>3.13.0","uncertainties>=3.2.2","astropy>=7.1.1"]
+all        = ["h5py>3.13.0","uncertainties>=3.2.2","astropy>=7.1.1"]
+
 [project.urls]
-"Homepage" = "https://kdsource.readthedocs.io/en/latest/"
+"Homepage"    = "https://kdsource.readthedocs.io/en/latest/"
 "Bug Tracker" = "https://github.com/KDSource/KDSource/issues"
 
 [build-system]
