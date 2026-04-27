@@ -41,6 +41,7 @@ build-backend = "scikit_build_core.build"
 [project.scripts]
 kdsource-config = "kdsource._cli_config:main"
 kdsource-resample = "kdsource._cli_resample:main"
+kdsource-test = "kdsource.test:main"
 
 [tool.scikit-build]
 #build.verbose = true
