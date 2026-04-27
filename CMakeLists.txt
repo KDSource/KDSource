@@ -185,6 +185,10 @@ target_link_libraries(
   PUBLIC LibXml2::LibXml2 MCPL::MCPL
 )
 
+if ( WIN32 )
+  set_target_properties( kdsource PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE )
+endif()
+
 install(
   FILES ${KDS_HEADERS}
   DESTINATION "${KDS_INSTALL_INCLUDEDIR}/kdsource/"
