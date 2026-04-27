@@ -38,20 +38,15 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version}}
 
-      #Verify that MCPL works:
-      - run: pip install mcpl
+      - run: pip install .
+      - run: pip show --files kdsource
+      - run: kdsource-config -s
       - run: mcpl-config -s
       - run: python3 -c "import mcpl"
-
-      #Now proceed to KDSource:
-      - run: pip install .
-      - run: kdsource-config -s
       - run: kdsource-resample -h
       - run: python3 -c "import kdsource"
       - run: kdsource-test
-
-      - name: generate test main.c
-        run: kdsource-test --gentestmainc
+      - run: kdsource-test --gentestmainc
 
       - name: kdsource-config buildflags test (Unix)
         if: ${{ !startsWith(matrix.config.name, 'Windows') }}
@@ -60,3 +55,42 @@ jobs:
           cc main.c `mcpl-config --show buildflags` `kdsource-config --show buildflags` -o fooapp
           ./fooapp source.xml
           mcpltool foobar.mcpl.gz
+
+      - name: Setup VS in shell (Windows)
+        if: ${{ startsWith(matrix.config.name, 'Windows') }}
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: kdsource-config buildflags test (Windows)
+        if: ${{ startsWith(matrix.config.name, 'Windows') }}
+        shell: cmd
+        run: |
+          echo "Set BUILDFLAGS variable via kdsource-config --show buildflags"
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          kdsource-config --show buildflags > buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          set /p BUILDFLAGS=<buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Got:" %BUILDFLAGS%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Set BUILDFLAGSMCPL variable via mcpl-config --show buildflags"
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          mcpl-config --show buildflags > buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          set /p BUILDFLAGSMCPL=<buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Got:" %BUILDFLAGSMCPL%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Building"
+          cl main.c %BUILDFLAGSMCPL% %BUILDFLAGS%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Custom compilation of downstream C code succeeded"
+
+          echo "Invoke custom built app
+          main.exe source.xml
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Invoke mcpltool on produced MCPL file"
+          mcpltool foobar.mcpl.gz
+          if %errorlevel% neq 0 exit /b %errorlevel%
