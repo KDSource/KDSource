@@ -12,24 +12,55 @@ cmake_minimum_required(VERSION 3.26.1...3.31)
 
 file(READ "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+
 project(KDSource VERSION "${PROJECT_VERSION}" LANGUAGES C )
 
-set( KDS_PYMODNAME "kdsource" )
+option( KDS_EMBED_LIBXML2 "Download and embed libxml2 statically" OFF)
 
 ###################################################################
-#Find dependencies:
+#Find dependencies (skip when generating sdist):
 ###################################################################
 
-if( NOT DEFINED "MCPL_DIR" )
-  #Need to invoke "mcpl-config --show cmakedir" if we want to be able to
-  #work with mcpl-core installed via python wheels:
-  execute_process(
-    COMMAND mcpl-config --show cmakedir
-    OUTPUT_VARIABLE "MCPL_DIR" OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+set( KDS_GENERATING_SDIST OFF )
+if ( DEFINED SKBUILD_PROJECT_NAME AND "${SKBUILD_STATE}" STREQUAL "sdist" )
+  set( KDS_GENERATING_SDIST ON )
 endif()
-find_package(MCPL REQUIRED)
-find_package(LibXml2 REQUIRED)
+
+if ( NOT KDS_GENERATING_SDIST )
+  if( NOT DEFINED "MCPL_DIR" )
+    #Need to invoke "mcpl-config --show cmakedir" if we want to be able to
+    #work with mcpl-core installed via python wheels:
+    execute_process(
+      COMMAND mcpl-config --show cmakedir
+      OUTPUT_VARIABLE "MCPL_DIR" OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+  endif()
+  find_package(MCPL REQUIRED)
+
+  if ( NOT KDS_EMBED_LIBXML2 )
+    find_package(LibXml2 REQUIRED)
+  else()
+    # Configure FetchContent for libxml2 and ensure it is a static lib:
+    include(FetchContent)
+    set(_OLD_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_Declare(
+      libxml2
+      #Use our own patched version, for a leaner build and to avoid installing
+      #libxml2 things into the wheel.
+      URL https://github.com/KDSource/libxml2/archive/refs/tags/v2.15.3_kdsource_patch1.tar.gz
+      URL_HASH SHA256=be8e8f2c2f92275fdb8e091ccd1e055400931e4e0a9f9b1c80b639f7d3c32bb2
+      #SOURCE_DIR "/some/where/clones/libxml2"
+      #URL https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.15.3/libxml2-v2.15.3.tar.gz
+      #URL https://github.com/GNOME/libxml2/archive/refs/tags/v2.15.3.tar.gz
+      #URL_HASH SHA256=5c6060277173270356c3f1c321a640ab629bdabc5e5ba9095b99e00759ba0c39
+    )
+    FetchContent_MakeAvailable(libxml2)
+    set(BUILD_SHARED_LIBS ${_OLD_BUILD_SHARED_LIBS})
+    # Build static version
+    set(BUILD_SHARED_LIBS OFF)
+  endif()
+endif()
 
 ###################################################################
 #Prepare autogen dir for processed files (possibly in-source if
@@ -70,6 +101,8 @@ endif()
 #processed .in files:
 ###################################################################
 
+set( KDS_PYMODNAME "kdsource" )
+
 if ( NOT KDS_FROM_SDIST )
   file(GLOB KDS_C CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/clib/src/*.c")
   file(GLOB KDS_H CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/clib/include/kdsource/*.h")
@@ -102,6 +135,11 @@ if ( NOT KDS_FROM_SDIST )
       @ONLY
     )
   endforeach()
+endif()
+
+if ( KDS_GENERATING_SDIST )
+  #Skip library+install parts when producing sdist.
+  return()
 endif()
 
 ###################################################################

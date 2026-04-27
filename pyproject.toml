@@ -3,7 +3,11 @@
 name = "kdsource"
 dynamic = ["version"]
 requires-python = ">=3.10"
-#Dependency which unfortunately can not be installed via pypi: libxml2
+# Note: the libxml2 dependency is not available via PyPI, so we fetch and embed
+# libxml2 code dynamically
+#
+# To build against a system-installed libxml2, use:
+#    pip install --config-settings=cmake.define.KDS_EMBED_LIBXML2=ON .
 dependencies = [ "mcpl>=2.2.8","scipy","KDEpy","joblib","matplotlib","scikit-learn","pandas"]
 readme = "README.md"
 license = "GPL-3.0"
@@ -35,6 +39,7 @@ kdsource-resample = "kdsource._cli_resample:main"
 [tool.scikit-build]
 #build.verbose = true
 #cmake.build-type = "Debug"
+cmake.define.KDS_EMBED_LIBXML2 = "ON"
 logging.level = "INFO"
 metadata.version.provider = "scikit_build_core.metadata.regex"
 metadata.version.input = "VERSION"
