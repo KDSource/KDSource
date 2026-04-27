@@ -49,3 +49,14 @@ jobs:
       - run: kdsource-resample -h
       - run: python3 -c "import kdsource"
       - run: kdsource-test
+
+      - name: generate test main.c
+        run: kdsource-test --gentestmainc
+
+      - name: kdsource-config buildflags test (Unix)
+        if: ${{ !startsWith(matrix.config.name, 'Windows') }}
+        run: |
+          set -eux
+          cc main.c `mcpl-config --show buildflags` `kdsource-config --show buildflags` -o fooapp
+          ./fooapp source.xml
+          mcpltool foobar.mcpl.gz

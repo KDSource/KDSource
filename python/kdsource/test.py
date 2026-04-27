@@ -44,14 +44,19 @@ def _test_source_xml_data():
     import base64
     return base64.b64decode(data)
 
+def gen_sourcexml_and_samplesmcplgz():
+    import pathlib
+    pathlib.Path('samples.mcpl.gz').write_bytes(_test_samples_mcpl_gz_data())
+    print("Wrote samples.mcpl.gz")
+    pathlib.Path('source.xml').write_bytes(_test_source_xml_data())
+    print("Wrote source.xml")
+
 def test_resample():
     import pathlib
     import mcpl
     import numpy
     from .resample import resample_to_mcpl
-
-    pathlib.Path('samples.mcpl.gz').write_bytes(_test_samples_mcpl_gz_data())
-    pathlib.Path('source.xml').write_bytes(_test_source_xml_data())
+    gen_sourcexml_and_samplesmcplgz()
     outfn = 'foo_tmp_testfile.mcpl.gz'
     outpath = pathlib.Path(outfn)
     if outpath.is_file():
@@ -89,10 +94,42 @@ def test_all():
     test_importpyapi()
     print("==> All tests ended OK")
 
+def gen_test_mainc(dst):
+    import pathlib
+    import textwrap
+    content = textwrap.dedent("""
+    #include "kdsource/kdsource.h"
+    int main( int argc, char** argv ) {
+      if ( argc != 2 )
+        return 1;
+      KDSource* kds = KDS_open(argv[1]);
+      mcpl_outfile_t file = mcpl_create_outfile("foobar");
+      double w_crit = KDS_w_mean(kds, 1000, NULL);
+      printf("Resampling...\\n");
+      uint64_t i;
+      mcpl_particle_t* part = mcpl_get_empty_particle(file);
+      for(i=0; i<17; ++i){
+        KDS_sample2(kds, part, 1, w_crit, NULL, 1);
+        mcpl_add_particle(file, part);
+      }
+      mcpl_closeandgzip_outfile(file);
+      KDS_destroy(kds);
+      printf("Successfully sampled particles.\\n");
+      return 0;
+    }
+    """)
+    dst=pathlib.Path( dst )
+    dst.write_text( content )
+    print(f"Wrote {dst}")
+    gen_sourcexml_and_samplesmcplgz()
+
 def main(argv = None):
     if argv is None:
         import sys
         argv = sys.argv
+    if '--gentestmainc' in argv[1:]:
+        gen_test_mainc('main.c')
+        return
     if '--cwd' in argv[1:]:
         test_all()
     else:
