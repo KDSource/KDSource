@@ -21,10 +21,20 @@ def summary():
     for item in config_items:
         print('  %s : %s'%(item.rjust(maxlen),config(item)))
 
+_config_cache={}
 def config(item):
     """Return configuration item (available are those in the config_item list).
     """
-    assert item in config_items, "unknown config item"
+    c = _config_cache.get(item)
+    if c is not None:
+        return c
+    c = _config_deduce(item)
+    _config_cache[item] = c
+    return c
+
+def _config_deduce(item):
+    if not item in config_items:
+        raise RuntimeError(f"unknown config item: {item}")
     if 'lib' not in item:
         if item=='includedir':
             return _datadir.joinpath('include')
@@ -44,6 +54,14 @@ def config(item):
         item = item[2:]
     if item=='libdir':
         return _datadir.joinpath('lib')
-    libs = list( _datadir.joinpath('lib').glob('*kdsource*') )
-    assert len(libs)==1, "inconsistent installation"
+    libs = list( e for e in _datadir.joinpath('lib').glob('*')
+                 if 'kdsource' in e.name.lower() )
+    if not libs:
+        raise RuntimeError('Inconsistent installation of KDSource'
+                           ' (could not find shared lib)')
+    if len(libs)!=1:
+        s = ' '.join(e.name for e in libs)
+        raise RuntimeError('Inconsistent installation of KDSource (multiple'
+                           f' libs: {s})')
+    assert len(libs)==1
     return libs[0].name if item=='libname' else libs[0]
