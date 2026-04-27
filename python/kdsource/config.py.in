@@ -39,6 +39,9 @@ def _config_deduce(item):
         if item=='includedir':
             return _datadir.joinpath('include')
         if item=='buildflags':
+            import platform
+            if platform.system()=='Windows':
+                return '"/I%s" "%s"'%(config('includedir'),config('libpath'))
             import shlex
             return shlex.join(
                 shlex.quote(e)
@@ -50,12 +53,22 @@ def _config_deduce(item):
             return "@KDSource_version_int@"
         if item=='version':
             return "@KDSource_VERSION@"
+    winsuffix = '.lib'
     if item.startswith('sh'):
+        winsuffix = '.dll'
         item = item[2:]
     if item=='libdir':
         return _datadir.joinpath('lib')
-    libs = list( e for e in _datadir.joinpath('lib').glob('*')
-                 if 'kdsource' in e.name.lower() )
+    libs = list( _datadir.joinpath('lib').glob('*') )
+
+    libs_win = [ e for e in libs if e.name.lower().endswith(winsuffix) ]
+    libs_other = [ e for e in libs if not e.name.lower().endswith(winsuffix) ]
+
+    if libs_win:
+        libs = libs_win
+    else:
+        libs = libs_other
+
     if not libs:
         raise RuntimeError('Inconsistent installation of KDSource'
                            ' (could not find shared lib)')
