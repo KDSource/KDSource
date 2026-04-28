@@ -50,7 +50,7 @@ if ( NOT KDS_GENERATING_SDIST )
       #Use our own patched version, for a leaner build and to avoid installing
       #libxml2 things into the wheel.
       URL https://github.com/KDSource/libxml2/archive/refs/tags/v2.15.3_kdsource_patch1.tar.gz
-      URL_HASH SHA256=be8e8f2c2f92275fdb8e091ccd1e055400931e4e0a9f9b1c80b639f7d3c32bb2
+      URL_HASH SHA256=4a9faa997f45eb232ed4727c6a75380f0db4afdcf22d676f73a1301c9ebf8f99
       #SOURCE_DIR "/some/where/clones/libxml2"
       #URL https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.15.3/libxml2-v2.15.3.tar.gz
       #URL https://github.com/GNOME/libxml2/archive/refs/tags/v2.15.3.tar.gz
