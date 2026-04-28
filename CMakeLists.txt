@@ -157,6 +157,29 @@ else()
   set( KDS_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}" )
 endif()
 
+set(kds_skbuild_shlib_in_wheel_scripts OFF)
+if ( WIN32 )
+  #dll's must be in %PATH% so we put them in bin (same as seems to be the way
+  #most packages do it on conda-forge).
+  set(KDS_INSTALL_SHLIBDIR "${CMAKE_INSTALL_BINDIR}")
+  if ( DEFINED SKBUILD_PROJECT_NAME )
+    #For wheels we will place the mcpl.dll into the scripts folder, since
+    #that seems to be the only way to get the dll onto the PATH.
+    set(KDS_INSTALL_SHLIBDIR "${SKBUILD_SCRIPTS_DIR}")
+    set(kds_skbuild_shlib_in_wheel_scripts ON)
+  endif()
+else()
+  #sane standard world
+  set(KDS_INSTALL_SHLIBDIR "${KDS_INSTALL_LIBDIR}")
+endif()
+
+if ( kds_skbuild_shlib_in_wheel_scripts )
+  #dll is over in the wheel scripts dir, at an unknown relative location.
+  set( kds_pymod_shlib_in_scripts "1" )#non-empty string
+else()
+  set( kds_pymod_shlib_in_scripts "" )#empty string
+endif()
+
 ###################################################################
 # Build library (entirely from autogendir)
 ###################################################################
@@ -207,4 +230,9 @@ if ( KDS_STRICT )
   target_compile_options( kdsource PRIVATE -Werror )
 endif()
 
-install( TARGETS kdsource DESTINATION "${KDS_INSTALL_LIBDIR}" )
+install(
+  TARGETS kdsource
+  RUNTIME DESTINATION "${KDS_INSTALL_SHLIBDIR}"
+  ARCHIVE DESTINATION "${KDS_INSTALL_LIBDIR}"
+  LIBRARY DESTINATION "${KDS_INSTALL_LIBDIR}"
+)

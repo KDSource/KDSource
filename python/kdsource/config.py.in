@@ -53,21 +53,30 @@ def _config_deduce(item):
             return "@KDSource_version_int@"
         if item=='version':
             return "@KDSource_VERSION@"
+
     winsuffix = '.lib'
+    look_in_scripts_for_dll = False
     if item.startswith('sh'):
         winsuffix = '.dll'
         item = item[2:]
-    if item=='libdir':
-        return _datadir.joinpath('lib')
-    libs = list( _datadir.joinpath('lib').glob('*') )
+        #The next is only True on Windows in python installations:
+        look_in_scripts_for_dll = bool('@kds_pymod_shlib_in_scripts@')
 
+    if look_in_scripts_for_dll:
+        p = _win_find_dll()
+        if item=='libdir':
+            return p.parent
+        return p.name if item=='libname' else p
+
+    libdir = _datadir.joinpath('lib')
+
+    if item=='libdir':
+        return libdir
+
+    libs = list( e for e in libdir.glob('*') if 'kdsource' in e.name.lower() )
     libs_win = [ e for e in libs if e.name.lower().endswith(winsuffix) ]
     libs_other = [ e for e in libs if not e.name.lower().endswith(winsuffix) ]
-
-    if libs_win:
-        libs = libs_win
-    else:
-        libs = libs_other
+    libs = libs_win or libs_other
 
     if not libs:
         raise RuntimeError('Inconsistent installation of KDSource'
@@ -78,3 +87,25 @@ def _config_deduce(item):
                            f' libs: {s})')
     assert len(libs)==1
     return libs[0].name if item=='libname' else libs[0]
+
+def _win_find_dll():
+    #Windows. The DLL is in the scripts directory (to be in %PATH%). To be safe
+    #we look not only in the default scheme, but also in a few other preferred
+    #schemes:
+    import sysconfig
+
+    #The following assumes python 3.10+:
+    schemes = [ sysconfig.get_default_scheme() ]
+
+    for scheme_key in ['prefix','home','user']:
+        scheme = sysconfig.get_preferred_scheme(scheme_key)
+        if scheme not in schemes:
+            schemes.append(scheme)
+
+    ln = 'kdsource.dll'
+    for scheme in schemes:
+        p = pathlib.Path( sysconfig.get_path('scripts',scheme) ).joinpath(ln)
+        if p.is_file():
+            return p.absolute().resolve()
+    raise RuntimeError('Unable to locate shared library (expected '
+                       f'{ln} in Python site scripts directory)')
