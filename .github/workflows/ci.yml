@@ -94,3 +94,7 @@ jobs:
           echo "Invoke mcpltool on produced MCPL file"
           mcpltool foobar.mcpl.gz
           if %errorlevel% neq 0 exit /b %errorlevel%
+
+      - name: pylint with ruff
+        if: ${{ !startsWith(matrix.config.name, 'Windows') }}
+        run: pip install ruff && ruff check python/kdsource/*.py python/kdsource/*.py.in
