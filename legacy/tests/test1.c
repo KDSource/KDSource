@@ -1,15 +1,13 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<assert.h>
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "kdsource/kdsource.h"
 
-void test_test(){
-	printf("C tests still not implemented.\n");
-}
+void test_test() { printf("C tests still not implemented.\n"); }
 
-int main(){
-	test_test();
+int main() {
+  test_test();
 
-	return 0;
+  return 0;
 }
