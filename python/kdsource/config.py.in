@@ -33,7 +33,7 @@ def config(item):
     return c
 
 def _config_deduce(item):
-    if not item in config_items:
+    if item not in config_items:
         raise RuntimeError(f"unknown config item: {item}")
     if 'lib' not in item:
         if item=='includedir':
@@ -60,7 +60,7 @@ def _config_deduce(item):
         winsuffix = '.dll'
         item = item[2:]
         #The next is only True on Windows in python installations:
-        look_in_scripts_for_dll = bool('@kds_pymod_shlib_in_scripts@')
+        look_in_scripts_for_dll = bool('@kds_skbuild_shlib_in_wheel_scripts@')
 
     if look_in_scripts_for_dll:
         p = _win_find_dll()
@@ -88,24 +88,34 @@ def _config_deduce(item):
     assert len(libs)==1
     return libs[0].name if item=='libname' else libs[0]
 
+__cache_windll = [None]
 def _win_find_dll():
     #Windows. The DLL is in the scripts directory (to be in %PATH%). To be safe
     #we look not only in the default scheme, but also in a few other preferred
-    #schemes:
+    #schemes. The sysconfig usage below assumes python 3.10 or later:
+    if __cache_windll[0] is not None:
+        return __cache_windll[0]
+
     import sysconfig
-
-    #The following assumes python 3.10+:
+    import pathlib
     schemes = [ sysconfig.get_default_scheme() ]
-
     for scheme_key in ['prefix','home','user']:
         scheme = sysconfig.get_preferred_scheme(scheme_key)
         if scheme not in schemes:
             schemes.append(scheme)
-
-    ln = 'kdsource.dll'
+    ln, ln2, res = 'kdsource.dll', 'kdsource.DLL', None
     for scheme in schemes:
-        p = pathlib.Path( sysconfig.get_path('scripts',scheme) ).joinpath(ln)
-        if p.is_file():
-            return p.absolute().resolve()
-    raise RuntimeError('Unable to locate shared library (expected '
-                       f'{ln} in Python site scripts directory)')
+        p = pathlib.Path( sysconfig.get_path('scripts',scheme) )
+        p1 = p.joinpath(ln)
+        if p1.is_file():
+            res = p1
+            break
+        p2 = p.joinpath(ln2)
+        if p2.is_file():
+            res = p2
+            break
+    if res is None:
+        raise RuntimeError('Unable to locate shared library (expected '
+                           f'{ln} in Python site scripts directory)')
+    __cache_windll[0] = res.absolute().resolve()
+    return __cache_windll[0]

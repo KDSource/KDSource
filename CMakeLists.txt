@@ -102,6 +102,17 @@ endif()
 #processed .in files:
 ###################################################################
 
+#On windows DLL's must be in %PATH% so we put them in bin (same as seems to be
+#the way most packages do it on conda-forge). For wheels we will place the
+#mcpl.dll into the scripts folder, since that seems to be the only way to get
+#the dll onto the PATH. The following variable decides if ultimately placing
+#.dll in wheel scripts (boolean value should here be "1" or "" due to
+#configure_file usage):
+set( kds_skbuild_shlib_in_wheel_scripts "" )
+if ( WIN32 AND DEFINED SKBUILD_PROJECT_NAME )
+  set( kds_skbuild_shlib_in_wheel_scripts "1" )
+endif()
+
 set( KDS_PYMODNAME "kdsource" )
 
 if ( NOT KDS_FROM_SDIST )
@@ -157,27 +168,11 @@ else()
   set( KDS_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}" )
 endif()
 
-set(kds_skbuild_shlib_in_wheel_scripts OFF)
-if ( WIN32 )
-  #dll's must be in %PATH% so we put them in bin (same as seems to be the way
-  #most packages do it on conda-forge).
-  set(KDS_INSTALL_SHLIBDIR "${CMAKE_INSTALL_BINDIR}")
-  if ( DEFINED SKBUILD_PROJECT_NAME )
-    #For wheels we will place the mcpl.dll into the scripts folder, since
-    #that seems to be the only way to get the dll onto the PATH.
-    set(KDS_INSTALL_SHLIBDIR "${SKBUILD_SCRIPTS_DIR}")
-    set(kds_skbuild_shlib_in_wheel_scripts ON)
-  endif()
+if ( kds_skbuild_shlib_in_wheel_scripts )
+  set(KDS_INSTALL_SHLIBDIR "${SKBUILD_SCRIPTS_DIR}")
 else()
   #sane standard world
   set(KDS_INSTALL_SHLIBDIR "${KDS_INSTALL_LIBDIR}")
-endif()
-
-if ( kds_skbuild_shlib_in_wheel_scripts )
-  #dll is over in the wheel scripts dir, at an unknown relative location.
-  set( kds_pymod_shlib_in_scripts "1" )#non-empty string
-else()
-  set( kds_pymod_shlib_in_scripts "" )#empty string
 endif()
 
 ###################################################################
