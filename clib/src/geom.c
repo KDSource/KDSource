@@ -159,7 +159,7 @@ int Geom_next(Geometry *geom, int loop) {
 
 void Geom_destroy(Geometry *geom) {
   int i;
-  if ( geom->bwfile )
+  if (geom->bwfile)
     fclose(geom->bwfile);
   for (i = 0; i < geom->ord; i++)
     Metric_destroy(geom->ms[i]);
@@ -361,7 +361,7 @@ int Guide_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
   double xwidth = metric->params[0], yheight = metric->params[1],
          zmax = metric->params[2], rcurv = metric->params[3];
   double t, mu, mu2, phi;
-  //int cont = 0;
+  // int cont = 0;
   int mirror;
   if (rcurv != 0) { // Transform to curved guide variables
     double r = sqrt((rcurv + x) * (rcurv + x) + z * z);
@@ -566,7 +566,7 @@ int Isotrop_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
 int Polar_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
                   char kernel) {
   double theta, theta2, phi;
-  //int cont = 0;
+  // int cont = 0;
   theta = acos(part->direction[2]);
   phi = atan2(part->direction[1], part->direction[0]);
   theta2 = theta + bw * metric->scaling[0] * KDS_PI / 180 * rand_type(kernel);
@@ -583,7 +583,7 @@ int Polar_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
 int PolarMu_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
                     char kernel) {
   double mu, mu2, phi;
-  //int cont = 0;
+  // int cont = 0;
   mu = part->direction[2];
   phi = atan2(part->direction[1], part->direction[0]);
   mu2 = mu + bw * metric->scaling[0] * rand_type(kernel);

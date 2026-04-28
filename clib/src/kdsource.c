@@ -95,19 +95,20 @@ KDSource *KDS_open(const char *xmlfilename) {
   xmlNodePtr gtree = pltree->next;
   sscanf((char *)xmlGetProp(gtree, (const xmlChar *)"order"), "%d",
          &order); // Read order
-  if ( order < 1 )
+  if (order < 1)
     KDS_error("Error in KDS_open: invalid value of \"order\"");
 
-  int* dims = malloc( sizeof(int)*order );
-  int* nps = malloc( sizeof(int)*order );
-  double ** params = malloc( sizeof(double*)*order );
-  double ** scalings = malloc( sizeof(double*)*order );
-  char (*metricnames)[NAME_MAX_LEN] = malloc(sizeof(char)*NAME_MAX_LEN*order);
-  PerturbFun * perturbs =  malloc( sizeof(PerturbFun)*order );
-  Metric ** metrics =  malloc( sizeof(Metric*)*order );
+  int *dims = malloc(sizeof(int) * order);
+  int *nps = malloc(sizeof(int) * order);
+  double **params = malloc(sizeof(double *) * order);
+  double **scalings = malloc(sizeof(double *) * order);
+  char(*metricnames)[NAME_MAX_LEN] =
+      malloc(sizeof(char) * NAME_MAX_LEN * order);
+  PerturbFun *perturbs = malloc(sizeof(PerturbFun) * order);
+  Metric **metrics = malloc(sizeof(Metric *) * order);
 
-  if ( !dims || !nps || !params || !scalings || !perturbs
-       || !metricnames || !metrics ) {
+  if (!dims || !nps || !params || !scalings || !perturbs || !metricnames ||
+      !metrics) {
     free(dims);
     free(nps);
     free(params);
@@ -316,15 +317,15 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
 
 MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
 
-  KDSource **s = malloc( sizeof(KDSource*)*len );
-  if ( !s ) {
+  KDSource **s = malloc(sizeof(KDSource *) * len);
+  if (!s) {
     KDS_error("Error in MS_open: memory allocation failure");
     return NULL;
   }
   int i;
   for (i = 0; i < len; i++)
     s[i] = KDS_open(xmlfilenames[i]);
-  MultiSource * result = MS_create(len, s, ws);
+  MultiSource *result = MS_create(len, s, ws);
   free(s);
   return result;
 }
