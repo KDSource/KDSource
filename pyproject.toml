@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 # 2) The libxml2 dependency is not available via PyPI, so we fetch and embed
 #    libxml2 code dynamically. To build against a system-installed libxml2, use:
 #       pip install --config-settings=cmake.define.KDS_EMBED_LIBXML2=ON .
-dependencies = [ "mcpl-python>=2.2.8",
+dependencies = [ "mcpl-core>=2.2.8", "mcpl-python>=2.2.8",
                  "scipy>=1.15.3", "KDEpy>=1.1.12", "joblib>=1.5.1",
                  "matplotlib>=3.9.4", "scikit-learn>=1.7.2", "pandas>=2.3.1" ]
 readme = "README.md"
