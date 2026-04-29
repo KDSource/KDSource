@@ -59,6 +59,7 @@ CMakeLists_for_wsl2.txt
 _site
 .DS_Store
 skbld_autogen/
+third_party/libxml2/
 *.egg-info/
 .ruff_cache/
 /venv/

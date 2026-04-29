@@ -13,8 +13,8 @@ dependencies = [ "mcpl>=2.2.8",
                  "scipy>=1.15.3", "KDEpy>=1.1.12", "joblib>=1.5.1",
                  "matplotlib>=3.9.4", "scikit-learn>=1.7.2", "pandas>=2.3.1" ]
 readme = "README.md"
-license = "GPL-3.0"
-license-files = [ "LICENSE" ]
+license = "GPL-3.0 AND MIT"
+license-files = [ "LICENSE", "third_party/LICENSE_libxml2"]
 authors = [
   { name = "Osiris Inti Abbate", email = "intiabbate@gmail.com" },
 ]
@@ -56,11 +56,14 @@ cmake.version = ">=3.26.1"
 wheel.packages = []#manually handled by cmake
 wheel.platlib = true
 wheel.py-api = "py3"
+sdist.cmake = true
 sdist.inclusion-mode = "manual"
 sdist.exclude = ["**"]
 sdist.include = [ "/VERSION",
                   "/LICENSE",
                   "/README.md",
+                  "/third_party/LICENSE_libxml2",
+                  "/third_party/libxml2/**",
                   "/CMakeLists.txt",
                   "/pyproject.toml",
                   "/clib/include/kdsource/*.h",

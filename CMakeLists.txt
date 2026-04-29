@@ -19,8 +19,55 @@ option( KDS_EMBED_LIBXML2 "Download and embed libxml2 statically" OFF)
 option( KDS_STRICT "Stricter compilation " OFF)
 
 ###################################################################
+#Detect sdist generation mode:
+###################################################################
+
+#NB: When generating the sdist, all we want to do is essentially download the
+#    libxml2 sources for inclusion.
+
+set( KDS_GENERATING_SDIST OFF )
+if ( DEFINED SKBUILD_PROJECT_NAME AND "${SKBUILD_STATE}" STREQUAL "sdist" )
+  set( KDS_GENERATING_SDIST ON )
+endif()
+
+###################################################################
 #Find dependencies:
 ###################################################################
+
+if ( NOT KDS_EMBED_LIBXML2 )
+  if ( NOT KDS_GENERATING_SDIST )
+    find_package(LibXml2 REQUIRED)
+  endif()
+else()
+  # Configure FetchContent for libxml2 and ensure it is a static lib. If running
+  # from an sdist, it might already have been fetched into third_party/libxml2.
+  set( KDS_LIBXML2SRC "${CMAKE_CURRENT_BINARY_DIR}/kds_third_party_libxml2_src" )
+  if ( DEFINED SKBUILD_PROJECT_NAME )
+    set( KDS_LIBXML2SRC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libxml2" )
+  endif()
+  if ( NOT EXISTS "${KDS_LIBXML2SRC}/CMakeLists.txt" )
+    include(FetchContent)
+    FetchContent_Populate(
+      libxml2
+      #Use our own patched version, for a leaner build and to avoid installing
+      #system libxml2 binaries into the wheel.
+      URL https://github.com/KDSource/libxml2/archive/refs/tags/v2.15.3_kdsource_patch1.tar.gz
+      URL_HASH SHA256=f422b40be3b99356bf9d397c9657a1a05ce223dc6c898af8857e827297ff036f
+      SOURCE_DIR "${KDS_LIBXML2SRC}"
+    )
+  endif()
+  if ( NOT KDS_GENERATING_SDIST )
+    set(KDS_OLD_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory("${KDS_LIBXML2SRC}")
+    set(BUILD_SHARED_LIBS ${KDS_OLD_BUILD_SHARED_LIBS})
+  endif()
+endif()
+
+if ( KDS_GENERATING_SDIST )
+  #sdist generation does not need anything else
+  return()
+endif()
 
 if( NOT DEFINED "MCPL_DIR" )
   #Need to invoke "mcpl-config --show cmakedir" if we want to be able to
@@ -32,42 +79,12 @@ if( NOT DEFINED "MCPL_DIR" )
 endif()
 find_package(MCPL REQUIRED)
 
-if ( NOT KDS_EMBED_LIBXML2 )
-  find_package(LibXml2 REQUIRED)
-else()
-  # Configure FetchContent for libxml2 and ensure it is a static lib:
-  include(FetchContent)
-  set(_OLD_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
-  set(BUILD_SHARED_LIBS OFF)
-  FetchContent_Declare(
-    libxml2
-    #Use our own patched version, for a leaner build and to avoid installing
-    #libxml2 things into the wheel.
-    URL https://github.com/KDSource/libxml2/archive/refs/tags/v2.15.3_kdsource_patch1.tar.gz
-    URL_HASH SHA256=4a9faa997f45eb232ed4727c6a75380f0db4afdcf22d676f73a1301c9ebf8f99
-    #SOURCE_DIR "/some/where/clones/libxml2"
-    #URL https://gitlab.gnome.org/GNOME/libxml2/-/archive/v2.15.3/libxml2-v2.15.3.tar.gz
-    #URL https://github.com/GNOME/libxml2/archive/refs/tags/v2.15.3.tar.gz
-    #URL_HASH SHA256=5c6060277173270356c3f1c321a640ab629bdabc5e5ba9095b99e00759ba0c39
-  )
-  FetchContent_MakeAvailable(libxml2)
-  set(BUILD_SHARED_LIBS ${_OLD_BUILD_SHARED_LIBS})
-  # Build static version
-  set(BUILD_SHARED_LIBS OFF)
-endif()
-
 ###################################################################
 #Prepare autogen dir for processed files (possibly in-source if building via
 #python tools)
 ###################################################################
 
-if ( NOT DEFINED SKBUILD_PROJECT_NAME )
-  set( kdsc_autogendir "${CMAKE_CURRENT_BINARY_DIR}/kdsc_autogen" )
-else()
-  #Needs it in-source since pyproject.toml needs wheel.packages to be in-source:
-  message( STATUS "scikit-build mode detected. Will use in-source skbld_autogen dir." )
-  set ( kdsc_autogendir "${PROJECT_SOURCE_DIR}/skbld_autogen" )
-endif()
+set( kdsc_autogendir "${CMAKE_CURRENT_BINARY_DIR}/kdsc_autogen" )
 
 #Always cleanup autogendir
 if ( IS_DIRECTORY "${kdsc_autogendir}" )
