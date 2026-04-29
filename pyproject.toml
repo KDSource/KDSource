@@ -53,11 +53,19 @@ metadata.version.input = "VERSION"
 metadata.version.regex = '(?P<value>\d+\.\d+\.\d+)'
 minimum-version = "build-system.requires"
 cmake.version = ">=3.26.1"
-wheel.packages = ["skbld_autogen/python/kdsource"]
+wheel.packages = []#manually handled by cmake
+wheel.platlib = true
 wheel.py-api = "py3"
-sdist.cmake = true
 sdist.inclusion-mode = "manual"
 sdist.exclude = ["**"]
-sdist.include = ["/VERSION","/LICENSE","/README.md",
-                 "/CMakeLists.txt","/pyproject.toml",
-                 "/skbld_autogen/"]
+sdist.include = [ "/VERSION",
+                  "/LICENSE",
+                  "/README.md",
+                  "/CMakeLists.txt",
+                  "/pyproject.toml",
+                  "/clib/include/kdsource/*.h",
+                  "/clib/include/kdsource/*.h.in",
+                  "/clib/src/*.c",
+                  "/clib/src/*.c.in",
+                  "/python/kdsource/*.py",
+                  "/python/kdsource/*.py.in" ]
