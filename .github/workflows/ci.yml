@@ -38,7 +38,7 @@ jobs:
         with:
           python-version: ${{ matrix.config.python-version}}
 
-      - run: pip install .
+      - run: pip install "-Ccmake.define.KDS_STRICT=ON" .
       - run: pip show --files kdsource
       - run: kdsource-config -s
       - run: mcpl-config -s

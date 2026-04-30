@@ -204,15 +204,14 @@ install(
 
 if ( KDS_STRICT )
   if ( MSVC )
-    message(FATAL_ERROR "KDS_STRICT not implemented for MSVC" )
+    #target_compile_options( kdsource PRIVATE /WX /W4 )
+    target_compile_options( kdsource PRIVATE /WX /W3 )
+  else()
+    target_compile_options(
+      kdsource PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wformat=2
+      -Wconversion -Wsign-conversion -Wnull-dereference -Werror
+    )
   endif()
-  target_compile_options(
-    kdsource PRIVATE
-    -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion
-    -Wsign-conversion -Wnull-dereference
-    #-Wno-unused-variable
-  )
-  target_compile_options( kdsource PRIVATE -Werror )
 endif()
 
 install(
