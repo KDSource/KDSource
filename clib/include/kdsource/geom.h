@@ -92,15 +92,8 @@ int Polar_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
 int PolarMu_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
                     double bw, char kernel);
 
-static const int _n_metrics = 14;
-static const char *_metric_names[] = {
-    "Energy", "Lethargy", "Wavelength", "Vol",   "SurfXY",
-    "SurfR",  "SurfR2",   "SurfCircle", "Guide", "Isotrop",
-    "Polar",  "PolarMu",  "Time",       "Decade"};
-static const PerturbFun _metric_perturbs[] = {
-    E_perturb,      Let_perturb,     wl_perturb,     Vol_perturb,
-    SurfXY_perturb, SurfR_perturb,   SurfR2_perturb, SurfCircle_perturb,
-    Guide_perturb,  Isotrop_perturb, Polar_perturb,  PolarMu_perturb,
-    t_perturb,      Dec_perturb};
+extern const int _n_metrics;
+extern const char *_metric_names[];
+extern const PerturbFun _metric_perturbs[];
 
 #endif
