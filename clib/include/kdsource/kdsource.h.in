@@ -36,7 +36,10 @@
 #define MAX_RESAMPLES 1000000
 #define NAME_MAX_LEN 256
 
+#ifndef KDS_RNG_FCT
+#define KDS_RNG_FCT
 typedef double (*kds_rng_fct_t)(void);
+#endif
 
 typedef double (*WeightFun)(const mcpl_particle_t *part);
 

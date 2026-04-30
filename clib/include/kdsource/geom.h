@@ -18,7 +18,11 @@
 
 typedef struct Metric Metric;
 
+#ifndef KDS_RNG_FCT
+#define KDS_RNG_FCT
 typedef double (*kds_rng_fct_t)(void);
+#endif
+
 typedef int (*PerturbFun)(kds_rng_fct_t, const Metric *metric,
                           mcpl_particle_t *part, double bw, char kernel);
 
