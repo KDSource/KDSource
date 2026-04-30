@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <math.h>
+#include <limits.h>
 
 #include "kdsource/kdsource.h"
 
@@ -15,7 +16,10 @@ PList *PList_create(char pt, const char *filename, const double *trasl,
   plist->pt = pt;
   plist->pdgcode = pt2pdg(pt);
   mcpl_file_t file = mcpl_open_file(filename);
-  plist->npts = mcpl_hdr_nparticles(file);
+  uint64_t npts_uint64 = mcpl_hdr_nparticles(file);
+  if ( npts_uint64 > (uint64_t)LLONG_MAX )
+    KDS_error("Too many particles in file (exceeds long long range)\n");
+  plist->npts = (long long)(npts_uint64);
   plist->filename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
   strcpy(plist->filename, filename);
   plist->file = file;

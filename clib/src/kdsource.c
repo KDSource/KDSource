@@ -102,15 +102,16 @@ KDSource *KDS_open(const char *xmlfilename) {
          &order); // Read order
   if (order < 1)
     KDS_error("Error in KDS_open: invalid value of \"order\"");
+  const unsigned uorder = (unsigned)(order);
 
-  int *dims = malloc(sizeof(int) * order);
-  int *nps = malloc(sizeof(int) * order);
-  double **params = malloc(sizeof(double *) * order);
-  double **scalings = malloc(sizeof(double *) * order);
+  int *dims = malloc(sizeof(int) * uorder);
+  int *nps = malloc(sizeof(int) * uorder);
+  double **params = malloc(sizeof(double *) * uorder);
+  double **scalings = malloc(sizeof(double *) * uorder);
   char(*metricnames)[NAME_MAX_LEN] =
-      malloc(sizeof(char) * NAME_MAX_LEN * order);
-  PerturbFun *perturbs = malloc(sizeof(PerturbFun) * order);
-  Metric **metrics = malloc(sizeof(Metric *) * order);
+      malloc(sizeof(char) * NAME_MAX_LEN * uorder);
+  PerturbFun *perturbs = malloc(sizeof(PerturbFun) * uorder);
+  Metric **metrics = malloc(sizeof(Metric *) * uorder);
 
   if (!dims || !nps || !params || !scalings || !perturbs || !metricnames ||
       !metrics) {
@@ -130,11 +131,18 @@ KDSource *KDS_open(const char *xmlfilename) {
     strcpy(metricnames[i], (char *)mtree->name);             // Read metricname
     node = mtree->children;                                  // Node: dim
     sscanf((char *)xmlNodeGetContent(node), "%d", &dims[i]); // Read dim
-    scalings[i] = (double *)malloc(dims[i] * sizeof(double));
+
+    if (dims[i] < 1)
+      KDS_error("Error in KDS_open: invalid value of \"dims[i]\"");
+    const unsigned udimsi = (unsigned)(dims[i]);
+    scalings[i] = (double *)malloc(udimsi * sizeof(double));
     node = node->next; // Node: params
     sscanf((char *)xmlGetProp(node, (const xmlChar *)"nps"), "%d",
            &nps[i]); // Read ngp
-    params[i] = (double *)malloc(nps[i] * sizeof(double));
+    if (nps[i] < 1)
+      KDS_error("Error in KDS_open: invalid value of \"nps[i]\"");
+    const unsigned unpsi = (unsigned)(nps[i]);
+    params[i] = (double *)malloc(unpsi * sizeof(double));
     buf = (char *)xmlNodeGetContent(node);
     for (j = 0; j < nps[i]; j++) { // Read params
       sscanf(buf, "%lf %n", &params[i][j], &n);
@@ -291,10 +299,9 @@ int KDS_sample(KDSource *kds, mcpl_particle_t *part) {
 
 double KDS_w_mean(KDSource *kds, int N, WeightFun bias) {
   int i;
-  char pt;
+  //char pt;
   mcpl_particle_t part;
   double w_mean = 0;
-  ;
   for (i = 0; i < N; i++) {
     KDS_sample2(kds, &part, 0, -1, NULL, 1);
     if (bias)
@@ -313,9 +320,13 @@ void KDS_destroy(KDSource *kds) {
 
 MultiSource *MS_create(int len, KDSource **s, const double *ws) {
   MultiSource *ms = (MultiSource *)malloc(sizeof(MultiSource));
+
+  if (len < 1)
+    KDS_error("Error in MS_create: invalid value of \"len\"");
+  const unsigned ulen = (unsigned)(len);
   ms->len = len;
-  ms->s = (KDSource **)malloc(len * sizeof(KDSource *));
-  ms->ws = (double *)malloc(len * sizeof(double));
+  ms->s = (KDSource **)malloc(ulen * sizeof(KDSource *));
+  ms->ws = (double *)malloc(ulen * sizeof(double));
   ms->J = 0;
   int i;
   for (i = 0; i < len; i++) {
@@ -323,7 +334,7 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
     ms->ws[i] = ws[i];
     ms->J += s[i]->J;
   }
-  ms->cdf = (double *)malloc(ms->len * sizeof(double));
+  ms->cdf = (double *)malloc(ulen * sizeof(double));
   for (i = 0; i < ms->len; i++)
     ms->cdf[i] = ms->ws[i];
   for (i = 1; i < ms->len; i++)
@@ -332,8 +343,10 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
 }
 
 MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
-
-  KDSource **s = malloc(sizeof(KDSource *) * len);
+  if (len < 1)
+    KDS_error("Error in MS_open: invalid value of \"len\"");
+  const unsigned ulen = (unsigned)(len);
+  KDSource **s = malloc(sizeof(KDSource *) * ulen);
   if (!s) {
     KDS_error("Error in MS_open: memory allocation failure");
     return NULL;
