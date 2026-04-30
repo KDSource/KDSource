@@ -49,18 +49,18 @@ double kds_rand_box(kds_rng_fct_t rng) { return rng() * 2.0 - 1.0; }
 
 // Sample depending on kernel selected
 double kds_rand_type(kds_rng_fct_t rng, char kernel) {
-  if (kernel == 'g')
+  if (kernel == 'g') {
     return kds_rand_norm(rng);
-  if (kernel == 'e')
+  } else if (kernel == 'e') {
     return kds_rand_epan(rng);
-  if (kernel == 'b')
+  }
+  if (kernel == 'b') {
     return kds_rand_box(rng);
-  else {
+  } else {
     printf("Cannot perturbate with current kernel. \n");
     // KDS_error("Cannot perturbate with current kernel.");
     return 0;
   }
-  return 0;
 }
 
 // Translation

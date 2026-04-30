@@ -380,7 +380,10 @@ int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
          dz = part->direction[2], dx2, dz2;
   double xwidth = metric->params[0], yheight = metric->params[1],
          zmax = metric->params[2], rcurv = metric->params[3];
-  double t, mu, mu2, phi;
+  double t = 0.0;
+  double mu = 0.0;
+  double mu2 = 0.0;
+  double phi = 0.0;
   // int cont = 0;
   int mirror;
   if (rcurv != 0) { // Transform to curved guide variables

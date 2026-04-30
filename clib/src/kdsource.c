@@ -168,9 +168,11 @@ KDSource *KDS_open(const char *xmlfilename) {
     free(metricnames);
     free(perturbs);
     free(metrics);
+    dims = NULL;
     KDS_error("Error in KDS_open: memory allocation failure");
-    return NULL;
   }
+  if (!dims)
+    return NULL;
 
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
@@ -395,9 +397,11 @@ MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
     KDS_error("Error in MS_open: invalid value of \"len\"");
   KDSource **s = KDS_calloc_i(len, sizeof(KDSource *));
   if (!s) {
+    len = 0;
     KDS_error("Error in MS_open: memory allocation failure");
-    return NULL;
   }
+  if (len == 0)
+    return NULL;
   int i;
   for (i = 0; i < len; i++)
     s[i] = KDS_open(xmlfilenames[i]);
