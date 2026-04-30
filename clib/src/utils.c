@@ -14,7 +14,7 @@ void kds_rand_norm_twovals(kds_rng_fct_t rng, double *v1, double *v2) {
     g1 = 2.0 * rng() - 1.0;
     g2 = 2.0 * rng() - 1.0;
     t = g1 * g1 + g2 * g2;
-  } while (t >= 1.0 || !t);
+  } while (t >= 1.0 || t == 0.0);
   t = sqrt((-2.0 * log(t)) / t);
   *v1 = g1 * t;
   *v2 = g2 * t;
