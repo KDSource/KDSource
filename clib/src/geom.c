@@ -11,15 +11,15 @@
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
 
+void *KDS_malloc(size_t);
+void *KDS_calloc_i(int n_elem, size_t elem_size);
+
 Metric *Metric_create(int dim, const double *scaling, PerturbFun perturb,
                       int nps, const double *params) {
-  Metric *metric = (Metric *)malloc(sizeof(Metric));
+  Metric *metric = (Metric *)KDS_malloc(sizeof(Metric));
   int i;
-  if (dim < 1)
-    KDS_error("Error in Metric_create: invalid value of \"dim\"");
-  const unsigned udim = (unsigned)(dim);
   metric->dim = dim;
-  metric->scaling = (float *)malloc(udim * sizeof(float));
+  metric->scaling = (float *)KDS_calloc_i(dim, sizeof(float));
   if (scaling)
     for (i = 0; i < dim; i++)
       metric->scaling[i] = (float)scaling[i];
@@ -28,29 +28,20 @@ Metric *Metric_create(int dim, const double *scaling, PerturbFun perturb,
       metric->scaling[i] = 0;
   metric->perturb = perturb;
   metric->nps = nps;
-  if (nps < 1)
-    KDS_error("Error in Metric_create: invalid value of \"nps\"");
-  const unsigned unps = (unsigned)(nps);
-  metric->params = (double *)malloc(unps * sizeof(double));
+  metric->params = (double *)KDS_calloc_i(nps, sizeof(double));
   for (i = 0; i < nps; i++)
     metric->params[i] = params[i];
   return metric;
 }
 
 Metric *Metric_copy(const Metric *from) {
-  Metric *metric = (Metric *)malloc(sizeof(Metric));
+  Metric *metric = (Metric *)KDS_malloc(sizeof(Metric));
   *metric = *from;
   int i;
-  if (metric->dim < 1)
-    KDS_error("Error in Metric_copy: invalid value of \"metrid->dim\"");
-  const unsigned udim = (unsigned)(metric->dim);
-  metric->scaling = (float *)malloc(udim * sizeof(double));
+  metric->scaling = (float *)KDS_calloc_i(metric->dim, sizeof(double));
   for (i = 0; i < metric->dim; i++)
     metric->scaling[i] = from->scaling[i];
-  if (metric->nps < 1)
-    KDS_error("Error in Metric_copy: invalid value of \"metrid->nps\"");
-  const unsigned unps = (unsigned)(metric->nps);
-  metric->params = (double *)malloc(unps * sizeof(double));
+  metric->params = (double *)KDS_calloc_i(metric->nps, sizeof(double));
   for (i = 0; i < metric->nps; i++)
     metric->params[i] = from->params[i];
   return metric;
@@ -64,13 +55,10 @@ void Metric_destroy(Metric *metric) {
 Geometry *Geom_create(int ord, Metric **metrics, double bw,
                       const char *bwfilename, char kernel, const double *trasl,
                       const double *rot) {
-  if (ord < 1)
-    KDS_error("Error in Geom_create: invalid value of \"ord\"");
-  const unsigned uord = (unsigned)(ord);
-  Geometry *geom = (Geometry *)malloc(sizeof(Geometry));
+  Geometry *geom = (Geometry *)KDS_malloc(sizeof(Geometry));
   geom->ord = ord;
   int i;
-  geom->ms = (Metric **)malloc(uord * sizeof(Metric *));
+  geom->ms = (Metric **)KDS_calloc_i(ord, sizeof(Metric *));
   for (i = 0; i < ord; i++)
     geom->ms[i] = metrics[i];
   geom->bw = bw;
@@ -84,19 +72,19 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
         printf("Could not open file %s\n", bwfilename);
         KDS_error("Error in Geom_create");
       }
-      geom->bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
+      geom->bwfilename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
       strcpy(geom->bwfilename, bwfilename);
       geom->bwfile = bwfile;
       Geom_next(geom, 1);
     }
   if (trasl) {
-    geom->trasl = (double *)malloc(3 * sizeof(double));
+    geom->trasl = (double *)KDS_malloc(3 * sizeof(double));
     for (i = 0; i < 3; i++)
       geom->trasl[i] = trasl[i];
   } else
     geom->trasl = NULL;
   if (rot) {
-    geom->rot = (double *)malloc(3 * sizeof(double));
+    geom->rot = (double *)KDS_malloc(3 * sizeof(double));
     for (i = 0; i < 3; i++)
       geom->rot[i] = rot[i];
   } else
@@ -105,33 +93,29 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
 }
 
 Geometry *Geom_copy(const Geometry *from) {
-  Geometry *geom = (Geometry *)malloc(sizeof(Geometry));
+  Geometry *geom = (Geometry *)KDS_malloc(sizeof(Geometry));
   *geom = *from;
   int i;
 
-  if (geom->ord < 1)
-    KDS_error("Error in Geom_copy: invalid value of \"geom->ord\"");
-  const unsigned uord = (unsigned)(geom->ord);
-
-  geom->ms = (Metric **)malloc(uord * sizeof(Metric *));
+  geom->ms = (Metric **)KDS_calloc_i(geom->ord, sizeof(Metric *));
   for (i = 0; i < geom->ord; i++)
     geom->ms[i] = Metric_copy(from->ms[i]);
   geom->bwfilename = NULL;
   geom->bwfile = NULL;
   if (geom->bwfile) {
-    geom->bwfilename = (char *)malloc(NAME_MAX_LEN * sizeof(char));
+    geom->bwfilename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
     strcpy(geom->bwfilename, from->bwfilename);
     geom->bwfile = fopen(geom->bwfilename, "rb");
     Geom_next(geom, 1);
   }
   if (from->trasl) {
-    geom->trasl = (double *)malloc(3 * sizeof(double));
+    geom->trasl = (double *)KDS_malloc(3 * sizeof(double));
     for (i = 0; i < 3; i++)
       geom->trasl[i] = from->trasl[i];
   } else
     geom->trasl = NULL;
   if (from->rot) {
-    geom->rot = (double *)malloc(3 * sizeof(double));
+    geom->rot = (double *)KDS_malloc(3 * sizeof(double));
     for (i = 0; i < 3; i++)
       geom->rot[i] = from->rot[i];
   } else
