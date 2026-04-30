@@ -8,18 +8,17 @@
 
 #define KDS_PI 3.1415926535897932384626433832795028841971694
 
-//Implement constants defined extern in header:
+// Implement constants defined extern in header:
 const int _n_metrics = 14;
-const char *_metric_names[] = {
-  "Energy", "Lethargy", "Wavelength", "Vol",   "SurfXY",
-  "SurfR",  "SurfR2",   "SurfCircle", "Guide", "Isotrop",
-  "Polar",  "PolarMu",  "Time",       "Decade"};
+const char *_metric_names[] = {"Energy", "Lethargy", "Wavelength", "Vol",
+                               "SurfXY", "SurfR",    "SurfR2",     "SurfCircle",
+                               "Guide",  "Isotrop",  "Polar",      "PolarMu",
+                               "Time",   "Decade"};
 const PerturbFun _metric_perturbs[] = {
-  E_perturb,      Let_perturb,     wl_perturb,     Vol_perturb,
-  SurfXY_perturb, SurfR_perturb,   SurfR2_perturb, SurfCircle_perturb,
-  Guide_perturb,  Isotrop_perturb, Polar_perturb,  PolarMu_perturb,
-  t_perturb,      Dec_perturb};
-
+    E_perturb,      Let_perturb,     wl_perturb,     Vol_perturb,
+    SurfXY_perturb, SurfR_perturb,   SurfR2_perturb, SurfCircle_perturb,
+    Guide_perturb,  Isotrop_perturb, Polar_perturb,  PolarMu_perturb,
+    t_perturb,      Dec_perturb};
 
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
@@ -560,7 +559,7 @@ void _vMF_perturb(kds_rng_fct_t rng, double bw, double *dx, double *dy,
 
 int Isotrop_perturb(kds_rng_fct_t rng, const Metric *metric,
                     mcpl_particle_t *part, double bw, char kernel) {
-  (void)kernel;//unused
+  (void)kernel;                         // unused
   if (isinf(bw * metric->scaling[0])) { // Generate isotropic direction
     part->direction[2] = -1 + 2. * rng();
     double dxy = sqrt(1 - part->direction[2] * part->direction[2]);
