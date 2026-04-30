@@ -298,12 +298,17 @@ int KDS_sample(KDSource *kds, mcpl_particle_t *part) {
 }
 
 double KDS_w_mean(KDSource *kds, int N, WeightFun bias) {
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return KDS_rand_w_mean(rng,kds,N,bias);
+}
+
+double KDS_rand_w_mean(kds_rng_fct_t rng, KDSource *kds, int N, WeightFun bias) {
   int i;
   //char pt;
   mcpl_particle_t part;
   double w_mean = 0;
   for (i = 0; i < N; i++) {
-    KDS_sample2(kds, &part, 0, -1, NULL, 1);
+    KDS_rand_sample2(rng,kds, &part, 0, -1, NULL, 1);
     if (bias)
       w_mean += part.weight * bias(&part);
     else
@@ -368,7 +373,7 @@ int MS_rand_sample2(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part,
   else
     for (i = 0; y * ms->cdf[ms->len - 1] > ms->cdf[i]; i++)
       ;
-  ret = KDS_sample2(ms->s[i], part, perturb, w_crit, bias, loop);
+  ret = KDS_rand_sample2(rng,ms->s[i], part, perturb, w_crit, bias, loop);
   if (ms->cdf[ms->len - 1] > 0)
     part->weight *= (ms->s[i]->J / ms->J) / (ms->ws[i] / ms->cdf[ms->len - 1]);
   else
@@ -392,10 +397,16 @@ int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
 }
 
 double MS_w_mean(MultiSource *ms, int N, WeightFun bias) {
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return MS_rand_w_mean(rng,ms,N,bias);
+}
+
+double MS_rand_w_mean(kds_rng_fct_t rng,
+                      MultiSource *ms, int N, WeightFun bias) {
   double w_mean = 0;
   int i;
   for (i = 0; i < ms->len; i++)
-    w_mean += ms->ws[i] * KDS_w_mean(ms->s[i], N, bias);
+    w_mean += ms->ws[i] * KDS_rand_w_mean(rng,ms->s[i], N, bias);
   return w_mean / ms->cdf[ms->len - 1];
 }
 

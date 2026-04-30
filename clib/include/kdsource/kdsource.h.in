@@ -55,7 +55,7 @@ KDSource *KDS_open(const char *xmlfilename);
 int KDS_rand_sample2(kds_rng_fct_t, KDSource *kds, mcpl_particle_t *part,
                      int perturb, double w_crit, WeightFun bias, int loop);
 int KDS_rand_sample(kds_rng_fct_t, KDSource *kds, mcpl_particle_t *part);
-double KDS_w_mean(KDSource *kds, int N, WeightFun bias);
+double KDS_rand_w_mean(kds_rng_fct_t, KDSource *kds, int N, WeightFun bias);
 void KDS_destroy(KDSource *kds);
 
 typedef struct MultiSource {
@@ -71,7 +71,7 @@ MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws);
 int MS_rand_sample2(kds_rng_fct_t, MultiSource *ms, mcpl_particle_t *part,
                     int perturb, double w_crit, WeightFun bias, int loop);
 int MS_rand_sample(kds_rng_fct_t, MultiSource *ms, mcpl_particle_t *part);
-double MS_w_mean(MultiSource *ms, int N, WeightFun bias);
+double MS_rand_w_mean(kds_rng_fct_t, MultiSource *ms, int N, WeightFun bias);
 void MS_destroy(MultiSource *ms);
 
 // Backwards compatibility sampling functions without RNG control (not really
@@ -82,5 +82,7 @@ int KDS_sample(KDSource *kds, mcpl_particle_t *part);
 int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
                double w_crit, WeightFun bias, int loop);
 int MS_sample(MultiSource *ms, mcpl_particle_t *part);
+double KDS_w_mean(KDSource *kds, int N, WeightFun bias);
+double MS_w_mean(MultiSource *ms, int N, WeightFun bias);
 
 #endif
