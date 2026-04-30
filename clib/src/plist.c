@@ -10,6 +10,7 @@
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
 void *KDS_malloc(size_t);
+void KDS_strcpyname(char *dst, const char *src);
 
 PList *PList_create(char pt, const char *filename, const double *trasl,
                     const double *rot, int switch_x2z) {
@@ -22,7 +23,7 @@ PList *PList_create(char pt, const char *filename, const double *trasl,
     KDS_error("Too many particles in file (exceeds long long range)\n");
   plist->npts = (long long)(npts_uint64);
   plist->filename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
-  strcpy(plist->filename, filename);
+  KDS_strcpyname(plist->filename, filename);
   plist->file = file;
   int i;
   if (trasl) {
@@ -47,7 +48,7 @@ PList *PList_copy(const PList *from) {
   PList *plist = (PList *)KDS_malloc(sizeof(PList));
   *plist = *from;
   plist->filename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
-  strcpy(plist->filename, from->filename);
+  KDS_strcpyname(plist->filename, from->filename);
   plist->file = mcpl_open_file(plist->filename);
   int i;
   if (from->trasl) {

@@ -204,8 +204,9 @@ install(
 
 if ( KDS_STRICT )
   if ( MSVC )
-    #target_compile_options( kdsource PRIVATE /WX /W4 )
-    target_compile_options( kdsource PRIVATE /WX /W3 )
+    #/disable warning 4996 for now, since it will require rewriting the sscanf
+    #usage.
+    target_compile_options( kdsource PRIVATE /WX /W4 /wd4996 )
   else()
     target_compile_options(
       kdsource PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wformat=2

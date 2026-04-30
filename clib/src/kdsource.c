@@ -44,6 +44,28 @@ void KDS_end(const char *msg) {
   exit(EXIT_SUCCESS);
 }
 
+void KDS_strcpy(char *dst, size_t dst_buflen, const char *src) {
+  // Safe + portable + C99 compatible implementation of strcpy
+  if (!dst || !src || !dst_buflen) {
+    KDS_error("invalid strcpy (null arg)");
+    return;
+  }
+  size_t srclen = 0;
+  while (srclen < dst_buflen && src[srclen])
+    ++srclen;
+  if (!(srclen < dst_buflen)) {
+    KDS_error("invalid strcpy (too small buffer)");
+    return;
+  }
+  if (srclen > 1)
+    memcpy(dst, src, srclen);
+  dst[srclen] = 0;
+}
+
+void KDS_strcpyname(char *dst, const char *src) {
+  KDS_strcpy(dst, NAME_MAX_LEN, src);
+}
+
 KDSource *KDS_create(double J, char kernel, PList *plist, Geometry *geom) {
   KDSource *kds = (KDSource *)KDS_malloc(sizeof(KDSource));
   kds->J = J;
@@ -103,8 +125,9 @@ KDSource *KDS_open(const char *xmlfilename) {
            (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
     KDS_error("Error in KDS_open");
   }
-  strcpy(mcplfile, (char *)xmlNodeGetContent(node)); // Read mcpl file name
-  node = node->next;                                 // Node: trasl
+  KDS_strcpyname(mcplfile,
+                 (char *)xmlNodeGetContent(node)); // Read mcpl file name
+  node = node->next;                               // Node: trasl
   if (strlen((char *)xmlNodeGetContent(node)) > 1) {
     trasl_plist = (double *)KDS_malloc(3 * sizeof(double));
     sscanf((char *)xmlNodeGetContent(node), "%lf %lf %lf", &trasl_plist[0],
@@ -151,7 +174,7 @@ KDSource *KDS_open(const char *xmlfilename) {
 
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
-    strcpy(metricnames[i], (char *)mtree->name);             // Read metricname
+    KDS_strcpyname(metricnames[i], (char *)mtree->name);     // Read metricname
     node = mtree->children;                                  // Node: dim
     sscanf((char *)xmlNodeGetContent(node), "%d", &dims[i]); // Read dim
 
@@ -199,7 +222,8 @@ KDSource *KDS_open(const char *xmlfilename) {
              (char *)xmlNodeGetContent(node), NAME_MAX_LEN);
       KDS_error("Error in KDS_open");
     }
-    strcpy(bwfilename, (char *)xmlNodeGetContent(node)); // Read BW file name
+    KDS_strcpyname(bwfilename,
+                   (char *)xmlNodeGetContent(node)); // Read BW file name
   } else
     sscanf((char *)xmlNodeGetContent(node), "%lf", &bw); // Read BW
 

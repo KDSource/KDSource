@@ -25,6 +25,7 @@ void KDS_end(const char *msg);
 
 void *KDS_malloc(size_t);
 void *KDS_calloc_i(int n_elem, size_t elem_size);
+void KDS_strcpyname(char *dst, const char *src);
 
 Metric *Metric_create(int dim, const double *scaling, PerturbFun perturb,
                       int nps, const double *params) {
@@ -85,7 +86,7 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
         KDS_error("Error in Geom_create");
       }
       geom->bwfilename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
-      strcpy(geom->bwfilename, bwfilename);
+      KDS_strcpyname(geom->bwfilename, bwfilename);
       geom->bwfile = bwfile;
       Geom_next(geom, 1);
     }
@@ -116,7 +117,7 @@ Geometry *Geom_copy(const Geometry *from) {
   geom->bwfile = NULL;
   if (geom->bwfile) {
     geom->bwfilename = (char *)KDS_malloc(NAME_MAX_LEN * sizeof(char));
-    strcpy(geom->bwfilename, from->bwfilename);
+    KDS_strcpyname(geom->bwfilename, from->bwfilename);
     geom->bwfile = fopen(geom->bwfilename, "rb");
     Geom_next(geom, 1);
   }
