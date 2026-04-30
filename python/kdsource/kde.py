@@ -9,8 +9,6 @@ from KDEpy import TreeKDE
 
 from joblib import Parallel, delayed
 
-import matplotlib.pyplot as plt
-
 import numpy as np
 
 from sklearn.model_selection import KFold
@@ -214,6 +212,7 @@ def bw_mlcv(data, weights=None, n_splits=10, seed=None, grid=None, show=True):
     idx_best = np.argmax(cv_scores)
 
     if show:
+        import matplotlib.pyplot as plt
         plt.plot(grid, cv_scores)
         plt.xlabel("Scaling factor")
         plt.ylabel("MLCV Figure of Merit (FoM)")

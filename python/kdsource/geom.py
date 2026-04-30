@@ -7,9 +7,6 @@ from xml.etree.ElementTree import SubElement
 
 import numpy as np
 
-import scipy.spatial.transform as st
-
-
 class Metric:
     def __init__(self, partvars, varnames, units, volunits):
         """
@@ -144,6 +141,7 @@ class Geometry(Metric):
             if trasl.shape != (3,):
                 raise ValueError("Invalid trasl.")
         if rot is not None:
+            import scipy.spatial.transform as st
             if not isinstance(rot, st.Rotation):
                 rot = np.array(rot)
                 if rot.shape == (4,):

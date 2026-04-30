@@ -1,8 +1,74 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
-name = "KDSource"
-authors = [{name = "Osiris Inti Abbate", email = "intiabbate@gmail.com"}]
-dynamic = ["version", "description"]
+name = "kdsource"
+dynamic = ["version"]
+requires-python = ">=3.10"
+# A few notes about dependencies:
+# 1) Some dependencies are put in the optional-dependencies group below, to be
+#    installed like "pip install kdsource[all]".
+#
+# 2) The libxml2 dependency is not available via PyPI, so we fetch and embed
+#    libxml2 code dynamically. To build against a system-installed libxml2, use:
+#       pip install --config-settings=cmake.define.KDS_EMBED_LIBXML2=ON .
+dependencies = [ "mcpl-core>=2.2.8", "mcpl-python>=2.2.8",
+                 "scipy>=1.14.1", "KDEpy>=1.1.12", "joblib>=1.5.1",
+                 "matplotlib>=3.9.4", "scikit-learn>=1.7.2", "pandas>=2.3.1" ]
+readme = "README.md"
+license = "GPL-3.0 AND MIT"
+license-files = [ "LICENSE", "third_party/LICENSE_libxml2"]
+authors = [
+  { name = "Osiris Inti Abbate", email = "intiabbate@gmail.com" },
+]
+maintainers = [
+  { name = "KDSource developers" },
+]
+description = "Tool for modelling distributional particle sources for Monte Carlo simulations, with Kernel Density Estimation."
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+surfsource = ["h5py>3.13.0","uncertainties>=3.2.2","astropy>=7.1.1"]
+all        = ["h5py>3.13.0","uncertainties>=3.2.2","astropy>=7.1.1"]
+
+[project.urls]
+"Homepage"    = "https://kdsource.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/KDSource/KDSource/issues"
+
+[build-system]
+requires = ["scikit-build-core>=0.12","mcpl-core>=2.2.8"]
+build-backend = "scikit_build_core.build"
+
+[project.scripts]
+kdsource-config = "kdsource._cli_config:main"
+kdsource-resample = "kdsource._cli_resample:main"
+kdsource-test = "kdsource.test:main"
+
+[tool.scikit-build]
+#build.verbose = true
+#cmake.build-type = "Debug"
+cmake.define.KDS_EMBED_LIBXML2 = "ON"
+logging.level = "INFO"
+metadata.version.provider = "scikit_build_core.metadata.regex"
+metadata.version.input = "VERSION"
+metadata.version.regex = '(?P<value>\d+\.\d+\.\d+)'
+minimum-version = "build-system.requires"
+cmake.version = ">=3.26.1"
+wheel.packages = []#manually handled by cmake
+wheel.platlib = true
+wheel.py-api = "py3"
+sdist.cmake = true
+sdist.inclusion-mode = "manual"
+sdist.exclude = ["**"]
+sdist.include = [ "/VERSION",
+                  "/LICENSE",
+                  "/README.md",
+                  "/third_party/LICENSE_libxml2",
+                  "/third_party/libxml2/**",
+                  "/CMakeLists.txt",
+                  "/pyproject.toml",
+                  "/clib/include/kdsource/*.h",
+                  "/clib/include/kdsource/*.h.in",
+                  "/clib/src/*.c",
+                  "/clib/src/*.c.in",
+                  "/python/kdsource/*.py",
+                  "/python/kdsource/*.py.in" ]

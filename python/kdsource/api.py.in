@@ -29,11 +29,22 @@ reference:
 
 """
 
-__version__ = "0.1.0"
+__version__ = "@KDSource_VERSION@"
+versionint = int('@KDSource_version_int@')
+version = ( int('@KDSource_VERSION_MAJOR@'),
+            int('@KDSource_VERSION_MINOR@'),
+            int('@KDSource_VERSION_PATCH@') )
 __author__ = "KDSource"
 
-from .geom import Geometry, Metric
-from .kde import bw_methods, bw_silv
-from .kdsource import KDSource, load
-from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv
-from .surfsource import SurfaceSourceFile, create_source_file
+#Convenience module with ~all imports (leaving __init__.py empty as per
+#best-practice, and to not make e.g. CLI scripts fail due to missing un-needed
+#dependency)
+from . import geom  #noqa F401
+from . import kde  #noqa F401
+from . import plist  #noqa F401
+from .geom import Geometry, Metric  #noqa F401
+from .kde import bw_silv  #noqa F401
+from .kdsource import KDSource, load  #noqa F401
+from .plist import PList, appendssv, convert2mcpl, join2mcpl, savessv  #noqa F401
+from .writemcpl import write_mcpl #noqa F401
+from .resample import resample_to_mcpl #noqa F401

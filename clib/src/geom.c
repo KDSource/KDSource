@@ -6,6 +6,8 @@
 
 #include "kdsource/kdsource.h"
 
+#define KDS_PI 3.1415926535897932384626433832795028841971694
+
 void KDS_error(const char *msg);
 void KDS_end(const char *msg);
 
@@ -157,11 +159,14 @@ int Geom_next(Geometry *geom, int loop) {
 
 void Geom_destroy(Geometry *geom) {
   int i;
+  if (geom->bwfile)
+    fclose(geom->bwfile);
   for (i = 0; i < geom->ord; i++)
     Metric_destroy(geom->ms[i]);
   free(geom->ms);
   free(geom->trasl);
   free(geom->rot);
+  free(geom->bwfilename);
   free(geom);
 }
 
@@ -175,7 +180,7 @@ int E_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
 
 int Let_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
                 char kernel) {
-  float E = part->ekin;
+  double E = part->ekin;
   E *= exp(bw * metric->scaling[0] * rand_type(kernel));
   while (E > metric->params[0]) {
     E = part->ekin;
@@ -265,7 +270,7 @@ int SurfR_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
   psi = atan2(part->position[1], part->position[0]);
 
   rho2 = rho + bw * metric->scaling[0] * rand_type(kernel);
-  psi2 = psi + bw * metric->scaling[1] * M_PI / 180 * rand_type(kernel);
+  psi2 = psi + bw * metric->scaling[1] * KDS_PI / 180 * rand_type(kernel);
 
   while ((rho2 < rho_min) || (rho2 > rho_max)) {
     if (rho2 < rho_min)
@@ -299,7 +304,7 @@ int SurfR2_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
   psi = atan2(part->position[1], part->position[0]);
 
   rho2 = rho + bw * metric->scaling[0] * rand_type(kernel);
-  psi2 = psi + bw * metric->scaling[1] * M_PI / 180 * rand_type(kernel);
+  psi2 = psi + bw * metric->scaling[1] * KDS_PI / 180 * rand_type(kernel);
 
   while ((rho2 < rho_min) || (rho2 > rho_max)) {
     if (rho2 < rho_min)
@@ -356,7 +361,8 @@ int Guide_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
   double xwidth = metric->params[0], yheight = metric->params[1],
          zmax = metric->params[2], rcurv = metric->params[3];
   double t, mu, mu2, phi;
-  int cont = 0, mirror;
+  // int cont = 0;
+  int mirror;
   if (rcurv != 0) { // Transform to curved guide variables
     double r = sqrt((rcurv + x) * (rcurv + x) + z * z);
     x = copysign(1, rcurv) * r - rcurv;
@@ -462,9 +468,9 @@ int Guide_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
     mu = mu2;
   }
   if (isinf(metric->scaling[3]))
-    phi = 2. * M_PI * rand() / RAND_MAX;
+    phi = 2. * KDS_PI * rand() / RAND_MAX;
   else
-    phi += bw * metric->scaling[3] * M_PI / 180 * rand_type(kernel);
+    phi += bw * metric->scaling[3] * KDS_PI / 180 * rand_type(kernel);
   // Antitransform from (z,t,theta_n,theta_t) to (x,y,z,dx,dy,dz)
   switch (mirror) {
   case 0:
@@ -518,7 +524,7 @@ void _vMF_perturb(double bw, double *dx, double *dy, double *dz) {
   double xi = (double)rand() / RAND_MAX;
   double w = 1;
   w += bw * bw * log(xi + (1 - xi) * exp(-2 / (bw * bw)));
-  double phi = 2. * M_PI * rand() / RAND_MAX;
+  double phi = 2. * KDS_PI * rand() / RAND_MAX;
   double uv = sqrt(1 - w * w), u = uv * cos(phi), v = uv * sin(phi);
   double dx0 = *dx, dy0 = *dy, dz0 = *dz;
   if (dz0 > 0) {
@@ -536,7 +542,7 @@ int Isotrop_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
   if (isinf(bw * metric->scaling[0])) { // Generate isotropic direction
     part->direction[2] = -1 + 2. * rand() / RAND_MAX;
     double dxy = sqrt(1 - part->direction[2] * part->direction[2]);
-    double phi = 2. * M_PI * rand() / RAND_MAX;
+    double phi = 2. * KDS_PI * rand() / RAND_MAX;
     part->direction[0] = dxy * cos(phi);
     part->direction[1] = dxy * sin(phi);
   } else if (bw * metric->scaling[0] >
@@ -560,14 +566,14 @@ int Isotrop_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
 int Polar_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
                   char kernel) {
   double theta, theta2, phi;
-  int cont = 0;
+  // int cont = 0;
   theta = acos(part->direction[2]);
   phi = atan2(part->direction[1], part->direction[0]);
-  theta2 = theta + bw * metric->scaling[0] * M_PI / 180 * rand_type(kernel);
+  theta2 = theta + bw * metric->scaling[0] * KDS_PI / 180 * rand_type(kernel);
   if (cos(theta2) * cos(theta) < 0)
-    theta += 2 * (M_PI / 2 - theta);
+    theta += 2 * (KDS_PI / 2 - theta);
   theta = theta2;
-  phi += bw * metric->scaling[1] * M_PI / 180 * rand_type(kernel);
+  phi += bw * metric->scaling[1] * KDS_PI / 180 * rand_type(kernel);
   part->direction[0] = sin(theta) * cos(phi);
   part->direction[1] = sin(theta) * sin(phi);
   part->direction[2] = cos(theta);
@@ -577,7 +583,7 @@ int Polar_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
 int PolarMu_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
                     char kernel) {
   double mu, mu2, phi;
-  int cont = 0;
+  // int cont = 0;
   mu = part->direction[2];
   phi = atan2(part->direction[1], part->direction[0]);
   mu2 = mu + bw * metric->scaling[0] * rand_type(kernel);
@@ -597,7 +603,7 @@ int PolarMu_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
     }
   }
   mu = mu2;
-  phi += bw * metric->scaling[1] * M_PI / 180 * rand_type(kernel);
+  phi += bw * metric->scaling[1] * KDS_PI / 180 * rand_type(kernel);
   part->direction[0] = sqrt(1 - mu * mu) * cos(phi);
   part->direction[1] = sqrt(1 - mu * mu) * sin(phi);
   part->direction[2] = mu;

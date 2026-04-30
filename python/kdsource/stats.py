@@ -3,8 +3,6 @@
 """Module for statistic analysis
 """
 
-import matplotlib.pyplot as plt
-
 import numpy as np
 
 
@@ -84,6 +82,7 @@ def convergence(vecs, ws, param, fracmin=0.1, steps=10, plot=True):
     params = np.array(params)
     errs = np.array(errs)
     if Ns[0] != Ns[-1] and plot:
+        import matplotlib.pyplot as plt
         plt.plot(Ns, params, "o-")
         plt.fill_between(
             Ns, params - errs, params + errs, color="blue", alpha=0.3
@@ -182,6 +181,7 @@ class Stats:
             plot=plot,
         )
         if plot:
+            import matplotlib.pyplot as plt
             plt.ylabel("Mean weight")
         return [Ns, params, errs]
 
@@ -217,6 +217,7 @@ class Stats:
             plot=plot,
         )
         if plot:
+            import matplotlib.pyplot as plt
             if varname is None:
                 varname = "v%d" % var
             plt.ylabel("{} mean".format(varname))
@@ -257,6 +258,7 @@ class Stats:
             plot=plot,
         )
         if plot:
+            import matplotlib.pyplot as plt
             if varname is None:
                 varname = "v%d" % var
             plt.ylabel("{} standard deviation".format(varname))

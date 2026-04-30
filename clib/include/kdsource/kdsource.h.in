@@ -1,9 +1,6 @@
 #ifndef KDSOURCE_H
 #define KDSOURCE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-
 /***********************************************************************************/
 /*                                                                                 */
 /*  KDSource: KDE particle sources */
@@ -24,11 +21,17 @@
 /***********************************************************************************/
 
 #include "mcpl.h"
-
-#include "KDSourceConfig.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include "kdsource/utils.h"
 #include "kdsource/geom.h"
 #include "kdsource/plist.h"
+
+#define KDSOURCE_VERSION_MAJOR @KDSource_VERSION_MAJOR@
+#define KDSOURCE_VERSION_MINOR @KDSource_VERSION_MINOR@
+#define KDSOURCE_VERSION_PATCH @KDSource_VERSION_PATCH@
+#define KDSOURCE_VERSION_STR "@KDSource_VERSION_MAJOR@.@KDSource_VERSION_MINOR@.@KDSource_VERSION_PATCH@"
+#define KDSOURCE_VERSION @KDSource_version_int@ /* 1000000*MAJOR+1000*MINOR+PATCH */
 
 #define MAX_RESAMPLES 1000000
 #define NAME_MAX_LEN 256

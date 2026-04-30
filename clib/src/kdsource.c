@@ -95,11 +95,31 @@ KDSource *KDS_open(const char *xmlfilename) {
   xmlNodePtr gtree = pltree->next;
   sscanf((char *)xmlGetProp(gtree, (const xmlChar *)"order"), "%d",
          &order); // Read order
-  int dims[order], nps[order];
-  char metricnames[order][NAME_MAX_LEN];
-  double *params[order];
-  double *scalings[order];
-  PerturbFun perturbs[order];
+  if (order < 1)
+    KDS_error("Error in KDS_open: invalid value of \"order\"");
+
+  int *dims = malloc(sizeof(int) * order);
+  int *nps = malloc(sizeof(int) * order);
+  double **params = malloc(sizeof(double *) * order);
+  double **scalings = malloc(sizeof(double *) * order);
+  char(*metricnames)[NAME_MAX_LEN] =
+      malloc(sizeof(char) * NAME_MAX_LEN * order);
+  PerturbFun *perturbs = malloc(sizeof(PerturbFun) * order);
+  Metric **metrics = malloc(sizeof(Metric *) * order);
+
+  if (!dims || !nps || !params || !scalings || !perturbs || !metricnames ||
+      !metrics) {
+    free(dims);
+    free(nps);
+    free(params);
+    free(scalings);
+    free(metricnames);
+    free(perturbs);
+    free(metrics);
+    KDS_error("Error in KDS_open: memory allocation failure");
+    return NULL;
+  }
+
   xmlNodePtr mtree = gtree->children;
   for (i = 0; i < order; i++) {
     strcpy(metricnames[i], (char *)mtree->name);             // Read metricname
@@ -166,7 +186,6 @@ KDSource *KDS_open(const char *xmlfilename) {
       KDS_error("Error in KDS_open");
     }
   }
-  Metric *metrics[order];
   for (i = 0; i < order; i++)
     metrics[i] =
         Metric_create(dims[i], scalings[i], perturbs[i], nps[i], params[i]);
@@ -189,6 +208,14 @@ KDSource *KDS_open(const char *xmlfilename) {
   }
   xmlFreeDoc(doc);
   xmlCleanupParser();
+
+  free(dims);
+  free(nps);
+  free(params);
+  free(scalings);
+  free(metricnames);
+  free(perturbs);
+  free(metrics);
 
   return s;
 }
@@ -289,11 +316,18 @@ MultiSource *MS_create(int len, KDSource **s, const double *ws) {
 }
 
 MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
-  KDSource *s[len];
+
+  KDSource **s = malloc(sizeof(KDSource *) * len);
+  if (!s) {
+    KDS_error("Error in MS_open: memory allocation failure");
+    return NULL;
+  }
   int i;
   for (i = 0; i < len; i++)
     s[i] = KDS_open(xmlfilenames[i]);
-  return MS_create(len, s, ws);
+  MultiSource *result = MS_create(len, s, ws);
+  free(s);
+  return result;
 }
 
 int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,

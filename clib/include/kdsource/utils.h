@@ -1,5 +1,5 @@
-#ifndef AUX_H
-#define AUX_H
+#ifndef KDSOURCE_UTILS_H
+#define KDSOURCE_UTILS_H
 
 #include <stdio.h>
 #include <stdlib.h>
