@@ -18,7 +18,7 @@ double rand_epan() {
   double x1 = (double)rand() / ((double)RAND_MAX / 2.0) - 1.0;
   double x2 = (double)rand() / ((double)RAND_MAX / 2.0) - 1.0;
   double x3 = (double)rand() / ((double)RAND_MAX / 2.0) - 1.0;
-  if (abs(x3) >= abs(x2) && abs(x3) >= abs(x1))
+  if (fabs(x3) >= fabs(x2) && fabs(x3) >= fabs(x1))
     return x2;
   else
     return x3;
