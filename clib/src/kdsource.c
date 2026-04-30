@@ -7,6 +7,11 @@
 
 #include "kdsource/kdsource.h"
 
+double KDS_default_rngfct(void) {
+  // This is a horrible RNG:
+  return rand() / (RAND_MAX + 1.0);
+}
+
 void KDS_error(const char *msg) {
   printf("KDSource error: %s\n", msg);
   exit(EXIT_FAILURE);
@@ -220,13 +225,13 @@ KDSource *KDS_open(const char *xmlfilename) {
   return s;
 }
 
-int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
-                double w_crit, WeightFun bias, int loop) {
+int KDS_rand_sample2(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part,
+                     int perturb, double w_crit, WeightFun bias, int loop) {
   int ret = 0;
   if (w_crit <= 0) {
     PList_get(kds->plist, part);
     if (perturb)
-      Geom_perturb(kds->geom, part);
+      Geom_perturb(rng, kds->geom, part);
     ret += PList_next(kds->plist, loop);
     ret += Geom_next(kds->geom, loop);
   } else { // Normalize w to 1
@@ -241,18 +246,18 @@ int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
       if (part->weight * bs > w_crit) { // If w*bs>w_crit, use w_crit/w*bs as
                                         // prob of going forward in list
         if (perturb)
-          Geom_perturb(kds->geom, part);
-        if (rand() < w_crit / (part->weight * bs) * RAND_MAX) {
+          Geom_perturb(rng, kds->geom, part);
+        if (rng() < w_crit / (part->weight * bs)) {
           ret += PList_next(kds->plist, loop);
           ret += Geom_next(kds->geom, loop);
         }
         break;
       } else { // If w*bs<w_crit, use w*bs/w_crit as prob of taking particle
         int take = 0;
-        if (rand() < (part->weight * bs) / w_crit * RAND_MAX) {
+        if (rng() < (part->weight * bs) / w_crit) {
           take = 1;
           if (perturb)
-            Geom_perturb(kds->geom, part);
+            Geom_perturb(rng, kds->geom, part);
         }
         ret += PList_next(kds->plist, loop);
         ret += Geom_next(kds->geom, loop);
@@ -269,8 +274,19 @@ int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
   return ret;
 }
 
+int KDS_rand_sample(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part) {
+  return KDS_rand_sample2(rng, kds, part, 1, 1, NULL, 1);
+}
+
+int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
+                double w_crit, WeightFun bias, int loop) {
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return KDS_rand_sample2(rng, kds, part, perturb, w_crit, bias, loop);
+}
+
 int KDS_sample(KDSource *kds, mcpl_particle_t *part) {
-  return KDS_sample2(kds, part, 1, 1, NULL, 1);
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return KDS_rand_sample(rng, kds, part);
 }
 
 double KDS_w_mean(KDSource *kds, int N, WeightFun bias) {
@@ -330,9 +346,9 @@ MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
   return result;
 }
 
-int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
-               double w_crit, WeightFun bias, int loop) {
-  double y = rand() / ((double)RAND_MAX + 1);
+int MS_rand_sample2(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part,
+                    int perturb, double w_crit, WeightFun bias, int loop) {
+  double y = rng();
   int i, ret;
   if (ms->cdf[ms->len - 1] <= 0)
     i = (int)(y * ms->len);
@@ -347,8 +363,19 @@ int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
   return ret;
 }
 
+int MS_rand_sample(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part) {
+  return MS_rand_sample2(rng, ms, part, 1, 1, NULL, 1);
+}
+
 int MS_sample(MultiSource *ms, mcpl_particle_t *part) {
-  return MS_sample2(ms, part, 1, 1, NULL, 1);
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return MS_rand_sample(rng, ms, part);
+}
+
+int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
+               double w_crit, WeightFun bias, int loop) {
+  kds_rng_fct_t rng = KDS_default_rngfct;
+  return MS_rand_sample2(rng, ms, part, perturb, w_crit, bias, loop);
 }
 
 double MS_w_mean(MultiSource *ms, int N, WeightFun bias) {

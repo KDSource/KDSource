@@ -5,6 +5,7 @@
 # See README.md file for installation instructions.                              #
 #                                                                                #
 # Written 2021 by O. I. Abbate.                                                  #
+# Major rewrite 2026 by T. Kittelmann.                                           #
 #                                                                                #
 ##################################################################################
 

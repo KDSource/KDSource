@@ -18,8 +18,9 @@
 
 typedef struct Metric Metric;
 
-typedef int (*PerturbFun)(const Metric *metric, mcpl_particle_t *part,
-                          double bw, char kernel);
+typedef double (*kds_rng_fct_t)(void);
+typedef int (*PerturbFun)(kds_rng_fct_t, const Metric *metric,
+                          mcpl_particle_t *part, double bw, char kernel);
 
 struct Metric {
   int dim;            // Dimension
@@ -27,6 +28,7 @@ struct Metric {
   PerturbFun perturb; // Perturbation function
   int nps;            // Number of metric parameters
   double *params;     // Metric parameters
+  kds_rng_fct_t rng;  // Random number generator
 };
 
 Metric *Metric_create(int dim, const double *scaling, PerturbFun perturb,
@@ -50,41 +52,41 @@ Geometry *Geom_create(int ord, Metric **metrics, double bw,
                       const char *bwfilename, char kernel, const double *trasl,
                       const double *rot);
 Geometry *Geom_copy(const Geometry *from);
-int Geom_perturb(const Geometry *geom, mcpl_particle_t *part);
+int Geom_perturb(kds_rng_fct_t, const Geometry *geom, mcpl_particle_t *part);
 int Geom_next(Geometry *geom, int loop);
 void Geom_destroy(Geometry *geom);
 
-int E_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-              char kernel);
-int Let_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                char kernel);
-int wl_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-               char kernel);
+int E_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+              double bw, char kernel);
+int Let_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                double bw, char kernel);
+int wl_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+               double bw, char kernel);
 
-int t_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-              char kernel);
-int Dec_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                char kernel);
+int t_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+              double bw, char kernel);
+int Dec_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                double bw, char kernel);
 
-int Vol_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                char kernel);
-int SurfXY_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                   char kernel);
-int SurfR_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                  char kernel);
-int SurfR2_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                   char kernel);
-int SurfCircle_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                       char kernel);
-int Guide_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                  char kernel);
+int Vol_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                double bw, char kernel);
+int SurfXY_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                   double bw, char kernel);
+int SurfR_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                  double bw, char kernel);
+int SurfR2_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                   double bw, char kernel);
+int SurfCircle_perturb(kds_rng_fct_t, const Metric *metric,
+                       mcpl_particle_t *part, double bw, char kernel);
+int Guide_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                  double bw, char kernel);
 
-int Isotrop_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                    char kernel);
-int Polar_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                  char kernel);
-int PolarMu_perturb(const Metric *metric, mcpl_particle_t *part, double bw,
-                    char kernel);
+int Isotrop_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                    double bw, char kernel);
+int Polar_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                  double bw, char kernel);
+int PolarMu_perturb(kds_rng_fct_t, const Metric *metric, mcpl_particle_t *part,
+                    double bw, char kernel);
 
 static const int _n_metrics = 14;
 static const char *_metric_names[] = {

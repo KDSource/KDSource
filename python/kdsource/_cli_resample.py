@@ -18,7 +18,11 @@ def parse_args(argv=None):
     parser.add_argument('nparticles',metavar='NPARTICLES',type=int,
                         help=wrap("""Number of particles to sample and place in
                         OUTMCPL."""))
-    parser.add_argument('--force',action='store_true',
+    parser.add_argument('-s','--seed',metavar='SEED',type=int,
+                        help=wrap("""Seed value of Number of particles to sample
+                        and place in OUTMCPL. If not set, a random seed is
+                        generated (based on bytes from os.urandom)."""))
+    parser.add_argument('-f','--force',action='store_true',
                         help=wrap("""Will overwrite existing file if it already
                         exists."""))
 
@@ -28,7 +32,7 @@ def main(argv=None):
     from .resample import resample_to_mcpl
     args = parse_args(argv)
     resample_to_mcpl( args.kdefile, args.outmcpl, args.nparticles,
-                      force=args.force)
+                      force=args.force, rng = args.seed )
 
 if __name__ == '__main__':
     main()
