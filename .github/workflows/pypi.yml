@@ -296,3 +296,64 @@ jobs:
           name: final-tarball
           path: final.tar.gz
           if-no-files-found: error
+
+  test_wheels:
+    needs: [ preparations, collect_output ]
+    strategy:
+      matrix:
+        os: ${{ fromJson(needs.preparations.outputs.platforms) }}
+    name: "${{ matrix.os }} / test wheels"
+    runs-on: ${{ matrix.os }}
+    steps:
+
+      - name: download artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: final
+          path: ./dist_final
+
+      - name: Setup python
+        uses: actions/setup-python@4f41a90a1f38628c7ccc608d05fbafe701bc20ae
+        with:
+          python-version: '3.12'
+
+      - name: Analyse wheel files
+        shell: python
+        run: |
+          import pathlib
+          import os.path
+          from zipfile import ZipFile
+          wheel_dir = pathlib.Path('.').joinpath('dist_final')
+          errors = [False]
+          def zip_content( p ):
+              with ZipFile(p, 'r') as fh:
+                  return fh.namelist()
+          def validate_wheel( wheelfile, exceptions = None ):
+              assert wheelfile.is_file()
+              for fn in zip_content(wheelfile):
+                  bnl = os.path.basename(fn).lower()
+                  if any(bnl.endswith(e) for e in ('.dll','.dylib','.so','.a','.o','.exe')):
+                      if exceptions and bnl in exceptions:
+                          print(f"Found allowed binary in {wheelfile.name}: {fn}")
+                      else:
+                          errors[0] = True
+                          print(f"Forbidden binary found in {wheelfile.name}: {fn}")
+              return not errors
+          def val( globpattern, exceptions = None ):
+              wfs = sorted(wheel_dir.rglob(globpattern))
+              assert wfs
+              for f in wfs:
+                  validate_wheel(f,exceptions)
+          val( 'kdsource-*.whl',
+               ['libkdsource.so','libkdsource.dylib','kdsource.lib','kdsource.dll'] )
+          if errors[0]:
+              raise SystemExit('Errors detected')
+
+      - name: Pip install wheels
+        env:
+          PIP_FIND_LINKS: ./dist_final
+        run: pip install "kdsource==${{ needs.preparations.outputs.kdsourceversion }}"
+
+      - run: kdsource-config -s
+      - run: kdsource-resample --help
+      - run: kdsource-test
