@@ -204,3 +204,95 @@ jobs:
           name: kdsource-binary-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/kdsource-*.whl
           if-no-files-found: error
+
+  collect_output:
+    name: Collect all output
+    needs: [ preparations, build_sdists, build_binary_wheels ]
+    runs-on: ubuntu-latest
+    steps:
+      # sdist:
+      - name: download kdsource sdist
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: sdist-kdsource
+          path: ./dist
+
+      # binary wheels (merge-multiple: true since produced in several jobs):
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          pattern: "kdsource-binary-wheels-*"
+          merge-multiple: true
+          path: ./dist
+
+      # Verify:
+      - name: List files
+        run: find ./dist
+
+      - name: Verify presence of expected wheel files
+        shell: python
+        run: |
+          import pathlib
+          versionstr = '${{ needs.preparations.outputs.kdsourceversion }}'
+          def expected_keys():
+              keys = [
+                  "macosx_10_9_x86_64",
+                  "macosx_11_0_arm64",
+                  "win_amd64",
+                  "musllinux_1_2_x86_64",
+                  "musllinux_1_2_aarch64",
+                  "manylinux_2_26_aarch64.manylinux_2_28_aarch64",
+                  "manylinux_2_26_x86_64.manylinux_2_28_x86_64",
+                  "manylinux2014_aarch64.manylinux_2_17_aarch64",
+                  "manylinux2014_x86_64.manylinux_2_17_x86_64",
+              ]
+              return keys
+          def testpkg():
+              print(f"==> Investigating kdsource")
+              pdir = pathlib.Path(f'./dist').absolute()
+              prefix = f'kdsource-{versionstr}-py3-none-'
+              expected_files = set([ f'{prefix}{key}.whl' for key in expected_keys() ])
+              expected_files.add(f'kdsource-{versionstr}.tar.gz')
+              actual_files = set(f.name for f in pdir.iterdir())
+              errmsgs = []
+              if expected_files - actual_files:
+                  errmsgs.append('Missing files: %s'%sorted(expected_files - actual_files))
+              if actual_files - expected_files :
+                  errmsgs.append('Unexpected files: %s'%sorted(actual_files - expected_files))
+              if errmsgs:
+                  for e in errmsgs:
+                      print(f"ERROR kdsource: {e}")
+                  return False
+              print("Found exactly the expected files:")
+              for f in sorted(expected_files):
+                  print(f'  {f}')
+              return True
+          if not testpkg():
+              raise SystemExit("Errors detected")
+
+      - name: List files
+        run: |
+          find ./dist
+
+      - name: Combine in final dir
+        run: |
+          mkdir ./dist_final
+          cp ./dist/kdsource-*.whl ./dist_final
+          cp ./dist/kdsource-*.tar.gz ./dist_final
+
+      - name: List files
+        run: find ./dist_final
+
+      - name: Package artifacts
+        run: tar cvzf final.tar.gz ./dist_final
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: final
+          path: ./dist_final
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: final-tarball
+          path: final.tar.gz
+          if-no-files-found: error
