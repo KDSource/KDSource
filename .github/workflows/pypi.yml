@@ -357,3 +357,27 @@ jobs:
       - run: kdsource-config -s
       - run: kdsource-resample --help
       - run: kdsource-test
+
+  publish_to_pypi:
+    name: Publish to pypi
+    needs: [ preparations, collect_output, test_wheels, basic_functionality_test ]
+    runs-on: ubuntu-latest
+    #UNCOMMENT WHEN READY: permissions:
+    #UNCOMMENT WHEN READY:   id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    steps:
+
+      - name: download artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: final
+          path: ./dist_final
+
+      - name: List files
+        run: ls -l ./dist_final
+
+      - name: Upload distribution to PyPI (if not dryrun)
+        if: needs.preparations.outputs.dryrun == '0'
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        with:
+          packages-dir: ./dist_final
+          verbose: true
