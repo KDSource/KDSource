@@ -126,3 +126,81 @@ jobs:
 
     outputs:
       sdistname_kdsource: kdsource${{ env.SDIST_SUFFIX }}
+
+  build_binary_wheels:
+    #Based on
+    #https://github.com/pypa/cibuildwheel/blob/main/examples/github-minimal.yml,
+    #where we should check if something needs updating once in a while
+    #(especially with respect to the hardcoded matrix.os list.
+    #NOTE: Not building windows arm64 wheels, since anyway kdepy does not have them.
+    needs: [ preparations, build_sdists ]
+    strategy:
+      matrix:
+        os: ${{ fromJson(needs.preparations.outputs.platforms) }}
+    name: ${{ matrix.os }} / kdsource binary wheels
+    runs-on: ${{ matrix.os }}
+
+    env:
+      SDIST_PATH: "./sdist/${{ needs.build_sdists.outputs.sdistname_kdsource }}"
+
+    steps:
+      - name: download kdsource sdist
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: sdist-kdsource
+          path: ./sdist
+
+      - name: Look in sdist dir (unix)
+        if: runner.os != 'Windows'
+        run: ls -l "${SDIST_PATH}"
+
+      - name: Verify presence of sdist (unix)
+        if: runner.os != 'Windows'
+        run: test -f "${SDIST_PATH}"
+
+      #Avoid auditwheel issues related to libmcpl.so (it will be found and
+      #loaded at runtime, but auditwheel can not know that).
+      - name: Prevent libmcpl.so in kdsource wheel (Linux)
+        if: runner.os == 'Linux'
+        run: echo 'CIBW_REPAIR_WHEEL_COMMAND_LINUX=auditwheel repair -w {dest_dir} {wheel} --exclude "libmcpl*"' >> $GITHUB_ENV
+
+      - name: Prevent libmcpl.so in kdsource wheel (MacOS)
+        if: runner.os == 'macOS'
+        #NOTE: --ignore-missing-dependencies is not a great solution! But at least we have code below testing the wheels!
+        run: echo 'CIBW_REPAIR_WHEEL_COMMAND_MACOS=delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel} --exclude libmcpl --ignore-missing-dependencies' >> $GITHUB_ENV
+
+      # Run cibuildwheel. Both in default mode, and with additional steps for
+      # manylinux2014 wheels.
+      #
+      - name: cibuildwheel
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084
+        env:
+          #no 32bit windows wheels:
+          CIBW_ARCHS_WINDOWS: "auto64"
+        with:
+          package-dir: ${{ env.SDIST_PATH }}
+          output-dir: wheelhouse
+
+      - name: cibuildwheel manylinux2014
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084
+        if: runner.os == 'Linux'
+        env:
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+        with:
+          package-dir: ${{ env.SDIST_PATH }}
+          output-dir: wheelhouse
+
+      - name: list wheelhouse (unix)
+        if: runner.os != 'Windows'
+        run: ls -l ./wheelhouse/
+
+      - name: list wheelhouse (windows)
+        if: runner.os == 'Windows'
+        run: dir wheelhouse
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        with:
+          name: kdsource-binary-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/kdsource-*.whl
+          if-no-files-found: error
