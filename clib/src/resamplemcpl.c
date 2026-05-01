@@ -2,7 +2,7 @@
 #include "kdsource/kdsource.h"
 #include <stdint.h>
 
-void kdsource_resample_to_mcpl(const char *kds_sourcefile,
+void kdsource_resample_to_mcpl(kds_rng_fct_t rng, const char *kds_sourcefile,
                                const char *destination_mcpl, uint64_t nout) {
   const char *filename = kds_sourcefile;
   const char *outfilename = destination_mcpl;
@@ -20,7 +20,7 @@ void kdsource_resample_to_mcpl(const char *kds_sourcefile,
   uint64_t i;
   mcpl_particle_t *part = mcpl_get_empty_particle(file);
   for (i = 0; i < nout; ++i) {
-    KDS_sample2(kds, part, 1, w_crit, NULL, 1);
+    KDS_rand_sample2(rng, kds, part, 1, w_crit, NULL, 1);
     mcpl_add_particle(file, part);
   }
   mcpl_closeandgzip_outfile(file);

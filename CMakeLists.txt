@@ -5,6 +5,7 @@
 # See README.md file for installation instructions.                              #
 #                                                                                #
 # Written 2021 by O. I. Abbate.                                                  #
+# Major rewrite 2026 by T. Kittelmann.                                           #
 #                                                                                #
 ##################################################################################
 
@@ -203,15 +204,15 @@ install(
 
 if ( KDS_STRICT )
   if ( MSVC )
-    message(FATAL_ERROR "KDS_STRICT not implemented for MSVC" )
+    #/disable warning 4996 for now, since it will require rewriting the sscanf
+    #usage.
+    target_compile_options( kdsource PRIVATE /WX /W4 /wd4996 )
+  else()
+    target_compile_options(
+      kdsource PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wformat=2
+      -Wconversion -Wsign-conversion -Wnull-dereference -Werror
+    )
   endif()
-  target_compile_options(
-    kdsource PRIVATE
-    -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Wconversion
-    -Wsign-conversion -Wnull-dereference
-    #-Wno-unused-variable
-  )
-  target_compile_options( kdsource PRIVATE -Werror )
 endif()
 
 install(

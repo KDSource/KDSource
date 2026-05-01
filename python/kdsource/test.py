@@ -61,7 +61,7 @@ def test_resample():
     outpath = pathlib.Path(outfn)
     if outpath.is_file():
         outpath.unlink()
-    resample_to_mcpl( 'source.xml', outfn, 117, force=True )
+    resample_to_mcpl( 'source.xml', outfn, 117, rng=12345, force=True )
     if not outpath.is_file():
         raise RuntimeError('Test failed: did not create resampled MCPL file')
     f = mcpl.MCPLFile('foo_tmp_testfile.mcpl.gz')

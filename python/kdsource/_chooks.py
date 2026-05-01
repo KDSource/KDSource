@@ -26,14 +26,19 @@ def _load_fcts():
     lib = _loadlib_kdsource()
 
     ###### resample_to_mcpl
+    kds_rng_fct_t = ctypes.CFUNCTYPE( ctypes.c_double )
     rawfct_rs = lib.kdsource_resample_to_mcpl
     rawfct_rs.restype=None
-    rawfct_rs.argtypes=(ctypes.c_char_p,ctypes.c_char_p,ctypes.c_uint64)
-    def fct( kds_sourcefile, destination_mcpl, nout ):
-        rawfct_rs( _str2cstr(kds_sourcefile),
+    rawfct_rs.argtypes=( kds_rng_fct_t,
+                         ctypes.c_char_p,
+                         ctypes.c_char_p,
+                         ctypes.c_uint64 )
+    def fct_rs( rng_fct, kds_sourcefile, destination_mcpl, nout ):
+        rawfct_rs( kds_rng_fct_t(rng_fct),
+                   _str2cstr(kds_sourcefile),
                    _str2cstr(destination_mcpl),
                    ctypes.c_uint64(nout) )
-    allfcts['resample_to_mcpl'] = fct
+    allfcts['resample_to_mcpl'] = fct_rs
 
     ###### write_mcpl
     dblptr = ctypes.POINTER(ctypes.c_double)
@@ -57,9 +62,9 @@ def _load_fcts():
             keepalive.append( ndarray_fix_type(a,dtypename) )
             return keepalive[-1].ctypes.data_as(cptr)
         return ndarray_to_cptr
-    def fct( filename, nparticles,
-             ekin, x, y, z, ux, uy, uz, time, weight, pdgcode,
-             polx, poly, polz, userflags, double_prec ):
+    def fct_wm( filename, nparticles,
+                ekin, x, y, z, ux, uy, uz, time, weight, pdgcode,
+                polx, poly, polz, userflags, double_prec ):
         import numbers
         flags = 1 if double_prec else 0
         keepalive=[]
@@ -90,7 +95,7 @@ def _load_fcts():
                    a2c(keepalive,ux), a2c(keepalive,uy), a2c(keepalive,uz),
                    a2c(keepalive,time), weight_arg, pdgcode_arg,
                    c_polx, c_poly, c_polz, c_userflags )
-    allfcts['write_mcpl'] = fct
+    allfcts['write_mcpl'] = fct_wm
 
     __cache_fcts[0]=allfcts
     return __cache_fcts[0]
