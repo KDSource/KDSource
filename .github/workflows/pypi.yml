@@ -60,6 +60,10 @@ jobs:
     outputs:
       kdsourceversion: ${{ steps.version-number.outputs.version_number }}
       dryrun: ${{ steps.dryrun_check.outputs.status }}
+      # macos-15-intel is an intel runner, macos-14 is apple silicon. We
+      # deliberately do not include windows arm at the moment (kdepy dep was
+      # missing for one thing).
+      platforms: '[ "ubuntu-latest", "ubuntu-24.04-arm", "macos-14", "macos-15-intel", "windows-latest" ]'
 
   basic_functionality_test:
     #Very basic testing only, we might have decided to publish a release even
@@ -69,9 +73,7 @@ jobs:
     needs: [ preparations ]
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15-intel, macos-14]
-        #        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        #NOTICE: Keep synchronised with matrix platform list elsewhere in this file!!!!
+        os: ${{ fromJson(needs.preparations.outputs.platforms) }}
     name: ${{ matrix.os }} / test
     runs-on: ${{ matrix.os }}
     steps:
