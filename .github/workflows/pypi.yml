@@ -362,8 +362,8 @@ jobs:
     name: Publish to pypi
     needs: [ preparations, collect_output, test_wheels, basic_functionality_test ]
     runs-on: ubuntu-latest
-    #UNCOMMENT WHEN READY: permissions:
-    #UNCOMMENT WHEN READY:   id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
+    permissions:
+      id-token: write # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
 
       - name: download artifacts
