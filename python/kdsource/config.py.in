@@ -1,0 +1,121 @@
+import pathlib as _p
+_datadir = _p.Path(__file__).parent.joinpath('data').absolute()
+config_items = [
+    'version',
+    'intversion',
+    'includedir',
+    'libdir',
+    'libpath',
+    'libname',
+    'shlibdir',
+    'shlibpath',
+    'shlibname',
+    'buildflags',
+]
+
+def summary():
+    """Print summary of all config items"""
+    print("KDSource v%s with configuration:"%config('version'))
+    print()
+    maxlen = max(len(item) for item in config_items)
+    for item in config_items:
+        print('  %s : %s'%(item.rjust(maxlen),config(item)))
+
+_config_cache={}
+def config(item):
+    """Return configuration item (available are those in the config_item list).
+    """
+    c = _config_cache.get(item)
+    if c is not None:
+        return c
+    c = _config_deduce(item)
+    _config_cache[item] = c
+    return c
+
+def _config_deduce(item):
+    if item not in config_items:
+        raise RuntimeError(f"unknown config item: {item}")
+    if 'lib' not in item:
+        if item=='includedir':
+            return _datadir.joinpath('include')
+        if item=='buildflags':
+            import platform
+            if platform.system()=='Windows':
+                return '"/I%s" "%s"'%(config('includedir'),config('libpath'))
+            import shlex
+            return shlex.join(
+                shlex.quote(e)
+                for e in [ "-Wl,-rpath,%s"%config('libdir'),
+                           "-Wl,%s"%config('libpath'),
+                           "-I%s"%config('includedir') ]
+            )
+        if item=='intversion':
+            return "@KDSource_version_int@"
+        if item=='version':
+            return "@KDSource_VERSION@"
+
+    winsuffix = '.lib'
+    look_in_scripts_for_dll = False
+    if item.startswith('sh'):
+        winsuffix = '.dll'
+        item = item[2:]
+        #The next is only True on Windows in python installations:
+        look_in_scripts_for_dll = bool('@kds_skbuild_shlib_in_wheel_scripts@')
+
+    if look_in_scripts_for_dll:
+        p = _win_find_dll()
+        if item=='libdir':
+            return p.parent
+        return p.name if item=='libname' else p
+
+    libdir = _datadir.joinpath('lib')
+
+    if item=='libdir':
+        return libdir
+
+    libs = list( e for e in libdir.glob('*') if 'kdsource' in e.name.lower() )
+    libs_win = [ e for e in libs if e.name.lower().endswith(winsuffix) ]
+    libs_other = [ e for e in libs if not e.name.lower().endswith(winsuffix) ]
+    libs = libs_win or libs_other
+
+    if not libs:
+        raise RuntimeError('Inconsistent installation of KDSource'
+                           ' (could not find shared lib)')
+    if len(libs)!=1:
+        s = ' '.join(e.name for e in libs)
+        raise RuntimeError('Inconsistent installation of KDSource (multiple'
+                           f' libs: {s})')
+    assert len(libs)==1
+    return libs[0].name if item=='libname' else libs[0]
+
+__cache_windll = [None]
+def _win_find_dll():
+    #Windows. The DLL is in the scripts directory (to be in %PATH%). To be safe
+    #we look not only in the default scheme, but also in a few other preferred
+    #schemes. The sysconfig usage below assumes python 3.10 or later:
+    if __cache_windll[0] is not None:
+        return __cache_windll[0]
+
+    import sysconfig
+    import pathlib
+    schemes = [ sysconfig.get_default_scheme() ]
+    for scheme_key in ['prefix','home','user']:
+        scheme = sysconfig.get_preferred_scheme(scheme_key)
+        if scheme not in schemes:
+            schemes.append(scheme)
+    ln, ln2, res = 'kdsource.dll', 'kdsource.DLL', None
+    for scheme in schemes:
+        p = pathlib.Path( sysconfig.get_path('scripts',scheme) )
+        p1 = p.joinpath(ln)
+        if p1.is_file():
+            res = p1
+            break
+        p2 = p.joinpath(ln2)
+        if p2.is_file():
+            res = p2
+            break
+    if res is None:
+        raise RuntimeError('Unable to locate shared library (expected '
+                           f'{ln} in Python site scripts directory)')
+    __cache_windll[0] = res.absolute().resolve()
+    return __cache_windll[0]

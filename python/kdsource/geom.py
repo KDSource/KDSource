@@ -7,9 +7,6 @@ from xml.etree.ElementTree import SubElement
 
 import numpy as np
 
-import scipy.spatial.transform as st
-
-
 class Metric:
     def __init__(self, partvars, varnames, units, volunits):
         """
@@ -144,6 +141,7 @@ class Geometry(Metric):
             if trasl.shape != (3,):
                 raise ValueError("Invalid trasl.")
         if rot is not None:
+            import scipy.spatial.transform as st
             if not isinstance(rot, st.Rotation):
                 rot = np.array(rot)
                 if rot.shape == (4,):
@@ -408,7 +406,7 @@ class Decade(Metric):
 
     def inverse_transform(self, ds):
         """Transform deacde to time."""
-        return 10**ds
+        return 10 ** ds
 
     def jac(self, ts):
         """Jacobian of lethargy transformation."""
@@ -549,7 +547,7 @@ class SurfR(Metric):
         Transform volume position (x,y,z)
         to circular flat position (rho,psi).
         """
-        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
+        rhos = np.sqrt(poss[:, 0] ** 2 + poss[:, 1] ** 2)
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
         return np.stack((rhos, psis), axis=1)
 
@@ -574,7 +572,7 @@ class SurfR(Metric):
 
     def jac(self, poss):
         """Jacobian of polar transformation."""
-        rhos = np.sqrt(poss[:, 0]**2 + poss[:, 1]**2)
+        rhos = np.sqrt(poss[:, 0] ** 2 + poss[:, 1] ** 2)
         return 1 / rhos.reshape(-1)
 
     @staticmethod
@@ -614,7 +612,7 @@ class SurfR2(Metric):
         Transform volume position (x,y,z)
         to circular flat position (rho2,psi).
         """
-        rhos = poss[:, 0]**2 + poss[:, 1]**2
+        rhos = poss[:, 0] ** 2 + poss[:, 1] ** 2
         psis = np.arctan2(poss[:, 1], poss[:, 0]) * 180 / np.pi
         return np.stack((rhos, psis), axis=1)
 
@@ -624,8 +622,8 @@ class SurfR2(Metric):
         to volume position (x,y,z).
         """
         z_col = np.broadcast_to(self.z, (*poss.shape[:-1], 1))
-        x_col = poss[:, 0]**0.5 * np.cos(poss[:, 1] * np.pi / 180)
-        y_col = poss[:, 0]**0.5 * np.sin(poss[:, 1] * np.pi / 180)
+        x_col = poss[:, 0] ** 0.5 * np.cos(poss[:, 1] * np.pi / 180)
+        y_col = poss[:, 0] ** 0.5 * np.sin(poss[:, 1] * np.pi / 180)
         return np.stack((x_col, y_col, z_col), axis=1)
 
     def save(self, mtree):
@@ -1085,7 +1083,7 @@ def GeomFlat(
         [
             Lethargy(E0),
             SurfXY(xmin, xmax, ymin, ymax, z),
-            Isotrop(keep_zdir=keep_zdir)
+            Isotrop(keep_zdir=keep_zdir),
         ],
         trasl=trasl,
         rot=rot,
@@ -1116,7 +1114,7 @@ def GeomFlatTemp(
             Lethargy(E0),
             SurfXY(xmin, xmax, ymin, ymax, z),
             Isotrop(keep_zdir=keep_zdir),
-            Decade()
+            Decade(),
         ],
         trasl=trasl,
         rot=rot,

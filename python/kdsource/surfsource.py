@@ -1,22 +1,17 @@
 import os
-import subprocess
+
 from enum import Enum
 from math import cos, pi, sin
 
-from astropy.stats import knuth_bin_width
-
-import h5py
-
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
+try:
+    from uncertainties import ufloat
+except ModuleNotFoundError as e:
+    raise RuntimeError('The "uncertainties" package is required to use the'
+                       ' surfsurface module') from e
 
 import mcpl
-
 import numpy as np
-
 import pandas as pd
-
-from uncertainties import ufloat
 
 c2 = 8.98755e16  # m2 / s2
 hc = 1.23984186e-12  # MeV m
@@ -111,11 +106,7 @@ YSCALE = {
     "t": 1e-3,
     "log(t)": 1,
 }
-PARTMASS = {
-    2112: 939.5653,
-    22: 0,
-    11: 0.511,
-    2212: 938.7829}
+PARTMASS = {2112: 939.5653, 22: 0, 11: 0.511, 2212: 938.7829}
 
 
 def momentum(ptype, pekin):
@@ -127,8 +118,9 @@ def momentum(ptype, pekin):
 def velocity(ptype, pekin):
     mc2 = np.array([PARTMASS[np.abs(i)] for i in ptype])
     pc = momentum(ptype, pekin)
-    v = np.array([pci / mc2i if mc2i > 0
-                  else c2 ** 0.5 for pci, mc2i in zip(pc, mc2)])
+    v = np.array(
+        [pci / mc2i if mc2i > 0 else c2 ** 0.5 for pci, mc2i in zip(pc, mc2)]
+    )
     return v
 
 
@@ -173,7 +165,7 @@ class VitessCode(Enum):
 
 class SurfaceSourceFile:
     """Read a surface source file.
-    Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+    Possible formats: MCPL, HDF5 (OpenMC)
 
     Parameters
     ----------
@@ -281,6 +273,12 @@ class SurfaceSourceFile:
     def __read__(self):
         # OpenMC .h5 format
         if self._extension == ".h5":
+            try:
+                import h5py
+            except ModuleNotFoundError as e:
+                raise RuntimeError('The "h5py" package is required to read'
+                                   ' OpenMC .h5 files') from e
+
             with h5py.File(self._filepath, "r") as fh:
                 df = pd.DataFrame(columns=MCPLColumns)
                 # Change from OpenMC ParticleType type to MCPL PDGCode
@@ -370,8 +368,11 @@ class SurfaceSourceFile:
             df = self.search_duplicated_particles(df, self._cloned)
 
         # Print some info regarding the particles in the file
-        print("Number of particles in file {:s}: {:d}".format(
-            self._filepath, len(df)))
+        print(
+            "Number of particles in file {:s}: {:d}".format(
+                self._filepath, len(df)
+            )
+        )
         for p, idx in zip((PDGCode), ["n", "g", "e-", "e+", "p"]):
             print(
                 "{:.0f}% {:s}, ".format(
@@ -409,8 +410,9 @@ class SurfaceSourceFile:
         self._normalize_direction(df)
         # Convolute time considering the pulse width
         if self._tpulse is not None and self._convoluted is False:
-            self._convolute(df, {"t": self._tpulse * 1e3},
-                            self._shape)  # from s to ms
+            self._convolute(
+                df, {"t": self._tpulse * 1e3}, self._shape
+            )  # from s to ms
             self._convoluted = True
         # Calculate extra coordinates
         df["R"] = (df[X].to_numpy() ** 2 + df[Y].to_numpy() ** 2) ** 0.5
@@ -472,14 +474,15 @@ class SurfaceSourceFile:
     def _normalize_direction(self, df):
         # Normalize the direction versor
         unorm = (
-            df["u"].to_numpy() ** 2 + df["v"].to_numpy() ** 2
+            df["u"].to_numpy() ** 2
+            + df["v"].to_numpy() ** 2
             + df["w"].to_numpy() ** 2
         )
 
         df["u"], df["v"], df["w"] = (
-            df["u"].to_numpy() / unorm**0.5,
-            df["v"].to_numpy() / unorm**0.5,
-            df["w"].to_numpy() / unorm**0.5,
+            df["u"].to_numpy() / unorm ** 0.5,
+            df["v"].to_numpy() / unorm ** 0.5,
+            df["w"].to_numpy() / unorm ** 0.5,
         )
         return df
 
@@ -535,7 +538,7 @@ class SurfaceSourceFile:
             pmin = min(df[nvar]) * YSCALE[nvar]
             pmax = max(df[nvar]) * YSCALE[nvar]
             if nvar == "R":
-                dp = 0.5 * (pmax**2 - pmin**2)
+                dp = 0.5 * (pmax ** 2 - pmin ** 2)
             elif nvar == "psi":
                 dp = -(np.cos(pmax) - np.cos(pmin))
             else:
@@ -630,7 +633,8 @@ class SurfaceSourceFile:
                     info += "Current: {:.2f} mA\n\n".format(self._current)
                 if self._tpulse is not None:
                     info += "Pulse width: {:.2f} us\n\n".format(
-                        self._tpulse * 1e6)
+                        self._tpulse * 1e6
+                    )
         return info
 
     def get_distribution(
@@ -709,7 +713,8 @@ class SurfaceSourceFile:
         if convolution is not None:
             df = self._convolute(df, convolution)
         p_units = self._get_brilliance(
-            df, [x for x in norm_vars if x not in vars])
+            df, [x for x in norm_vars if x not in vars]
+        )
 
         if len(bins) != len(vars):
             print("Both lists of variables and bins should have the same size")
@@ -724,24 +729,35 @@ class SurfaceSourceFile:
             # If bins is int, create a mesh from var-min to var-max
             if type(bin) is int:
                 if bin == 0:
+                    try:
+                        import astropy # noqa F401
+                    except ModuleNotFoundError as e:
+                        raise RuntimeError('The "astropy" package is required'
+                                           ' when bin=0 (to use the'
+                                           ' knuth_bin_width function)') from e
+                    from astropy.stats import knuth_bin_width
+
                     if scale == "log":
                         bins[i] = knuth_bin_width(
                             np.log10(df[var].to_numpy()), return_bins=True
                         )[1]
                         bins[i] = 10 ** bins[i]
                     else:
-                        bins[i] = knuth_bin_width(df[var].to_numpy(),
-                                                  return_bins=True)[1]
+                        bins[i] = knuth_bin_width(
+                            df[var].to_numpy(), return_bins=True
+                        )[1]
 
                 else:
                     if scale == "log":
                         bins[i] = np.logspace(
-                            np.log10(df[var].min()), np.log10(
-                                df[var].max()), bin
+                            np.log10(df[var].min()),
+                            np.log10(df[var].max()),
+                            bin,
                         )
                     else:
                         bins[i] = np.linspace(
-                            df[var].min(), df[var].max(), bin)
+                            df[var].min(), df[var].max(), bin
+                        )
             else:
                 # If var is angle, convert degrees to radians
                 if var == "psi" or var == "phi" or var == "theta":
@@ -864,7 +880,7 @@ class SurfaceSourceFile:
         vmin=None,
         vmax=None,
         peak_brilliance=False,
-        **kwargs
+        **kwargs,
     ):
         """Plot 1-D or 2-D distribution for given variables
 
@@ -927,14 +943,21 @@ class SurfaceSourceFile:
         matplotlib 1-D or 2-D plot for the required variables with the proper
         normalization.
         """
+
+        import matplotlib.pyplot as plt
+        from matplotlib.colors import LogNorm
+
         xscale, yscale = scales
         scales = [scales[i] for i in range(0, len(bins))]
         df, bins, pinfo = self.get_distribution(
             vars, bins, scales, factor, filters, norm_vars, convolution
         )
         if peak_brilliance and len(vars) == 2:
-            df = df.groupby([var for var in vars if var != "t"]
-                            ).max().reset_index()
+            df = (
+                df.groupby([var for var in vars if var != "t"])
+                .max()
+                .reset_index()
+            )
         if xscale == "log":
             norm_vars = [var for var in norm_vars if var != vars[0]]
         if yscale == "log" and len(vars) > 1:
@@ -951,24 +974,29 @@ class SurfaceSourceFile:
             if xscale == "log":
                 if info:
                     print("Plotting x*f(x) instead of f(x) (xscale='log')")
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
             df.loc[df["erel"] >= tolerance, "mean"] = 0
             df.loc[df["erel"] >= tolerance, "stdv"] = 0
             if errors:
-                plt.errorbar(df[vars], df["mean"], df["stdv"],
-                             ds="steps-mid", **kwargs)
+                plt.errorbar(
+                    df[vars], df["mean"], df["stdv"], ds="steps-mid", **kwargs
+                )
             else:
                 plt.plot(
-                    df[vars].to_numpy(), df["mean"].to_numpy(),
-                    ds="steps-mid", **kwargs
+                    df[vars].to_numpy(),
+                    df["mean"].to_numpy(),
+                    ds="steps-mid",
+                    **kwargs,
                 )
             plt.xscale(xscale)
             plt.yscale(yscale)
             if XUNITS[vars[0]] != "":
-                plt.xlabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[0]], XUNITS[vars[0]]))
+                plt.xlabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[0]], XUNITS[vars[0]])
+                )
             else:
                 plt.xlabel(r"${:s}$".format(XLATEX[vars[0]]))
             plt.ylabel(r"{:s}".format(Jlabel))
@@ -992,10 +1020,12 @@ class SurfaceSourceFile:
                         "Plotting x*y*f(x,y) instead of f(x,y)\
                         (xscale='log', yscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
             elif xscale == "log":
                 if info:
@@ -1003,8 +1033,9 @@ class SurfaceSourceFile:
                         "Plotting x*f(x,y) instead of f(x,y)\
                         (xscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[0])] * YSCALE[vars[0]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
 
             elif yscale == "log":
@@ -1013,8 +1044,9 @@ class SurfaceSourceFile:
                         "Plotting y*f(x,y) instead of f(x,y)\
                         (yscale='log')"
                     )
-                df["mean"] = df["mean"] * \
-                    df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                df["mean"] = (
+                    df["mean"] * df["{:s}".format(vars[1])] * YSCALE[vars[1]]
+                )
                 df["stdv"] = df["erel"] * df["mean"]
 
             df.loc[df["erel"] >= tolerance, "mean"] = 0
@@ -1031,7 +1063,7 @@ class SurfaceSourceFile:
                     shading="auto",
                     vmin=vmin,
                     vmax=vmax,
-                    **kwargs
+                    **kwargs,
                 )
                 cbar = plt.colorbar(label=r"{:s}".format(Jlabel))
                 if zlevels > 0:
@@ -1043,7 +1075,7 @@ class SurfaceSourceFile:
                     z_mean,
                     shading="auto",
                     norm=LogNorm(vmin, vmax),
-                    **kwargs
+                    **kwargs,
                 )
                 cbar = plt.colorbar(label=r"{:s}".format(Jlabel))
                 if zlevels > 0:
@@ -1061,13 +1093,15 @@ class SurfaceSourceFile:
             plt.xscale(xscale)
             plt.yscale(yscale)
             if XUNITS[vars[0]] != "":
-                plt.xlabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[0]], XUNITS[vars[0]]))
+                plt.xlabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[0]], XUNITS[vars[0]])
+                )
             else:
                 plt.xlabel(r"${:s}$".format(XLATEX[vars[0]]))
             if XUNITS[vars[1]] != "":
-                plt.ylabel(r"${:s}$ [{:s}]".format(
-                    XLATEX[vars[1]], XUNITS[vars[1]]))
+                plt.ylabel(
+                    r"${:s}$ [{:s}]".format(XLATEX[vars[1]], XUNITS[vars[1]])
+                )
             else:
                 plt.ylabel(r"${:s}$".format(XLATEX[vars[1]]))
 
@@ -1084,12 +1118,13 @@ class SurfaceSourceFile:
                 cbar.add_lines(cntrs)
 
         if info:
-            plt.figtext(x=1.0, y=0.1, s=r"{:s}".format(
-                pinfo), fontdict={"size": 8})
+            plt.figtext(
+                x=1.0, y=0.1, s=r"{:s}".format(pinfo), fontdict={"size": 8}
+            )
 
     def save_source_file(self, filepath, **kwargs):
         """Save the particles list.
-        Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+        Possible formats: MCPL, HDF5 (OpenMC)
 
         Parameters
         ----------
@@ -1104,7 +1139,7 @@ class SurfaceSourceFile:
 
 def create_source_file(df, filepath, **kwargs):
     """Generate a source file from a Pandas DataFrame.
-    Possible formats: MCPL, HDF5 (OpenMC), SSV (KDSource)
+    Possible formats: MCPL, HDF5 (OpenMC)
 
     Parameters
     ----------
@@ -1114,12 +1149,18 @@ def create_source_file(df, filepath, **kwargs):
         Path to surface source file.
     """
 
-    new_extension = os.path.splitext(filepath)[-1]
+    basename = os.path.basename(filepath)
     df = df[MCPLColumns]
 
     # Write in the OpenMC .h5 format
-    if new_extension == ".h5":
+    if basename.endswith(".h5"):
         print("Saving into OpenMC format (HDF5)")
+        try:
+            import h5py
+        except ModuleNotFoundError as e:
+            raise RuntimeError('The "h5py" package is required to write'
+                               ' OpenMC .h5 files') from e
+
         for pin, pout in zip((PDGCode), (OpenMCCode)):
             df.loc[df["type"] == pin.value, "type"] = pout.value
 
@@ -1154,67 +1195,29 @@ def create_source_file(df, filepath, **kwargs):
         )
         kwargs.setdefault("mode", "w")
         with h5py.File(filepath, **kwargs) as fh:
-            fh.attrs["filetype"] = np.string_("source")
+            fh.attrs["filetype"] = np.bytes_("source")
             fh.create_dataset("source_bank", data=arr, dtype=source_dtype)
 
     # Write in MCPL format
-    elif new_extension == ".mcpl" or new_extension == ".gz":
-        new_extension = ".mcpl"
+    elif basename.endswith(".mcpl") or basename.endswith(".mcpl.gz"):
+        import pathlib
+        filepath = pathlib.Path(filepath)
+        if filepath.name.endswith(".mcpl"):
+            filepath = filepath.parent.joinpath(basename+'.gz')
         print("Saving into MCPL format")
-        create_source_file(df, "temp.txt")
-        subprocess.call(["ssv2mcpl", "temp.txt", filepath])
-        subprocess.call(["rm", "temp.txt"])
-
-    # Write the ASCII-based format file in the other cases
+        from .writemcpl import write_mcpl
+        write_mcpl( filepath,
+                    ekin = df.E.values,
+                    x = df.x.values, y = df.y.values, z = df.z.values,
+                    ux = df.u.values, uy = df.v.values, uz = df.w.values,
+                    time = df.t.values, weight = df.wgt.values,
+                    pdgcode = df['type'].values,
+                    polx = df.px.values,
+                    poly = df.py.values,
+                    polz = df.pz.values,
+                    userflags = df.userflags.values,
+                    **kwargs )
     else:
-        print("Saving into SSV format (ASCII)")
-        with open(filepath, "w") as fo:
-            sheader = ""
-            fmtstr = ""
+        raise RuntimeError("filepath must end with .mcpl, .mcpl.gz, or .h5")
 
-            sheader += "#MCPL-ASCII\n"
-            sheader += "#GENERATED FROM KDSOURCE\n"
-            sheader += "#NPARTICLES: {:d}\n".format(len(df))
-            sheader += "#END-HEADER\n"
-            sheader += "index     "
-            sheader += "pdgcode               "
-            sheader += "ekin[MeV]                   "
-            sheader += "x[cm]                   "
-            sheader += "y[cm]                   "
-            sheader += "z[cm]                      "
-            sheader += "ux                      "
-            sheader += "uy                      "
-            sheader += "uz                "
-            sheader += "time[ms]                  "
-            sheader += "weight                   "
-            sheader += "pol-x                   "
-            sheader += "pol-y                   "
-            sheader += "pol-z  "
-            sheader += "userflags\n"
-            fo.write(sheader)
-
-            fmtstr += "%5i %11i %23.18g %23.18g %23.18g %23.18g "
-            fmtstr += "%23.18g %23.18g %23.18g %23.18g %23.18g "
-            fmtstr += "%23.18g %23.18g %23.18g 0x%08x\n"
-            for s in df.values:
-                fo.write(
-                    fmtstr
-                    % (
-                        s[0],
-                        s[1],
-                        s[2],
-                        s[3],
-                        s[4],
-                        s[5],
-                        s[6],
-                        s[7],
-                        s[8],
-                        s[9],
-                        s[10],
-                        s[11],
-                        s[12],
-                        s[13],
-                        int(s[14]),
-                    )
-                )
-    print("Done, saved into {:s} file".format(filepath))
+    print(f"Done, saved into {filepath} file")

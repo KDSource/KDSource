@@ -1,0 +1,19 @@
+@PACKAGE_INIT@
+
+# Rutas de instalación
+set(KDSource_INCLUDE_DIRS "@CMAKE_INSTALL_PREFIX@/include")
+set(KDSource_LIBRARIES "@CMAKE_INSTALL_PREFIX@/lib/libkdsource.so")
+
+# Dependencias
+include(CMakeFindDependencyMacro)
+find_dependency(LibXml2)
+
+# Definir el objetivo de KDSource
+add_library(KDSource::kdsource SHARED IMPORTED)
+set_target_properties(KDSource::kdsource PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${KDSource_INCLUDE_DIRS}"
+    IMPORTED_LOCATION "${KDSource_LIBRARIES}"
+)
+
+# Incluir el archivo que define los objetivos de instalación
+include("${CMAKE_CURRENT_LIST_DIR}/KDSourceTargets.cmake")

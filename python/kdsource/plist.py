@@ -11,8 +11,6 @@ import mcpl
 
 import numpy as np
 
-import scipy.spatial.transform as st
-
 from .utils import pt2pdg
 
 
@@ -297,6 +295,7 @@ class PList:
             if trasl.shape != (3,):
                 raise ValueError("Invalid trasl")
         if rot is not None:
+            import scipy.spatial.transform as st
             if not isinstance(rot, st.Rotation):
                 rot = np.array(rot)
                 if rot.shape == (4,):

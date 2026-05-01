@@ -13,56 +13,88 @@ jobs:
       matrix:
         config:
           - {
-            name: "Ubuntu_Latest",
+            name: "Ubuntu_Latest_py310",
             os: ubuntu-latest,
-            python-version: 3.9,
+            python-version: "3.10",
           }
           - {
-            name: "MacOS_13",
-            os: macos-13,
-            python-version: 3.9,
+            name: "MacOS_Latest_py313",
+            os: macos-latest,
+            python-version: "3.13",
+          }
+          - {
+            name: "Windows_Latest_py312",
+            os: windows-latest,
+            python-version: "3.12",
           }
 
     steps:
-      - uses: actions/checkout@master
-        with:
-          submodules: 'true'
-      - name: Install and test C API on Ubuntu
-        if: startsWith(matrix.config.name, 'Ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install cmake libxml2
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=/usr/share/KDSource
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/usr/share/KDSource/bin
-          kdtool -h
-          kdtool resample -h
-      - name: Install and test C API on MacOS
-        if: startsWith(matrix.config.name, 'MacOS')
-        run: |
-          brew update
-          brew install cmake libxml2
-          mkdir build
-          cd build
-          mkdir /Users/runner/work/KDSource/KDinstall
-          cmake .. -DCMAKE_INSTALL_PREFIX=/Users/runner/work/KDSource/KDinstall
-          make
-          make test
-          make install
-          cd ..
-          export PATH=$PATH:/Users/runner/work/KDSource/KDinstall/bin
-          kdtool -h
-          kdtool resample -h
+
+      - name: checkout
+        uses: actions/checkout@v6
+
       - name: Set up Python ${{ matrix.config.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.config.python-version}}
-      - name: Install tox
-        run: pip install tox tox-gh-actions
-      - name: Test with tox
-        run: tox -r -c python
+
+      - run: pip install "-Ccmake.define.KDS_STRICT=ON" .
+      - run: pip show --files kdsource
+      - run: kdsource-config -s
+      - run: mcpl-config -s
+      - run: python3 -c "import mcpl"
+      - run: kdsource-resample -h
+      - run: python3 -c "import kdsource"
+      - run: kdsource-test
+      - run: kdsource-test --gentestmainc
+
+      - name: kdsource-config buildflags test (Unix)
+        if: ${{ !startsWith(matrix.config.name, 'Windows') }}
+        run: |
+          set -eux
+          cc main.c `mcpl-config --show buildflags` `kdsource-config --show buildflags` -o fooapp
+          ./fooapp source.xml
+          mcpltool foobar.mcpl.gz
+
+      - name: Setup VS in shell (Windows)
+        if: ${{ startsWith(matrix.config.name, 'Windows') }}
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: kdsource-config buildflags test (Windows)
+        if: ${{ startsWith(matrix.config.name, 'Windows') }}
+        shell: cmd
+        run: |
+          echo "Set BUILDFLAGS variable via kdsource-config --show buildflags"
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          kdsource-config --show buildflags > buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          set /p BUILDFLAGS=<buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Got:" %BUILDFLAGS%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Set BUILDFLAGSMCPL variable via mcpl-config --show buildflags"
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          mcpl-config --show buildflags > buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          set /p BUILDFLAGSMCPL=<buildflags.txt
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Got:" %BUILDFLAGSMCPL%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Building"
+          cl main.c %BUILDFLAGSMCPL% %BUILDFLAGS%
+          if %errorlevel% neq 0 exit /b %errorlevel%
+          echo "Custom compilation of downstream C code succeeded"
+
+          echo "Invoke custom built app
+          main.exe source.xml
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+          echo "Invoke mcpltool on produced MCPL file"
+          mcpltool foobar.mcpl.gz
+          if %errorlevel% neq 0 exit /b %errorlevel%
+
+      - name: pylint with ruff
+        if: ${{ !startsWith(matrix.config.name, 'Windows') }}
+        run: pip install ruff && ruff check python/kdsource/*.py python/kdsource/*.py.in

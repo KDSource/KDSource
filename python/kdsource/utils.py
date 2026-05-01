@@ -3,12 +3,7 @@
 """Module for utility functions
 """
 
-import os
-
 import numpy as np
-
-from scipy import interpolate
-
 
 # Conversion entre tipo de part (char) y pdgcode
 def pt2pdg(pt):
@@ -65,9 +60,6 @@ def pdg2pt(pdgcode):
 
 # Dosimetric factors
 
-fact_dos = os.path.dirname(__file__) + "/fact_dos"
-
-
 def H10(pt="n", ref="ICRP"):
     """
     Object for loading and interpolating dosimetric factors.
@@ -83,18 +75,20 @@ def H10(pt="n", ref="ICRP"):
         - 'ICRP': International Commission on Radiological Protection.
         - 'ARN': Nuclear Regulatory Authority of Argentina.
     """
+    from ._fact_dos_data import load as loadfd
+    from scipy import interpolate
     if ref == "ARN":
         if pt == "n":
-            E, H10 = np.loadtxt(fact_dos + "/ARN_neutron", unpack=True)
+            E, H10 = loadfd('ARN_neutron')
         elif pt == "p":
-            E, H10 = np.loadtxt(fact_dos + "/ARN_photon", unpack=True)
+            E, H10 = loadfd('ARN_photon')
         else:
-            raise ValueError("Tipo de particula invalido")
+            raise ValueError("Invalid particle type.")
     elif ref == "ICRP":
         if pt == "n":
-            E, H10 = np.loadtxt(fact_dos + "/ICRP_neutron", unpack=True)
+            E, H10 = loadfd('ICRP_neutron')
         elif pt == "p":
-            E, H10 = np.loadtxt(fact_dos + "/ICRP_photon", unpack=True)
+            E, H10 = loadfd('ICRP_photon')
         else:
             raise ValueError("Invalid particle type.")
     else:
