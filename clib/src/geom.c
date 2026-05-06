@@ -136,7 +136,7 @@ Geometry *Geom_copy(const Geometry *from) {
   return geom;
 }
 
-int Geom_perturb(kds_rng_fct_t rng, const Geometry *geom,
+int Geom_perturb(kds_rng_fct_t rng, void *rngstate, const Geometry *geom,
                  mcpl_particle_t *part) {
   int i, ret = 0;
   if (geom->trasl)
@@ -146,7 +146,8 @@ int Geom_perturb(kds_rng_fct_t rng, const Geometry *geom,
     rotv(part->direction, geom->rot, 1);
   }
   for (i = 0; i < geom->ord; i++)
-    ret += geom->ms[i]->perturb(rng, geom->ms[i], part, geom->bw, geom->kernel);
+    ret += geom->ms[i]->perturb(rng, rngstate, geom->ms[i], part, geom->bw,
+                                geom->kernel);
   if (geom->rot) {
     rotv(part->position, geom->rot, 0);
     rotv(part->direction, geom->rot, 0);
@@ -188,67 +189,72 @@ void Geom_destroy(Geometry *geom) {
   free(geom);
 }
 
-int E_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-              double bw, char kernel) {
-  part->ekin += bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+int E_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+              mcpl_particle_t *part, double bw, char kernel) {
+  part->ekin += bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   if (part->ekin < 0)
     part->ekin *= -1;
   return 0;
 }
 
-int Let_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-                double bw, char kernel) {
+int Let_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+                mcpl_particle_t *part, double bw, char kernel) {
   double E = part->ekin;
-  E *= exp(bw * metric->scaling[0] * kds_rand_type(rng, kernel));
+  E *= exp(bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel));
   while (E > metric->params[0]) {
     E = part->ekin;
-    E *= exp(bw * metric->scaling[0] * kds_rand_type(rng, kernel));
+    E *= exp(bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel));
   }
   part->ekin = E;
   return 0;
 }
 
-int wl_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-               double bw, char kernel) {
+int wl_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+               mcpl_particle_t *part, double bw, char kernel) {
   double wl = 9.045 / sqrt(part->ekin * 1e9);
-  double wl2 = wl + bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+  double wl2 =
+      wl + bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   part->ekin = 81.82e-9 / (wl2 * wl2);
   if (part->ekin < 0)
     part->ekin *= -1;
   return 0;
 }
 
-int t_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-              double bw, char kernel) {
-  part->time += bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+int t_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+              mcpl_particle_t *part, double bw, char kernel) {
+  part->time += bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   return 0;
 }
-int Dec_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-                double bw, char kernel) {
-  part->time *= pow(10, bw * metric->scaling[0] * kds_rand_type(rng, kernel));
+int Dec_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+                mcpl_particle_t *part, double bw, char kernel) {
+  part->time *=
+      pow(10, bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel));
   return 0;
 }
 
-int Vol_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
-                double bw, char kernel) {
+int Vol_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
+                mcpl_particle_t *part, double bw, char kernel) {
   double xmin = metric->params[0], xmax = metric->params[1];
   double ymin = metric->params[2], ymax = metric->params[3];
   double zmin = metric->params[4], zmax = metric->params[5];
-  part->position[0] += bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+  part->position[0] +=
+      bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   while ((part->position[0] < xmin) || (part->position[0] > xmax)) {
     if (part->position[0] < xmin)
       part->position[0] += 2 * (xmin - part->position[0]);
     else
       part->position[0] -= 2 * (part->position[0] - xmax);
   }
-  part->position[1] += bw * metric->scaling[1] * kds_rand_type(rng, kernel);
+  part->position[1] +=
+      bw * metric->scaling[1] * kds_rand_type(rng, rngstate, kernel);
   while ((part->position[1] < ymin) || (part->position[1] > ymax)) {
     if (part->position[1] < ymin)
       part->position[1] += 2 * (ymin - part->position[1]);
     else
       part->position[1] -= 2 * (part->position[1] - ymax);
   }
-  part->position[2] += bw * metric->scaling[2] * kds_rand_type(rng, kernel);
+  part->position[2] +=
+      bw * metric->scaling[2] * kds_rand_type(rng, rngstate, kernel);
   while ((part->position[2] < zmin) || (part->position[2] > zmax)) {
     if (part->position[2] < zmin)
       part->position[2] += 2 * (zmin - part->position[2]);
@@ -257,18 +263,20 @@ int Vol_perturb(kds_rng_fct_t rng, const Metric *metric, mcpl_particle_t *part,
   }
   return 0;
 }
-int SurfXY_perturb(kds_rng_fct_t rng, const Metric *metric,
+int SurfXY_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                    mcpl_particle_t *part, double bw, char kernel) {
   double xmin = metric->params[0], xmax = metric->params[1];
   double ymin = metric->params[2], ymax = metric->params[3];
-  part->position[0] += bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+  part->position[0] +=
+      bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   while ((part->position[0] < xmin) || (part->position[0] > xmax)) {
     if (part->position[0] < xmin)
       part->position[0] += 2 * (xmin - part->position[0]);
     else
       part->position[0] -= 2 * (part->position[0] - xmax);
   }
-  part->position[1] += bw * metric->scaling[1] * kds_rand_type(rng, kernel);
+  part->position[1] +=
+      bw * metric->scaling[1] * kds_rand_type(rng, rngstate, kernel);
   while ((part->position[1] < ymin) || (part->position[1] > ymax)) {
     if (part->position[1] < ymin)
       part->position[1] += 2 * (ymin - part->position[1]);
@@ -277,7 +285,7 @@ int SurfXY_perturb(kds_rng_fct_t rng, const Metric *metric,
   }
   return 0;
 }
-int SurfR_perturb(kds_rng_fct_t rng, const Metric *metric,
+int SurfR_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                   mcpl_particle_t *part, double bw, char kernel) {
   double rho_min = metric->params[0], rho_max = metric->params[1];
   double psi_min = metric->params[2], psi_max = metric->params[3];
@@ -287,9 +295,9 @@ int SurfR_perturb(kds_rng_fct_t rng, const Metric *metric,
              part->position[1] * part->position[1]);
   psi = atan2(part->position[1], part->position[0]);
 
-  rho2 = rho + bw * metric->scaling[0] * kds_rand_type(rng, kernel);
-  psi2 =
-      psi + bw * metric->scaling[1] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+  rho2 = rho + bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
+  psi2 = psi + bw * metric->scaling[1] * KDS_PI / 180 *
+                   kds_rand_type(rng, rngstate, kernel);
 
   while ((rho2 < rho_min) || (rho2 > rho_max)) {
     if (rho2 < rho_min)
@@ -309,7 +317,7 @@ int SurfR_perturb(kds_rng_fct_t rng, const Metric *metric,
   part->position[1] = rho2 * sin(psi2);
   return 0;
 }
-int SurfR2_perturb(kds_rng_fct_t rng, const Metric *metric,
+int SurfR2_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                    mcpl_particle_t *part, double bw, char kernel) {
   double rho_min = metric->params[0], rho_max = metric->params[1];
   double psi_min = metric->params[2], psi_max = metric->params[3];
@@ -322,9 +330,9 @@ int SurfR2_perturb(kds_rng_fct_t rng, const Metric *metric,
         part->position[1] * part->position[1];
   psi = atan2(part->position[1], part->position[0]);
 
-  rho2 = rho + bw * metric->scaling[0] * kds_rand_type(rng, kernel);
-  psi2 =
-      psi + bw * metric->scaling[1] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+  rho2 = rho + bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
+  psi2 = psi + bw * metric->scaling[1] * KDS_PI / 180 *
+                   kds_rand_type(rng, rngstate, kernel);
 
   while ((rho2 < rho_min) || (rho2 > rho_max)) {
     if (rho2 < rho_min)
@@ -344,14 +352,16 @@ int SurfR2_perturb(kds_rng_fct_t rng, const Metric *metric,
   part->position[1] = sqrt(rho2) * sin(psi2);
   return 0;
 }
-int SurfCircle_perturb(kds_rng_fct_t rng, const Metric *metric,
+int SurfCircle_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                        mcpl_particle_t *part, double bw, char kernel) {
   double rho_min = metric->params[0], rho_max = metric->params[1];
   double psi_min = metric->params[2], psi_max = metric->params[3];
   double x, y, rho2 = 0, psi2 = 0;
 
-  x = part->position[0] + bw * metric->scaling[0] * kds_rand_type(rng, kernel);
-  y = part->position[1] + bw * metric->scaling[1] * kds_rand_type(rng, kernel);
+  x = part->position[0] +
+      bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
+  y = part->position[1] +
+      bw * metric->scaling[1] * kds_rand_type(rng, rngstate, kernel);
 
   rho2 = sqrt(x * x + y * y);
   psi2 = atan2(y, x);
@@ -373,7 +383,7 @@ int SurfCircle_perturb(kds_rng_fct_t rng, const Metric *metric,
   part->position[1] = rho2 * sin(psi2);
   return 0;
 }
-int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
+int Guide_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                   mcpl_particle_t *part, double bw, char kernel) {
   double x = part->position[0], y = part->position[1], z = part->position[2];
   double dx = part->direction[0], dy = part->direction[1],
@@ -427,14 +437,14 @@ int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
     break;
   }
   // Perturb
-  z += bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+  z += bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   while ((z < 0) || (z > zmax)) {
     if (z < 0)
       z *= -1;
     else
       z -= 2 * (z - zmax);
   }
-  t += bw * metric->scaling[1] * kds_rand_type(rng, kernel);
+  t += bw * metric->scaling[1] * kds_rand_type(rng, rngstate, kernel);
   switch (mirror) { // Avoid perturbation to change mirror
   case 0:
     while ((t < 0) || (t > yheight)) {
@@ -470,9 +480,9 @@ int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
     break;
   }
   if (isinf(metric->scaling[2]))
-    mu = -1 + 2. * rng();
+    mu = -1 + 2. * rng(rngstate);
   else {
-    mu2 = mu + bw * metric->scaling[2] * kds_rand_type(rng, kernel);
+    mu2 = mu + bw * metric->scaling[2] * kds_rand_type(rng, rngstate, kernel);
     if (mu >= 0) {
       while ((mu2 < 0) || (mu2 > 1)) {
         if (mu2 < 0)
@@ -491,9 +501,10 @@ int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
     mu = mu2;
   }
   if (isinf(metric->scaling[3]))
-    phi = 2. * KDS_PI * rng();
+    phi = 2. * KDS_PI * rng(rngstate);
   else
-    phi += bw * metric->scaling[3] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+    phi += bw * metric->scaling[3] * KDS_PI / 180 *
+           kds_rand_type(rng, rngstate, kernel);
   // Antitransform from (z,t,theta_n,theta_t) to (x,y,z,dx,dy,dz)
   switch (mirror) {
   case 0:
@@ -543,12 +554,12 @@ int Guide_perturb(kds_rng_fct_t rng, const Metric *metric,
   return 0;
 }
 
-void _vMF_perturb(kds_rng_fct_t rng, double bw, double *dx, double *dy,
-                  double *dz) {
-  double xi = rng();
+void _vMF_perturb(kds_rng_fct_t rng, void *rngstate, double bw, double *dx,
+                  double *dy, double *dz) {
+  double xi = rng(rngstate);
   double w = 1;
   w += bw * bw * log(xi + (1 - xi) * exp(-2 / (bw * bw)));
-  double phi = 2. * KDS_PI * rng();
+  double phi = 2. * KDS_PI * rng(rngstate);
   double uv = sqrt(1 - w * w), u = uv * cos(phi), v = uv * sin(phi);
   double dx0 = *dx, dy0 = *dy, dz0 = *dz;
   if (dz0 > 0) {
@@ -561,20 +572,20 @@ void _vMF_perturb(kds_rng_fct_t rng, double bw, double *dx, double *dy,
   *dz = w * dz0 - u * dx0 - v * dy0;
 }
 
-int Isotrop_perturb(kds_rng_fct_t rng, const Metric *metric,
+int Isotrop_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                     mcpl_particle_t *part, double bw, char kernel) {
   (void)kernel;                         // unused
   if (isinf(bw * metric->scaling[0])) { // Generate isotropic direction
-    part->direction[2] = -1 + 2. * rng();
+    part->direction[2] = -1 + 2. * rng(rngstate);
     double dxy = sqrt(1 - part->direction[2] * part->direction[2]);
-    double phi = 2. * KDS_PI * rng();
+    double phi = 2. * KDS_PI * rng(rngstate);
     part->direction[0] = dxy * cos(phi);
     part->direction[1] = dxy * sin(phi);
   } else if (bw * metric->scaling[0] >
              0) { // Perturb following von Mises-Fischer distribution
     double dx = part->direction[0], dy = part->direction[1],
            dz = part->direction[2];
-    _vMF_perturb(rng, bw * metric->scaling[0], &part->direction[0],
+    _vMF_perturb(rng, rngstate, bw * metric->scaling[0], &part->direction[0],
                  &part->direction[1], &part->direction[2]);
     int keepx = (int)metric->params[0], keepy = (int)metric->params[1],
         keepz = (int)metric->params[2];
@@ -588,31 +599,32 @@ int Isotrop_perturb(kds_rng_fct_t rng, const Metric *metric,
   return 0;
 }
 
-int Polar_perturb(kds_rng_fct_t rng, const Metric *metric,
+int Polar_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                   mcpl_particle_t *part, double bw, char kernel) {
   double theta, theta2, phi;
   // int cont = 0;
   theta = acos(part->direction[2]);
   phi = atan2(part->direction[1], part->direction[0]);
-  theta2 = theta +
-           bw * metric->scaling[0] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+  theta2 = theta + bw * metric->scaling[0] * KDS_PI / 180 *
+                       kds_rand_type(rng, rngstate, kernel);
   if (cos(theta2) * cos(theta) < 0)
     theta += 2 * (KDS_PI / 2 - theta);
   theta = theta2;
-  phi += bw * metric->scaling[1] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+  phi += bw * metric->scaling[1] * KDS_PI / 180 *
+         kds_rand_type(rng, rngstate, kernel);
   part->direction[0] = sin(theta) * cos(phi);
   part->direction[1] = sin(theta) * sin(phi);
   part->direction[2] = cos(theta);
   return 0;
 }
 
-int PolarMu_perturb(kds_rng_fct_t rng, const Metric *metric,
+int PolarMu_perturb(kds_rng_fct_t rng, void *rngstate, const Metric *metric,
                     mcpl_particle_t *part, double bw, char kernel) {
   double mu, mu2, phi;
   // int cont = 0;
   mu = part->direction[2];
   phi = atan2(part->direction[1], part->direction[0]);
-  mu2 = mu + bw * metric->scaling[0] * kds_rand_type(rng, kernel);
+  mu2 = mu + bw * metric->scaling[0] * kds_rand_type(rng, rngstate, kernel);
   if (mu >= 0) {
     while ((mu2 < 0) || (mu2 > 1)) {
       if (mu2 < 0)
@@ -629,7 +641,8 @@ int PolarMu_perturb(kds_rng_fct_t rng, const Metric *metric,
     }
   }
   mu = mu2;
-  phi += bw * metric->scaling[1] * KDS_PI / 180 * kds_rand_type(rng, kernel);
+  phi += bw * metric->scaling[1] * KDS_PI / 180 *
+         kds_rand_type(rng, rngstate, kernel);
   part->direction[0] = sqrt(1 - mu * mu) * cos(phi);
   part->direction[1] = sqrt(1 - mu * mu) * sin(phi);
   part->direction[2] = mu;

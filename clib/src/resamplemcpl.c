@@ -2,10 +2,28 @@
 #include "kdsource/kdsource.h"
 #include <stdint.h>
 
-void kdsource_resample_to_mcpl(kds_rng_fct_t rng, const char *kds_sourcefile,
+typedef double (*kds_stateless_rng_fct_t)(void);
+
+typedef struct {
+  kds_stateless_rng_fct_t rngfct;
+} kds_stateless_rng_fct_data_t;
+
+double kdsource_stateless_rng_wrapper(void *thefct_as_state) {
+  kds_stateless_rng_fct_data_t *data =
+      (kds_stateless_rng_fct_data_t *)(thefct_as_state);
+  return data->rngfct();
+}
+
+void kdsource_resample_to_mcpl(kds_stateless_rng_fct_t rng_stateless,
+                               const char *kds_sourcefile,
                                const char *destination_mcpl, uint64_t nout) {
   const char *filename = kds_sourcefile;
   const char *outfilename = destination_mcpl;
+
+  kds_rng_fct_t rng = kdsource_stateless_rng_wrapper;
+  kds_stateless_rng_fct_data_t rng_data;
+  rng_data.rngfct = rng_stateless;
+  void *rngstate = (void *)(&rng_data);
 
   KDSource *kds = KDS_open(filename);
 
@@ -20,7 +38,7 @@ void kdsource_resample_to_mcpl(kds_rng_fct_t rng, const char *kds_sourcefile,
   uint64_t i;
   mcpl_particle_t *part = mcpl_get_empty_particle(file);
   for (i = 0; i < nout; ++i) {
-    KDS_rand_sample2(rng, kds, part, 1, w_crit, NULL, 1);
+    KDS_rand_sample2(rng, rngstate, kds, part, 1, w_crit, NULL, 1);
     mcpl_add_particle(file, part);
   }
   mcpl_closeandgzip_outfile(file);

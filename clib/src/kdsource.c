@@ -34,8 +34,9 @@ void *KDS_calloc_i(int n_elem, size_t elem_size) {
   return KDS_calloc((size_t)(n_elem), elem_size);
 }
 
-double KDS_default_rngfct(void) {
-  // This is a horrible RNG:
+double KDS_default_rngfct(void *rngstate) {
+  // This is a horrible RNG. Also, simply uses global state!
+  (void)rngstate;
   return rand() / (RAND_MAX + 1.0);
 }
 
@@ -278,13 +279,14 @@ KDSource *KDS_open(const char *xmlfilename) {
   return s;
 }
 
-int KDS_rand_sample2(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part,
-                     int perturb, double w_crit, WeightFun bias, int loop) {
+int KDS_rand_sample2(kds_rng_fct_t rng, void *rngstate, KDSource *kds,
+                     mcpl_particle_t *part, int perturb, double w_crit,
+                     WeightFun bias, int loop) {
   int ret = 0;
   if (w_crit <= 0) {
     PList_get(kds->plist, part);
     if (perturb)
-      Geom_perturb(rng, kds->geom, part);
+      Geom_perturb(rng, rngstate, kds->geom, part);
     ret += PList_next(kds->plist, loop);
     ret += Geom_next(kds->geom, loop);
   } else { // Normalize w to 1
@@ -299,18 +301,18 @@ int KDS_rand_sample2(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part,
       if (part->weight * bs > w_crit) { // If w*bs>w_crit, use w_crit/w*bs as
                                         // prob of going forward in list
         if (perturb)
-          Geom_perturb(rng, kds->geom, part);
-        if (rng() < w_crit / (part->weight * bs)) {
+          Geom_perturb(rng, rngstate, kds->geom, part);
+        if (rng(rngstate) < w_crit / (part->weight * bs)) {
           ret += PList_next(kds->plist, loop);
           ret += Geom_next(kds->geom, loop);
         }
         break;
       } else { // If w*bs<w_crit, use w*bs/w_crit as prob of taking particle
         int take = 0;
-        if (rng() < (part->weight * bs) / w_crit) {
+        if (rng(rngstate) < (part->weight * bs) / w_crit) {
           take = 1;
           if (perturb)
-            Geom_perturb(rng, kds->geom, part);
+            Geom_perturb(rng, rngstate, kds->geom, part);
         }
         ret += PList_next(kds->plist, loop);
         ret += Geom_next(kds->geom, loop);
@@ -327,34 +329,35 @@ int KDS_rand_sample2(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part,
   return ret;
 }
 
-int KDS_rand_sample(kds_rng_fct_t rng, KDSource *kds, mcpl_particle_t *part) {
-  return KDS_rand_sample2(rng, kds, part, 1, 1, NULL, 1);
+int KDS_rand_sample(kds_rng_fct_t rng, void *rngstate, KDSource *kds,
+                    mcpl_particle_t *part) {
+  return KDS_rand_sample2(rng, rngstate, kds, part, 1, 1, NULL, 1);
 }
 
 int KDS_sample2(KDSource *kds, mcpl_particle_t *part, int perturb,
                 double w_crit, WeightFun bias, int loop) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return KDS_rand_sample2(rng, kds, part, perturb, w_crit, bias, loop);
+  return KDS_rand_sample2(rng, NULL, kds, part, perturb, w_crit, bias, loop);
 }
 
 int KDS_sample(KDSource *kds, mcpl_particle_t *part) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return KDS_rand_sample(rng, kds, part);
+  return KDS_rand_sample(rng, NULL, kds, part);
 }
 
 double KDS_w_mean(KDSource *kds, int N, WeightFun bias) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return KDS_rand_w_mean(rng, kds, N, bias);
+  return KDS_rand_w_mean(rng, NULL, kds, N, bias);
 }
 
-double KDS_rand_w_mean(kds_rng_fct_t rng, KDSource *kds, int N,
+double KDS_rand_w_mean(kds_rng_fct_t rng, void *rngstate, KDSource *kds, int N,
                        WeightFun bias) {
   int i;
   // char pt;
   mcpl_particle_t part;
   double w_mean = 0;
   for (i = 0; i < N; i++) {
-    KDS_rand_sample2(rng, kds, &part, 0, -1, NULL, 1);
+    KDS_rand_sample2(rng, rngstate, kds, &part, 0, -1, NULL, 1);
     if (bias)
       w_mean += part.weight * bias(&part);
     else
@@ -410,16 +413,18 @@ MultiSource *MS_open(int len, const char **xmlfilenames, const double *ws) {
   return result;
 }
 
-int MS_rand_sample2(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part,
-                    int perturb, double w_crit, WeightFun bias, int loop) {
-  double y = rng();
+int MS_rand_sample2(kds_rng_fct_t rng, void *rngstate, MultiSource *ms,
+                    mcpl_particle_t *part, int perturb, double w_crit,
+                    WeightFun bias, int loop) {
+  double y = rng(rngstate);
   int i, ret;
   if (ms->cdf[ms->len - 1] <= 0)
     i = (int)(y * ms->len);
   else
     for (i = 0; y * ms->cdf[ms->len - 1] > ms->cdf[i]; i++)
       ;
-  ret = KDS_rand_sample2(rng, ms->s[i], part, perturb, w_crit, bias, loop);
+  ret = KDS_rand_sample2(rng, rngstate, ms->s[i], part, perturb, w_crit, bias,
+                         loop);
   if (ms->cdf[ms->len - 1] > 0)
     part->weight *= (ms->s[i]->J / ms->J) / (ms->ws[i] / ms->cdf[ms->len - 1]);
   else
@@ -427,32 +432,33 @@ int MS_rand_sample2(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part,
   return ret;
 }
 
-int MS_rand_sample(kds_rng_fct_t rng, MultiSource *ms, mcpl_particle_t *part) {
-  return MS_rand_sample2(rng, ms, part, 1, 1, NULL, 1);
+int MS_rand_sample(kds_rng_fct_t rng, void *rngstate, MultiSource *ms,
+                   mcpl_particle_t *part) {
+  return MS_rand_sample2(rng, rngstate, ms, part, 1, 1, NULL, 1);
 }
 
 int MS_sample(MultiSource *ms, mcpl_particle_t *part) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return MS_rand_sample(rng, ms, part);
+  return MS_rand_sample(rng, NULL, ms, part);
 }
 
 int MS_sample2(MultiSource *ms, mcpl_particle_t *part, int perturb,
                double w_crit, WeightFun bias, int loop) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return MS_rand_sample2(rng, ms, part, perturb, w_crit, bias, loop);
+  return MS_rand_sample2(rng, NULL, ms, part, perturb, w_crit, bias, loop);
 }
 
 double MS_w_mean(MultiSource *ms, int N, WeightFun bias) {
   kds_rng_fct_t rng = KDS_default_rngfct;
-  return MS_rand_w_mean(rng, ms, N, bias);
+  return MS_rand_w_mean(rng, NULL, ms, N, bias);
 }
 
-double MS_rand_w_mean(kds_rng_fct_t rng, MultiSource *ms, int N,
+double MS_rand_w_mean(kds_rng_fct_t rng, void *rngstate, MultiSource *ms, int N,
                       WeightFun bias) {
   double w_mean = 0;
   int i;
   for (i = 0; i < ms->len; i++)
-    w_mean += ms->ws[i] * KDS_rand_w_mean(rng, ms->s[i], N, bias);
+    w_mean += ms->ws[i] * KDS_rand_w_mean(rng, rngstate, ms->s[i], N, bias);
   return w_mean / ms->cdf[ms->len - 1];
 }
 

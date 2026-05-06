@@ -17,12 +17,12 @@
 // random sampling:
 #ifndef KDS_RNG_FCT
 #define KDS_RNG_FCT
-typedef double (*kds_rng_fct_t)(void);
+typedef double (*kds_rng_fct_t)(void *);
 #endif
-double kds_rand_norm(kds_rng_fct_t);
-double kds_rand_epan(kds_rng_fct_t);
-double kds_rand_box(kds_rng_fct_t);
-double kds_rand_type(kds_rng_fct_t, char kernel);
+double kds_rand_norm(kds_rng_fct_t, void *rngstate);
+double kds_rand_epan(kds_rng_fct_t, void *rngstate);
+double kds_rand_box(kds_rng_fct_t, void *rngstate);
+double kds_rand_type(kds_rng_fct_t, void *rngstate, char kernel);
 
 double *traslv(double *vect, const double *trasl, int inverse);
 double *rotv(double *vect, const double *rotvec, int inverse);
