@@ -6,8 +6,8 @@
 
 #define KDS_PI 3.1415926535897932384626433832795028841971694
 
-void kds_rand_norm_twovals(kds_rng_fct_t rng, void* rngstate,
-                           double *v1, double *v2) {
+void kds_rand_norm_twovals(kds_rng_fct_t rng, void *rngstate, double *v1,
+                           double *v2) {
   // sample two independent values from a unit normal distribution via the polar
   // method. The loop runs on average 4/pi ~= 1.27 times.
   double t, g1, g2;
@@ -22,14 +22,14 @@ void kds_rand_norm_twovals(kds_rng_fct_t rng, void* rngstate,
 }
 
 // Sample with normal distribution (x0=0, s=1)
-double kds_rand_norm(kds_rng_fct_t rng, void* rngstate) {
+double kds_rand_norm(kds_rng_fct_t rng, void *rngstate) {
   double v1, v2;
   kds_rand_norm_twovals(rng, rngstate, &v1, &v2);
   return v1;
 }
 
 // Sample with Epanechnikov distribution (x0=0, s=1)
-double kds_rand_epan(kds_rng_fct_t rng, void* rngstate) {
+double kds_rand_epan(kds_rng_fct_t rng, void *rngstate) {
   // NB: Alternative simpler implementation:
   //   double x;
   //   do {
@@ -46,17 +46,19 @@ double kds_rand_epan(kds_rng_fct_t rng, void* rngstate) {
 }
 
 // Sample with Tophat distribution (x0=0, s=1)
-double kds_rand_box(kds_rng_fct_t rng, void* rngstate) { return rng(rngstate) * 2.0 - 1.0; }
+double kds_rand_box(kds_rng_fct_t rng, void *rngstate) {
+  return rng(rngstate) * 2.0 - 1.0;
+}
 
 // Sample depending on kernel selected
-double kds_rand_type(kds_rng_fct_t rng, void* rngstate, char kernel) {
+double kds_rand_type(kds_rng_fct_t rng, void *rngstate, char kernel) {
   if (kernel == 'g') {
-    return kds_rand_norm(rng,rngstate);
+    return kds_rand_norm(rng, rngstate);
   } else if (kernel == 'e') {
-    return kds_rand_epan(rng,rngstate);
+    return kds_rand_epan(rng, rngstate);
   }
   if (kernel == 'b') {
-    return kds_rand_box(rng,rngstate);
+    return kds_rand_box(rng, rngstate);
   } else {
     printf("Cannot perturbate with current kernel. \n");
     // KDS_error("Cannot perturbate with current kernel.");

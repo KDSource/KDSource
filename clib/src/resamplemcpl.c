@@ -4,8 +4,7 @@
 
 typedef double (*kds_stateless_rng_fct_t)(void);
 
-double kdsource_stateless_rng_wrapper( void * thefct_as_state )
-{
+double kdsource_stateless_rng_wrapper(void *thefct_as_state) {
   return ((kds_stateless_rng_fct_t)(thefct_as_state))();
 }
 
@@ -16,7 +15,7 @@ void kdsource_resample_to_mcpl(kds_stateless_rng_fct_t rng_stateless,
   const char *outfilename = destination_mcpl;
 
   kds_rng_fct_t rng = kdsource_stateless_rng_wrapper;
-  void * rngstate = (void*)(rng_stateless);
+  void *rngstate = (void *)(rng_stateless);
 
   KDSource *kds = KDS_open(filename);
 
