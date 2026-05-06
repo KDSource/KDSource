@@ -34,8 +34,9 @@ void *KDS_calloc_i(int n_elem, size_t elem_size) {
   return KDS_calloc((size_t)(n_elem), elem_size);
 }
 
-double KDS_default_rngfct(void *) {
+double KDS_default_rngfct(void *rngstate) {
   // This is a horrible RNG. Also, simply uses global state!
+  (void)rngstate;
   return rand() / (RAND_MAX + 1.0);
 }
 

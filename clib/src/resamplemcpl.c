@@ -4,8 +4,14 @@
 
 typedef double (*kds_stateless_rng_fct_t)(void);
 
+typedef struct {
+  kds_stateless_rng_fct_t rngfct;
+} kds_stateless_rng_fct_data_t;
+
 double kdsource_stateless_rng_wrapper(void *thefct_as_state) {
-  return ((kds_stateless_rng_fct_t)(thefct_as_state))();
+  kds_stateless_rng_fct_data_t *data =
+      (kds_stateless_rng_fct_data_t *)(thefct_as_state);
+  return data->rngfct();
 }
 
 void kdsource_resample_to_mcpl(kds_stateless_rng_fct_t rng_stateless,
@@ -15,7 +21,9 @@ void kdsource_resample_to_mcpl(kds_stateless_rng_fct_t rng_stateless,
   const char *outfilename = destination_mcpl;
 
   kds_rng_fct_t rng = kdsource_stateless_rng_wrapper;
-  void *rngstate = (void *)(rng_stateless);
+  kds_stateless_rng_fct_data_t rng_data;
+  rng_data.rngfct = rng_stateless;
+  void *rngstate = (void *)(&rng_data);
 
   KDSource *kds = KDS_open(filename);
 
