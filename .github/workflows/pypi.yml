@@ -212,13 +212,13 @@ jobs:
     steps:
       # sdist:
       - name: download kdsource sdist
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: sdist-kdsource
           path: ./dist
 
       # binary wheels (merge-multiple: true since produced in several jobs):
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           pattern: "kdsource-binary-wheels-*"
           merge-multiple: true
@@ -307,7 +307,7 @@ jobs:
     steps:
 
       - name: download artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: final
           path: ./dist_final
@@ -367,7 +367,7 @@ jobs:
     steps:
 
       - name: download artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: final
           path: ./dist_final
