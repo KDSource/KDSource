@@ -118,7 +118,7 @@ jobs:
       - run: ls -l ./dist/
 
       - name: register sdist
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: sdist-kdsource
           path: ./dist/kdsource${{ env.SDIST_SUFFIX }}
@@ -199,7 +199,7 @@ jobs:
         if: runner.os == 'Windows'
         run: dir wheelhouse
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: kdsource-binary-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/kdsource-*.whl
@@ -285,13 +285,13 @@ jobs:
       - name: Package artifacts
         run: tar cvzf final.tar.gz ./dist_final
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: final
           path: ./dist_final
           if-no-files-found: error
 
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: final-tarball
           path: final.tar.gz
