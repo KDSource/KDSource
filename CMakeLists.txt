@@ -227,6 +227,41 @@ install(
 # Install python modules (only if building a wheel)
 ###################################################################
 
+if ( NOT DEFINED SKBUILD_PROJECT_NAME )
+  # Native (non-Python) installation: provide a shell-based kdsource-config,
+  # so consumers like McStas can use "kdsource-config --show buildflags"
+  # without the Python package and its dependencies.
+  set( KDS_LIBNAME "${CMAKE_SHARED_LIBRARY_PREFIX}kdsource${CMAKE_SHARED_LIBRARY_SUFFIX}" )
+  file( RELATIVE_PATH KDS_REL_BIN2PREFIX
+        "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" "${CMAKE_INSTALL_PREFIX}" )
+  if ( NOT WIN32 )
+    configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/cmake/kdsource-config.in"
+                    "${kdsc_autogendir}/kdsource-config" @ONLY )
+    install( PROGRAMS "${kdsc_autogendir}/kdsource-config"
+             DESTINATION "${CMAKE_INSTALL_BINDIR}" )
+  endif()
+
+  option( KDS_ENABLE_CPACK "Enable CPack packaging (e.g. cpack -G DEB)" OFF )
+  if ( KDS_ENABLE_CPACK )
+    set( CPACK_PACKAGE_NAME "kdsource" )
+    set( CPACK_PACKAGE_VENDOR "KDSource developers" )
+    set( CPACK_PACKAGE_VERSION "${PROJECT_VERSION}" )
+    set( CPACK_PACKAGE_DESCRIPTION_SUMMARY
+         "KDSource C library: distributional particle sources (KDE) for Monte Carlo simulations" )
+    set( CPACK_PACKAGE_CONTACT "KDSource developers <https://github.com/KDSource/KDSource>" )
+    set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" )
+    set( CPACK_DEBIAN_FILE_NAME DEB-DEFAULT )
+    set( CPACK_DEBIAN_PACKAGE_SECTION "science" )
+    set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://kdsource.readthedocs.io/" )
+    # Explicit rather than SHLIBDEPS: libmcpl usually comes from a CPack-built
+    # mcpl .deb without dpkg shlibs info, which dpkg-shlibdeps rejects.
+    set( KDS_CPACK_DEBIAN_DEPENDS "libxml2, mcpl (>= 2.2.8)"
+         CACHE STRING "Depends: field of the KDSource .deb" )
+    set( CPACK_DEBIAN_PACKAGE_DEPENDS "${KDS_CPACK_DEBIAN_DEPENDS}" )
+    include( CPack )
+  endif()
+endif()
+
 if ( DEFINED SKBUILD_PROJECT_NAME )
   file( GLOB KDS_PYWHL CONFIGURE_DEPENDS "${kdsc_autogendir}/python/${KDS_PYMODNAME}/*.py" )
   install( FILES ${KDS_PYWHL} DESTINATION "${SKBUILD_PLATLIB_DIR}/${KDS_PYMODNAME}" )
