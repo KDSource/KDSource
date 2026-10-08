@@ -72,3 +72,7 @@ sdist.include = [ "/VERSION",
                   "/clib/src/*.c.in",
                   "/python/kdsource/*.py",
                   "/python/kdsource/*.py.in" ]
+
+[tool.ruff.lint]
+# ruff 0.16 widened its default rules; keep the pre-0.16 set
+select = ["E4", "E7", "E9", "F"]
