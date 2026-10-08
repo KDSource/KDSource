@@ -245,7 +245,6 @@ if ( NOT DEFINED SKBUILD_PROJECT_NAME )
   if ( KDS_ENABLE_CPACK )
     set( CPACK_PACKAGE_NAME "kdsource" )
     set( CPACK_PACKAGE_VENDOR "KDSource developers" )
-    set( CPACK_PACKAGE_VERSION "${PROJECT_VERSION}" )
     set( CPACK_PACKAGE_DESCRIPTION_SUMMARY
          "KDSource C library: distributional particle sources (KDE) for Monte Carlo simulations" )
     set( CPACK_PACKAGE_CONTACT "KDSource developers <https://github.com/KDSource/KDSource>" )
@@ -255,9 +254,9 @@ if ( NOT DEFINED SKBUILD_PROJECT_NAME )
     set( CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://kdsource.readthedocs.io/" )
     # Explicit rather than SHLIBDEPS: libmcpl usually comes from a CPack-built
     # mcpl .deb without dpkg shlibs info, which dpkg-shlibdeps rejects.
-    set( KDS_CPACK_DEBIAN_DEPENDS "libxml2, mcpl (>= 2.2.8)"
-         CACHE STRING "Depends: field of the KDSource .deb" )
-    set( CPACK_DEBIAN_PACKAGE_DEPENDS "${KDS_CPACK_DEBIAN_DEPENDS}" )
+    if ( NOT DEFINED CPACK_DEBIAN_PACKAGE_DEPENDS )
+      set( CPACK_DEBIAN_PACKAGE_DEPENDS "libxml2, mcpl (>= 2.2.8)" )
+    endif()
     include( CPack )
   endif()
 endif()
