@@ -1,0 +1,44 @@
+#!/bin/sh
+# kdsource-config for native (CMake/CPack, non-Python) installations of KDSource.
+# Mirrors the items of the Python-provided kdsource-config (kdsource/_cli_config.py).
+# Paths are resolved relative to this script, so the installation is relocatable.
+
+_self="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+prefix="$(cd "$(dirname "$_self")/@KDS_REL_BIN2PREFIX@" && pwd)"
+
+version="@KDSource_VERSION@"
+intversion="@KDSource_version_int@"
+includedir="${prefix}/@KDS_INSTALL_INCLUDEDIR@"
+libdir="${prefix}/@KDS_INSTALL_LIBDIR@"
+libname="@KDS_LIBNAME@"
+libpath="${libdir}/${libname}"
+shlibdir="${libdir}"
+shlibname="${libname}"
+shlibpath="${libpath}"
+buildflags="-Wl,-rpath,${libdir} -Wl,${libpath} -I${includedir}"
+
+items="version intversion includedir libdir libpath libname shlibdir shlibpath shlibname buildflags"
+
+summary() {
+  echo "KDSource v${version} with configuration:"
+  echo
+  for i in $items; do eval "printf '  %10s : %s\n' $i \"\$$i\""; done
+}
+
+usage() {
+  echo "usage: kdsource-config [-h] [-v] [-i] [-s] [--show ITEM]"
+}
+
+case "${1:-}" in
+  ""|-s|--summary) summary ;;
+  -v|--version) echo "$version" ;;
+  -i|--intversion) echo "$intversion" ;;
+  -h|--help) usage ;;
+  --show)
+    if [ "${2:-}" = "list" ]; then for i in $items; do echo "$i"; done | sort; exit 0; fi
+    for i in $items; do
+      if [ "${2:-}" = "$i" ]; then eval "echo \"\$$i\""; exit 0; fi
+    done
+    echo "ERROR: Unknown configuration item \"${2:-}\"" >&2; exit 1 ;;
+  *) usage >&2; exit 1 ;;
+esac

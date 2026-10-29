@@ -1,0 +1,29 @@
+name: deb
+
+on:
+  push:
+    tags: [ 'v*' ]
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    # Oldest supported Debian, so the .deb also installs on newer Debian/Ubuntu.
+    container: debian:bookworm
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends build-essential libxml2-dev dpkg-dev git python3-venv
+          python3 -m venv /opt/venv
+          /opt/venv/bin/pip install cmake "mcpl-core>=2.2.8"
+          echo /opt/venv/bin >> "$GITHUB_PATH"
+
+      - uses: actions/checkout@b9e0990d219a03df7633c93f6f005a8fecbcab22
+
+      - name: Build .deb
+        run: cmake/build-deb.sh tmp
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: kdsource-deb
+          path: tmp/kdsource_*.deb
